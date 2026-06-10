@@ -3,6 +3,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/haptic_touchable.dart';
 import '../../services/push_notification_service.dart';
 import '../../services/biometric_service.dart';
+import '../../services/auth_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String username;
@@ -398,7 +399,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             width: double.infinity,
             height: 50,
             child: OutlinedButton.icon(
-              onPressed: widget.onLogout,
+              onPressed: () async {
+                await AuthService().signOut();
+                widget.onLogout();
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: SafeTalkTheme.brandTerracotta,
                 side: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),

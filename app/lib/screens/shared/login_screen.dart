@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/safetalk_logo.dart';
 import '../../controllers/session_controller.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final String activeRole;
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _monikerController = TextEditingController(); // For Sign Up custom handle
   bool _obscurePassword = true;
+  bool _isLoading = false;
   
   // Toggle between Sign In (false) and Sign Up (true)
   bool _isSigningUp = false;
@@ -55,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _handleAccess() {
+  void _handleAccess() async {
     if (_emailController.text.trim().isEmpty) {
       _showSnack('Please enter a valid email address.');
       return;
@@ -76,8 +78,53 @@ class _LoginScreenState extends State<LoginScreen> {
       SessionController().isTherapist = email.contains('therapist');
     }
 
-    // Success login/signup bypass
-    widget.onLoginSuccess(widget.activeRole);
+    setState(() => _isLoading = true);
+
+    String? error;
+
+    if (_isSigningUp) {
+      // Sign Up with Firebase
+      error = await AuthService().signUpWithEmail(
+        email: _emailController.text.trim(),
+        password: _passController.text.trim(),
+        displayName: _monikerController.text.trim(),
+      );
+    } else {
+      // Sign In with Firebase
+      error = await AuthService().signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passController.text.trim(),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      _showSnack(error);
+    } else {
+      // Firebase auth succeeded — notify parent of role
+      widget.onLoginSuccess(widget.activeRole);
+    }
+  }
+
+  void _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    final error = await AuthService().signInWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      _showSnack(error);
+    } else {
+      if (widget.activeRole == 'listener') {
+        final email = AuthService().email.toLowerCase();
+        SessionController().isTherapist = email.contains('therapist');
+      }
+      widget.onLoginSuccess(widget.activeRole);
+    }
   }
 
   void _showSnack(String message) {
@@ -124,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.arrow_back_ios_new, color: SafeTalkTheme.textPrimary, size: 20),
-                            onPressed: widget.onBack,
+                            onPressed: _isLoading ? null : widget.onBack,
                           ),
                           const Spacer(),
                         ],
@@ -165,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 32),
                           
-                          // --- NEW MONIKER FIELD (ONLY IN SIGN UP MODE) ---
+                          // --- MONIKER FIELD (ONLY IN SIGN UP MODE) ---
                           if (_isSigningUp) ...[
                             Text(
                               widget.activeRole == 'user' ? 'CONFIDENTIAL MONIKER' : 'COUNSELOR RANK / Moniker',
@@ -174,6 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 10),
                             TextField(
                               controller: _monikerController,
+                              enabled: !_isLoading,
                               style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
                               decoration: InputDecoration(
                                 hintText: widget.activeRole == 'user' ? 'e.g. Mist Pebble #482' : 'e.g. Listener Amber R.',
@@ -189,6 +237,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: SafeTalkTheme.standardRadius,
                                   borderSide: BorderSide(color: themeColor, width: 2),
                                 ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: SafeTalkTheme.standardRadius,
+                                  borderSide: BorderSide(color: SafeTalkTheme.borderSage.withValues(alpha: 0.5), width: 1.5),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -202,6 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 10),
                           TextField(
                             controller: _emailController,
+                            enabled: !_isLoading,
                             style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
@@ -218,6 +271,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: SafeTalkTheme.standardRadius,
                                 borderSide: BorderSide(color: themeColor, width: 2),
                               ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: SafeTalkTheme.standardRadius,
+                                borderSide: BorderSide(color: SafeTalkTheme.borderSage.withValues(alpha: 0.5), width: 1.5),
+                              ),
                             ),
                           ),
                           
@@ -232,6 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextField(
                             controller: _passController,
                             obscureText: _obscurePassword,
+                            enabled: !_isLoading,
                             style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
                             decoration: InputDecoration(
                               hintText: '••••••••',
@@ -255,32 +313,81 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: SafeTalkTheme.standardRadius,
                                 borderSide: BorderSide(color: themeColor, width: 2),
                               ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: SafeTalkTheme.standardRadius,
+                                borderSide: BorderSide(color: SafeTalkTheme.borderSage.withValues(alpha: 0.5), width: 1.5),
+                              ),
                             ),
                           ),
                           
                           const SizedBox(height: 40),
 
-                          // Main Action Button (Sign In / Sign Up)
+                          // Main Action Button (Sign In / Sign Up) with loading state
                           SizedBox(
                             width: double.infinity,
                             height: 54,
                             child: ElevatedButton(
-                              onPressed: _handleAccess,
+                              onPressed: _isLoading ? null : _handleAccess,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: themeColor,
                                 foregroundColor: SafeTalkTheme.bgMidnight,
+                                disabledBackgroundColor: themeColor.withValues(alpha: 0.5),
                                 elevation: 6,
                                 shadowColor: themeColor.withValues(alpha: 0.15),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: SafeTalkTheme.organicCardRadius,
                                 ),
                               ),
-                              child: Text(
-                                _isSigningUp
-                                    ? (widget.activeRole == 'user' ? 'Create Free Sanctuary' : 'Register Credentials')
-                                    : (widget.activeRole == 'user' ? 'Connect to Safe Harbor' : 'Go Online Now'),
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true)
-                                    .copyWith(fontSize: 16),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor: AlwaysStoppedAnimation<Color>(SafeTalkTheme.bgMidnight),
+                                      ),
+                                    )
+                                  : Text(
+                                      _isSigningUp
+                                          ? (widget.activeRole == 'user' ? 'Create Free Sanctuary' : 'Register Credentials')
+                                          : (widget.activeRole == 'user' ? 'Connect to Safe Harbor' : 'Go Online Now'),
+                                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true)
+                                          .copyWith(fontSize: 16),
+                                    ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // ── Google Sign-In Button ──────────────────────────
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: OutlinedButton.icon(
+                              onPressed: _isLoading ? null : _handleGoogleSignIn,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: SafeTalkTheme.textPrimary,
+                                side: BorderSide(
+                                  color: _isLoading 
+                                      ? SafeTalkTheme.borderSage.withValues(alpha: 0.5) 
+                                      : SafeTalkTheme.borderSage, 
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: SafeTalkTheme.organicCardRadius,
+                                ),
+                              ),
+                              icon: _isLoading
+                                  ? const SizedBox.shrink()
+                                  : const Icon(Icons.g_mobiledata_rounded, size: 28),
+                              label: Text(
+                                'Continue with Google',
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: _isLoading 
+                                      ? SafeTalkTheme.textMuted 
+                                      : SafeTalkTheme.textPrimary, 
+                                  bold: true,
+                                ).copyWith(fontSize: 15),
                               ),
                             ),
                           ),
@@ -290,11 +397,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Route link switching between Sign In and Sign Up
                           Center(
                             child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _isSigningUp = !_isSigningUp;
-                                });
-                              },
+                              onTap: _isLoading
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _isSigningUp = !_isSigningUp;
+                                      });
+                                    },
                               borderRadius: SafeTalkTheme.pillRadius,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -326,7 +435,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Icon(Icons.lock_outline_rounded, color: SafeTalkTheme.brandSageLight.withValues(alpha: 0.6), size: 15),
                     const SizedBox(width: 8),
                     Text(
-                      'Decentralized Encryption Active',
+                      'Firebase Secure Authentication',
                       style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
                     ),
                   ],

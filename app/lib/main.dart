@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 import 'theme/tokens.dart';
 import 'screens/shared/welcome_screen.dart';
 import 'screens/shared/login_screen.dart';
@@ -8,6 +11,7 @@ import 'screens/listener/listener_layout.dart';
 import 'services/biometric_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/listener_settings_service.dart';
+import 'services/auth_service.dart';
 
 // Custom ScrollBehavior to enable global click-and-drag mouse scrolling for horizontal lists
 class SafeTalkScrollBehavior extends MaterialScrollBehavior {
@@ -25,6 +29,11 @@ class SafeTalkScrollBehavior extends MaterialScrollBehavior {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize Firebase before anything else
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   // Asynchronously load the service settings before the UI renders to prevent race conditions
   await BiometricService().loadSettings();
   await PushNotificationService().loadSettings();
@@ -41,10 +50,8 @@ class SafeTalkApp extends StatefulWidget {
 }
 
 class _SafeTalkAppState extends State<SafeTalkApp> {
-  // Authentication states:
-  // - null: Shows the tranquil, wordless Welcome/Landing screen
-  // - 'user': Seeker App Experience
-  // - 'listener': Peer support specialist Desk
+  // The role selected by the user ('user' or 'listener').
+  // Persisted locally — Firebase handles auth state, this handles role routing.
   String? _currentUserRole;
 
   // Intermediate routing state:
@@ -70,7 +77,8 @@ class _SafeTalkAppState extends State<SafeTalkApp> {
     });
   }
 
-  void _logout() {
+  void _logout() async {
+    await AuthService().signOut();
     setState(() {
       _currentUserRole = null;
       _showingLoginForRole = null;
@@ -99,43 +107,64 @@ class _SafeTalkAppState extends State<SafeTalkApp> {
         ),
         useMaterial3: true,
       ),
-      home: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 400),
-        switchInCurve: Curves.easeIn,
-        switchOutCurve: Curves.easeOut,
-        child: _buildCurrentScreen(),
+      home: StreamBuilder<User?>(
+        stream: AuthService().authStateChanges,
+        builder: (context, snapshot) {
+          // While checking auth state, show a minimal loading screen
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Scaffold(
+              backgroundColor: SafeTalkTheme.bgMidnight,
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: SafeTalkTheme.brandSage,
+                  strokeWidth: 2,
+                ),
+              ),
+            );
+          }
+
+          final user = snapshot.data;
+
+          // User is authenticated via Firebase
+          if (user != null && _currentUserRole != null) {
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeIn,
+              switchOutCurve: Curves.easeOut,
+              child: BiometricShieldWrapper(
+                child: _currentUserRole == 'listener'
+                    ? ListenerLayout(
+                        key: const ValueKey('listener_layout'),
+                        onLogout: _logout,
+                      )
+                    : UserLayout(
+                        key: const ValueKey('user_layout'),
+                        onLogout: _logout,
+                      ),
+              ),
+            );
+          }
+
+          // User is not authenticated OR no role selected yet — show auth flow
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            switchInCurve: Curves.easeIn,
+            switchOutCurve: Curves.easeOut,
+            child: _showingLoginForRole != null
+                ? LoginScreen(
+                    key: ValueKey('login_screen_$_showingLoginForRole'),
+                    activeRole: _showingLoginForRole!,
+                    onBack: _cancelLoginSelection,
+                    onLoginSuccess: _login,
+                  )
+                : WelcomeScreen(
+                    key: const ValueKey('welcome_screen'),
+                    onRoleSelected: _selectRole,
+                  ),
+          );
+        },
       ),
     );
-  }
-
-  Widget _buildCurrentScreen() {
-    if (_currentUserRole == 'user') {
-      return BiometricShieldWrapper(
-        child: UserLayout(
-          key: const ValueKey('user_layout'),
-          onLogout: _logout,
-        ),
-      );
-    } else if (_currentUserRole == 'listener') {
-      return BiometricShieldWrapper(
-        child: ListenerLayout(
-          key: const ValueKey('listener_layout'),
-          onLogout: _logout,
-        ),
-      );
-    } else if (_showingLoginForRole != null) {
-      return LoginScreen(
-        key: ValueKey('login_screen_$_showingLoginForRole'),
-        activeRole: _showingLoginForRole!,
-        onBack: _cancelLoginSelection,
-        onLoginSuccess: _login,
-      );
-    } else {
-      return WelcomeScreen(
-        key: const ValueKey('welcome_screen'),
-        onRoleSelected: _selectRole,
-      );
-    }
   }
 }
 

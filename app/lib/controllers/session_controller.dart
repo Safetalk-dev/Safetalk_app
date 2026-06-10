@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// SessionController acts as the single source of truth for a SafeTalk session.
 ///
@@ -27,6 +28,34 @@ class SessionController extends ChangeNotifier {
   static final SessionController _instance = SessionController._internal();
   factory SessionController() => _instance;
   SessionController._internal();
+
+  // ── Firebase User Identity ────────────────────────────────────────────────
+  String? _firebaseUid;
+  String? _firebaseEmail;
+  String? _firebaseDisplayName;
+
+  String? get firebaseUid => _firebaseUid;
+  String? get firebaseEmail => _firebaseEmail;
+  String? get firebaseDisplayName => _firebaseDisplayName;
+
+  /// Initialize session identity from the currently authenticated Firebase user.
+  void initFromFirebaseUser() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _firebaseUid = user.uid;
+      _firebaseEmail = user.email;
+      _firebaseDisplayName = user.displayName;
+      notifyListeners();
+    }
+  }
+
+  /// Clear Firebase identity on sign-out.
+  void clearFirebaseUser() {
+    _firebaseUid = null;
+    _firebaseEmail = null;
+    _firebaseDisplayName = null;
+    notifyListeners();
+  }
 
   SessionPhase _phase = SessionPhase.idle;
   SessionPhase get phase => _phase;
