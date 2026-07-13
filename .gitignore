@@ -2,3 +2,35 @@ node_modules/
 firebase-debug.log
 *.env.*
 
+# Firebase emulator logs (all levels)
+firestore-debug.log
+**/firestore-debug.log
+ui-debug.log
+
+# Firebase Functions lockfile (regenerated on npm install)
+firebase/functions/package-lock.json
+
+# Flutter/Firebase generated config (contains API keys)
+app/android/app/google-services.json
+app/lib/firebase_options.dart
+
+# Vault & local data (user-private)
+app/data/
+
+# Flutter analyze output (ephemeral)
+app/analyze_output.txt
+
+# Flutter generated metadata
+app/.metadata
+
+# Windows Flutter generated files
+app/windows/flutter/generated_*
+
+# Android signing secrets
+*.jks
+*.keystore
+key.properties
+
+# Fastlane artifacts
+app/android/fastlane/report.xml
+app/android/fastlane/README.md
