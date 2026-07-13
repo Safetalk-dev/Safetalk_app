@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../controllers/chat_controller.dart';
+import '../../controllers/session_controller.dart';
 import '../shared/session_chat_screen.dart';
 import '../shared/history_screen.dart';
 
@@ -35,7 +36,9 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => SessionChatScreen(
-                  partnerName: thread['name'],
+                  sessionId: thread['id'] ?? '',
+                  myUid: SessionController().firebaseUid ?? '',
+                  partnerName: thread['name']!,
                   isSeeker: true,
                 ),
               ),
@@ -157,7 +160,9 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => SessionChatScreen(
-                              partnerName: thread['name'],
+                              sessionId: thread['id'] ?? '',
+                              myUid: SessionController().firebaseUid ?? '',
+                              partnerName: thread['name']!,
                               isSeeker: true,
                             ),
                           ),

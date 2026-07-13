@@ -36,7 +36,9 @@ class _ListenerMessagesScreenState extends State<ListenerMessagesScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => SessionChatScreen(
-                  partnerName: thread['name'],
+                  sessionId: thread['id'] ?? '',
+                  myUid: SessionController().firebaseUid ?? '',
+                  partnerName: thread['name']!,
                   isSeeker: false,
                 ),
               ),
@@ -139,7 +141,9 @@ class _ListenerMessagesScreenState extends State<ListenerMessagesScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => SessionChatScreen(
-                              partnerName: thread['name'],
+                              sessionId: thread['id'] ?? '',
+                              myUid: SessionController().firebaseUid ?? '',
+                              partnerName: thread['name']!,
                               isSeeker: false,
                             ),
                           ),

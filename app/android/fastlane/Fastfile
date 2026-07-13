@@ -1,0 +1,35 @@
+default_platform(:android)
+
+platform :android do
+  desc "Submit a new Beta Build to Google Play Closed Testing (Alpha Track)"
+  lane :alpha do
+    # Build the signed app bundle from Flutter (invoked from root context)
+    sh("cd ../.. && flutter build appbundle --release")
+    
+    # Upload to Google Play Alpha Track (Closed Testing)
+    upload_to_play_store(
+      track: 'alpha',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Submit a new Build to Google Play Internal Testing Track"
+  lane :internal do
+    # Build the signed app bundle from Flutter (invoked from root context)
+    sh("cd ../.. && flutter build appbundle --release")
+    
+    # Upload to Google Play Internal Track
+    upload_to_play_store(
+      track: 'internal',
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

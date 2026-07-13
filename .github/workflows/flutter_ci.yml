@@ -1,0 +1,80 @@
+name: Flutter CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_and_build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.22.x' # Align with app sdk requirements
+        channel: 'stable'
+        cache: true
+
+    - name: Install dependencies
+      run: |
+        cd app
+        flutter pub get
+
+    - name: Verify formatting
+      run: |
+        cd app
+        flutter format --set-exit-if-changed lib/
+
+    - name: Run analyzer
+      run: |
+        cd app
+        flutter analyze
+
+    - name: Run Flutter unit tests
+      run: |
+        cd app
+        flutter test
+
+    - name: Setup Keystore for Signed Release
+      env:
+        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+      run: |
+        if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+          echo "Decoding Android signing keystore..."
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > app/android/app/upload-keystore.jks
+          
+          # Write key credentials properties file for gradle lookup
+          cat <<EOF > app/android/key.properties
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+        EOF
+        else
+          echo "No keystore secrets detected. Building unsigned binary only."
+        fi
+
+    - name: Build Android App Bundle (Release)
+      run: |
+        cd app
+        flutter build appbundle --release --no-pub
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-appbundle
+        path: app/build/app/outputs/bundle/release/app-release.aab

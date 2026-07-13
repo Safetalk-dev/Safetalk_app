@@ -7,6 +7,11 @@ import 'profile_screen.dart';
 import 'notification_screen.dart';
 import '../../widgets/haptic_touchable.dart';
 import '../../controllers/session_controller.dart';
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/session_service.dart';
+import '../../models/session_model.dart';
+import '../../services/push_notification_service.dart';
 
 class ListenerLayout extends StatefulWidget {
   final VoidCallback onLogout;
@@ -23,14 +28,35 @@ class _ListenerLayoutState extends State<ListenerLayout> {
   bool _isOnline = true;
   bool _hasIncomingRequest = false;
 
+  StreamSubscription<List<SessionModel>>? _incomingSub;
+  List<SessionModel> _incomingRequests = [];
+
   @override
   void initState() {
     super.initState();
     SessionController().addListener(_onSessionChanged);
+    _listenToIncomingRequests();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService().initialize(context);
+    });
+  }
+
+  void _listenToIncomingRequests() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      _incomingSub = SessionService().streamIncomingRequests(uid).listen((requests) {
+        if (!mounted) return;
+        setState(() {
+          _incomingRequests = requests;
+          _hasIncomingRequest = requests.isNotEmpty;
+        });
+      });
+    }
   }
 
   @override
   void dispose() {
+    _incomingSub?.cancel();
     SessionController().removeListener(_onSessionChanged);
     super.dispose();
   }
@@ -38,10 +64,7 @@ class _ListenerLayoutState extends State<ListenerLayout> {
   void _onSessionChanged() {
     if (!mounted) return;
     final phase = SessionController().phase;
-    setState(() {
-      _hasIncomingRequest = phase == SessionPhase.seekerRequesting ||
-          phase == SessionPhase.listenerIncoming;
-    });
+    // Just keeping this for any legacy state that still relies on it
   }
 
   void _toggleOnlineStatus(bool value) {
@@ -71,6 +94,7 @@ class _ListenerLayoutState extends State<ListenerLayout> {
       case 1:
         return AcceptUserScreen(
           isOnline: _isOnline,
+          currentRequest: _incomingRequests.isNotEmpty ? _incomingRequests.first : null,
           onAcceptConnection: () {
             // Seeker is paying, call will launch automatically when payment completes
           },

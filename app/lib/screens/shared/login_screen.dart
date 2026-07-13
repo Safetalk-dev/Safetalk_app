@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/safetalk_logo.dart';
-import '../../controllers/session_controller.dart';
 import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String activeRole;
-  final VoidCallback onBack;
-  final Function(String role) onLoginSuccess;
-
-  const LoginScreen({
-    super.key,
-    required this.activeRole,
-    required this.onBack,
-    required this.onLoginSuccess,
-  });
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -23,7 +13,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-  final TextEditingController _monikerController = TextEditingController(); // For Sign Up custom handle
   bool _obscurePassword = true;
   bool _isLoading = false;
   
@@ -31,30 +20,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSigningUp = false;
 
   @override
-  void initState() {
-    super.initState();
-    _emailController.addListener(_onEmailChanged);
-  }
-
-  @override
   void dispose() {
-    _emailController.removeListener(_onEmailChanged);
     _emailController.dispose();
     _passController.dispose();
-    _monikerController.dispose();
     super.dispose();
-  }
-
-  void _onEmailChanged() {
-    if (widget.activeRole == 'listener') {
-      final email = _emailController.text.toLowerCase();
-      final hasTherapist = email.contains('therapist');
-      if (hasTherapist != SessionController().isTherapist) {
-        setState(() {
-          SessionController().isTherapist = hasTherapist;
-        });
-      }
-    }
   }
 
   void _handleAccess() async {
@@ -68,16 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (_isSigningUp && _monikerController.text.trim().isEmpty) {
-      _showSnack('Please choose a confidential handle.');
-      return;
-    }
-
-    if (widget.activeRole == 'listener') {
-      final email = _emailController.text.trim().toLowerCase();
-      SessionController().isTherapist = email.contains('therapist');
-    }
-
     setState(() => _isLoading = true);
 
     String? error;
@@ -87,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
       error = await AuthService().signUpWithEmail(
         email: _emailController.text.trim(),
         password: _passController.text.trim(),
-        displayName: _monikerController.text.trim(),
       );
     } else {
       // Sign In with Firebase
@@ -102,10 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (error != null) {
       _showSnack(error);
-    } else {
-      // Firebase auth succeeded — notify parent of role
-      widget.onLoginSuccess(widget.activeRole);
     }
+    // If successful, AuthWrapper's StreamBuilder will automatically rebuild and navigate
   }
 
   void _handleGoogleSignIn() async {
@@ -118,26 +74,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (error != null) {
       _showSnack(error);
-    } else {
-      if (widget.activeRole == 'listener') {
-        final email = AuthService().email.toLowerCase();
-        SessionController().isTherapist = email.contains('therapist');
-      }
-      widget.onLoginSuccess(widget.activeRole);
     }
   }
 
   void _showSnack(String message) {
-    final isTherapist = SessionController().isTherapist;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
           style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight),
         ),
-        backgroundColor: widget.activeRole == 'user'
-            ? SafeTalkTheme.brandTerracotta
-            : SafeTalkTheme.getListenerColor(isTherapist),
+        backgroundColor: SafeTalkTheme.brandTerracotta,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -145,10 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTherapist = SessionController().isTherapist;
-    final themeColor = widget.activeRole == 'user'
-        ? SafeTalkTheme.brandTerracotta
-        : SafeTalkTheme.getListenerColor(isTherapist);
+    final themeColor = SafeTalkTheme.brandSage;
 
     return Scaffold(
       body: Container(
@@ -166,18 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Top header with Back Button
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new, color: SafeTalkTheme.textPrimary, size: 20),
-                            onPressed: _isLoading ? null : widget.onBack,
-                          ),
-                          const Spacer(),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 40),
                       
                       // Small custom S Logo and Title
                       const SafeTalkLogo(size: 64, animate: true),
@@ -191,61 +124,25 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 40),
 
                       // Full Screen Panel Form Layout
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isSigningUp
-                                ? (widget.activeRole == 'user' ? 'Create Seeker Haven' : 'Register Counselor Desk')
-                                : (widget.activeRole == 'user' ? 'Welcome, Seeker' : 'Welcome, Peer Support'),
+                            _isSigningUp ? 'Create an Account' : 'Welcome Back',
                             style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 24),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _isSigningUp
-                                ? 'Register your secure email to create a custom confidential access key.'
-                                : 'Sign in to access your secure local counseling logs.',
+                                ? 'Register your secure email to create a confidential access key.'
+                                : 'Sign in to access your secure haven.',
                             style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
                           ),
                           const SizedBox(height: 32),
                           
-                          // --- MONIKER FIELD (ONLY IN SIGN UP MODE) ---
-                          if (_isSigningUp) ...[
-                            Text(
-                              widget.activeRole == 'user' ? 'CONFIDENTIAL MONIKER' : 'COUNSELOR RANK / Moniker',
-                              style: SafeTalkTheme.captionStyle(color: themeColor).copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              controller: _monikerController,
-                              enabled: !_isLoading,
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
-                              decoration: InputDecoration(
-                                hintText: widget.activeRole == 'user' ? 'e.g. Mist Pebble #482' : 'e.g. Listener Amber R.',
-                                hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
-                                filled: true,
-                                fillColor: SafeTalkTheme.bgMidnight,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: SafeTalkTheme.standardRadius,
-                                  borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: SafeTalkTheme.standardRadius,
-                                  borderSide: BorderSide(color: themeColor, width: 2),
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: SafeTalkTheme.standardRadius,
-                                  borderSide: BorderSide(color: SafeTalkTheme.borderSage.withValues(alpha: 0.5), width: 1.5),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-
                           // Email Field
                           Text(
                             'CONFIDENTIAL EMAIL ADDRESS',
@@ -282,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Password Field
                           Text(
-                            _isSigningUp ? 'CREATE ACCESS PIN' : (widget.activeRole == 'user' ? 'ACCESS KEY' : 'SECURITY PIN'),
+                            _isSigningUp ? 'CREATE ACCESS PIN' : 'ACCESS KEY',
                             style: SafeTalkTheme.captionStyle(color: themeColor).copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
@@ -348,9 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     )
                                   : Text(
-                                      _isSigningUp
-                                          ? (widget.activeRole == 'user' ? 'Create Free Sanctuary' : 'Register Credentials')
-                                          : (widget.activeRole == 'user' ? 'Connect to Safe Harbor' : 'Go Online Now'),
+                                      _isSigningUp ? 'Create Account' : 'Sign In',
                                       style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true)
                                           .copyWith(fontSize: 16),
                                     ),
@@ -410,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Text(
                                   _isSigningUp
                                       ? 'Already registered? Sign In instead'
-                                      : 'New to SafeTalk? Create a safe key (Sign Up)',
+                                      : 'New to SafeTalk? Sign Up',
                                   style: SafeTalkTheme.captionStyle(color: themeColor).copyWith(
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,

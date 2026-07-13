@@ -51,6 +51,7 @@ class RazorpayService {
     required String description,
     required String userEmail,
     required String userPhone,
+    required String sessionId,
   }) {
     if (!isNativeSupported) {
       debugPrint('RazorpayService: Platform is not native mobile. Bypassing native SDK and triggering simulated overlay.');
@@ -66,6 +67,9 @@ class RazorpayService {
       'prefill': {
         'contact': userPhone,
         'email': userEmail,
+      },
+      'notes': {
+        'sessionId': sessionId,
       },
       'external': {
         'wallets': ['paytm']

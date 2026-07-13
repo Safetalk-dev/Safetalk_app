@@ -68,19 +68,14 @@ class _RequestListenerScreenState extends State<RequestListenerScreen> {
     // Progress through "Searching" steps with timed animation
     _matchingTimer = Timer.periodic(const Duration(milliseconds: 1800), (timer) {
       if (!mounted) return;
-      // Only advance steps while still searching (not yet matched from listener side)
       if (_matchFound) {
         timer.cancel();
         return;
       }
-      if (_currentStep < _matchingSteps.length - 1) {
+      if (_currentStep < _matchingSteps.length - 2) {
         setState(() {
           _currentStep++;
         });
-      } else {
-        // Last step reached! Automatically accept and move to payment state
-        timer.cancel();
-        SessionController().listenerAcceptsRequest('Amber R.');
       }
     });
   }
@@ -96,6 +91,16 @@ class _RequestListenerScreenState extends State<RequestListenerScreen> {
         _matchFound = true;
       });
       _matchingTimer?.cancel();
+    } else if (phase == SessionPhase.idle && !_matchFound) {
+      // Session was rejected or cancelled
+      _matchingTimer?.cancel();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No listeners are available right now. Please try again later.'),
+          backgroundColor: SafeTalkTheme.brandTerracotta,
+        ),
+      );
+      widget.onCancel();
     }
   }
 
@@ -400,6 +405,7 @@ class _RequestListenerScreenState extends State<RequestListenerScreen> {
                         description: 'SafeTalk Peer Support Session',
                         userEmail: 'seeker@safetalk.org',
                         userPhone: '9999999999',
+                        sessionId: SessionController().currentSessionId ?? 'mock_session_id',
                       );
                     } else {
                       // Trigger simulated overlay on Desktop/Web

@@ -8,13 +8,17 @@ import '../shared/video_call_screen.dart';
 import '../shared/session_chat_screen.dart';
 import '../../widgets/breathing_pulse.dart';
 
+import '../../models/session_model.dart';
+
 class AcceptUserScreen extends StatefulWidget {
   final bool isOnline;
+  final SessionModel? currentRequest;
   final VoidCallback onAcceptConnection;
 
   const AcceptUserScreen({
     super.key,
     required this.isOnline,
+    this.currentRequest,
     required this.onAcceptConnection,
   });
 
@@ -44,10 +48,8 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   }
 
   void _checkForActiveRequest() {
-    final phase = SessionController().phase;
     setState(() {
-      _hasActiveRequest = phase == SessionPhase.seekerRequesting ||
-          phase == SessionPhase.listenerIncoming;
+      _hasActiveRequest = widget.currentRequest != null && widget.currentRequest!.status == 'pending';
     });
   }
 
@@ -56,7 +58,7 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     _paymentSecondsElapsed = 0;
     _paymentTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
-      if (SessionController().phase != SessionPhase.paymentPending) {
+      if (widget.currentRequest?.status != 'payment_pending') {
         timer.cancel();
         _paymentTimer = null;
         return;
@@ -77,14 +79,12 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
 
   void _onSessionChanged() {
     if (!mounted) return;
-    final phase = SessionController().phase;
 
     setState(() {
-      _hasActiveRequest = phase == SessionPhase.seekerRequesting ||
-          phase == SessionPhase.listenerIncoming;
+      _hasActiveRequest = widget.currentRequest != null && widget.currentRequest!.status == 'pending';
     });
 
-    if (phase == SessionPhase.paymentPending) {
+    if (widget.currentRequest?.status == 'payment_pending') {
       if (_paymentTimer == null) {
         _startPaymentTimer();
       }
@@ -94,12 +94,12 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     }
 
     // If payment succeeded → launch call for listener side
-    if (phase == SessionPhase.callActive) {
+    if (widget.currentRequest?.status == 'active') {
       _launchCallAsListener();
     }
 
     // If seeker cancelled, reset the request card
-    if (phase == SessionPhase.idle) {
+    if (widget.currentRequest == null) {
       setState(() {
         _swipePosition = 0.0;
         _secondsLeft = 30;
@@ -108,36 +108,18 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   }
 
   void _launchCallAsListener() {
-    if (!mounted) return;
+    if (!mounted || widget.currentRequest == null) return;
     
-    final sessionType = SessionController().sessionType;
+    final sessionTypeString = widget.currentRequest!.sessionType;
     Widget targetScreen;
+    final partnerName = widget.currentRequest!.seekerMoniker;
     
-    if (sessionType == SessionType.messages) {
-      targetScreen = SessionChatScreen(
-        partnerName: SessionController().seekerMoniker,
-        isSeeker: false,
-        onSessionEnd: () {
-          SessionController().callEnded();
-        },
-      );
-    } else if (sessionType == SessionType.videoCall) {
-      targetScreen = VideoCallScreen(
-        partnerName: SessionController().seekerMoniker,
-        isSeekerCaller: false,
-        onSessionEnd: () {
-          SessionController().callEnded();
-        },
-      );
-    } else {
-      targetScreen = VoiceCallScreen(
-        partnerName: SessionController().seekerMoniker,
-        isSeekerCaller: false,
-        onSessionEnd: () {
-          SessionController().callEnded();
-        },
-      );
-    }
+    targetScreen = SessionChatScreen(
+      sessionId: SessionController().currentSessionId ?? '',
+      myUid: SessionController().firebaseUid ?? '',
+      partnerName: partnerName,
+      isSeeker: false,
+    );
 
     Navigator.push(
       context,
@@ -169,20 +151,10 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
 
   void _onListenerAccepts() {
     _countdownTimer?.cancel();
-    // Register acceptance on session controller
-    // This bridges back to the seeker's request_screen which is watching phase changes
-    SessionController().listenerAcceptsRequest('Amber R.');
-    
-    // In a simulated request match (where no seeker actually pays),
-    // automatically trigger payment success after a short delay so the listener
-    // lands directly into the matching session (Messages, Voice, or Video call).
-    if (SessionController().isSimulated) {
-      Timer(const Duration(seconds: 6), () {
-        SessionController().paymentSucceeded();
-      });
+    if (widget.currentRequest != null) {
+      SessionController().listenerAcceptsRequest('Listener', sessionId: widget.currentRequest!.id);
     }
     
-    // Let parent layout know (it can optionally switch tabs)
     widget.onAcceptConnection();
   }
 
@@ -200,6 +172,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     if (widget.isOnline && !oldWidget.isOnline) {
       _startTimer();
     }
+    if (widget.currentRequest != oldWidget.currentRequest) {
+      _onSessionChanged();
+    }
   }
 
   @override
@@ -207,33 +182,29 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     if (!widget.isOnline) {
       return _buildOfflineState();
     }
-    if (SessionController().phase == SessionPhase.paymentPending) {
+    if (widget.currentRequest?.status == 'payment_pending') {
       return _buildPaymentPendingBufferState();
     }
-    if (!_hasActiveRequest) {
-      return _buildWaitingState();
+    if (widget.currentRequest?.status == 'pending') {
+      return _buildActiveRequestView();
     }
-    return _buildActiveRequestView();
+    return _buildWaitingState();
   }
 
   Widget _buildPaymentPendingBufferState() {
     final isTherapist = SessionController().isTherapist;
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
-    final seekerMoniker = SessionController().seekerMoniker.isNotEmpty
-        ? SessionController().seekerMoniker
-        : 'Pine Pebble #107';
-    final moodTag = SessionController().seekerMoodTag.isNotEmpty
-        ? SessionController().seekerMoodTag
-        : 'Anxious / Overwhelmed';
-    final sessionType = SessionController().sessionType;
+    final seekerMoniker = widget.currentRequest?.seekerMoniker ?? 'Unknown Seeker';
+    final moodTag = widget.currentRequest?.seekerMoodTag ?? 'Neutral';
+    final sessionTypeString = widget.currentRequest?.sessionType ?? 'SessionType.messages';
     
     String sessionTypeName = 'Secure Chat';
     IconData sessionTypeIcon = Icons.chat_bubble_rounded;
-    if (sessionType == SessionType.voiceCall) {
+    if (sessionTypeString == 'SessionType.voiceCall') {
       sessionTypeName = 'Secure Voice Call';
       sessionTypeIcon = Icons.phone_rounded;
-    } else if (sessionType == SessionType.videoCall) {
+    } else if (sessionTypeString == 'SessionType.videoCall') {
       sessionTypeName = 'Secure Video Call';
       sessionTypeIcon = Icons.videocam_rounded;
     }
@@ -529,11 +500,10 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   // ── ACTIVE INCOMING REQUEST ───────────────────────────────────────────────────
 
   Widget _buildActiveRequestView() {
-    final session = SessionController();
     final isTherapist = SessionController().isTherapist;
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
-    final sessionType = session.sessionType;
+    final sessionTypeString = widget.currentRequest?.sessionType ?? 'SessionType.messages';
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -597,7 +567,7 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            session.seekerMoniker,
+                            widget.currentRequest?.seekerMoniker ?? 'Unknown Seeker',
                             style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
                           ),
                           Text(
@@ -654,7 +624,7 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                           border: Border.all(color: SafeTalkTheme.borderSage, width: 1),
                         ),
                         child: Text(
-                          session.seekerMoodTag,
+                          widget.currentRequest?.seekerMoodTag ?? 'Neutral',
                           style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandTerracotta)
                               .copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -672,7 +642,7 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '"${session.seekerConcern}"',
+                  '"${widget.currentRequest?.seekerConcern ?? ''}"',
                   style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary)
                       .copyWith(fontStyle: FontStyle.italic, fontSize: 14, height: 1.4),
                 ),
@@ -691,20 +661,20 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildSessionDetailChip(
-                        sessionType == SessionType.messages
+                        sessionTypeString == 'SessionType.messages'
                             ? Icons.chat_bubble_outline_rounded
-                            : (sessionType == SessionType.videoCall
+                            : (sessionTypeString == 'SessionType.videoCall'
                                 ? Icons.videocam_outlined
                                 : Icons.phone_outlined),
-                        sessionType == SessionType.messages
+                        sessionTypeString == 'SessionType.messages'
                             ? 'Messages'
-                            : (sessionType == SessionType.videoCall
+                            : (sessionTypeString == 'SessionType.videoCall'
                                 ? 'Video Call'
                                 : 'Voice Call'),
                       ),
                       _buildSessionDetailChip(
                         Icons.timer_outlined,
-                        sessionType == SessionType.videoCall ? '7 mins' : '10 mins',
+                        sessionTypeString == 'SessionType.videoCall' ? '7 mins' : '10 mins',
                       ),
                       _buildSessionDetailChip(
                         Icons.currency_rupee_rounded,
@@ -784,7 +754,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                 Center(
                   child: TextButton.icon(
                     onPressed: () {
-                      SessionController().listenerDeclinesRequest();
+                      if (widget.currentRequest != null) {
+                        SessionController().listenerDeclinesRequest(sessionId: widget.currentRequest!.id);
+                      }
                       setState(() => _swipePosition = 0.0);
                     },
                     icon: const Icon(Icons.close_rounded, size: 16, color: SafeTalkTheme.brandTerracotta),

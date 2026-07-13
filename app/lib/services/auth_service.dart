@@ -40,22 +40,16 @@ class AuthService {
   // ── Email/Password Authentication ───────────────────────────────────────────
 
   /// Create a new account with email and password.
-  /// Sets the user's display name to [displayName] (the moniker).
   /// Returns null on success, or an error message string on failure.
   Future<String?> signUpWithEmail({
     required String email,
     required String password,
-    required String displayName,
   }) async {
     try {
-      final credential = await _auth.createUserWithEmailAndPassword(
+      await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
-
-      // Set the display name (moniker) on the Firebase user profile
-      await credential.user?.updateDisplayName(displayName.trim());
-      await credential.user?.reload();
 
       return null; // Success
     } on FirebaseAuthException catch (e) {

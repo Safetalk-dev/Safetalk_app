@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:app/services/user_service.dart';
+import 'dart:async';
+import 'package:app/services/session_service.dart';
+import 'package:app/models/session_model.dart';
 
 /// SessionController acts as the single source of truth for a SafeTalk session.
 ///
@@ -33,18 +37,27 @@ class SessionController extends ChangeNotifier {
   String? _firebaseUid;
   String? _firebaseEmail;
   String? _firebaseDisplayName;
+  String _currentRole = 'user'; // Defaults to user
 
   String? get firebaseUid => _firebaseUid;
   String? get firebaseEmail => _firebaseEmail;
   String? get firebaseDisplayName => _firebaseDisplayName;
+  String get currentRole => _currentRole;
 
   /// Initialize session identity from the currently authenticated Firebase user.
-  void initFromFirebaseUser() {
+  Future<void> initFromFirebaseUser() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       _firebaseUid = user.uid;
       _firebaseEmail = user.email;
       _firebaseDisplayName = user.displayName;
+
+      // Fetch role from Firestore
+      final userModel = await UserService().getUser(user.uid);
+      if (userModel != null) {
+        _currentRole = userModel.role;
+        _isTherapist = userModel.role == 'therapist';
+      }
       notifyListeners();
     }
   }
@@ -91,68 +104,118 @@ class SessionController extends ChangeNotifier {
   // Payment amount in rupees (₹150 for Razorpay)
   final int sessionAmount = 150;
 
+  String? _currentSessionId;
+  String? get currentSessionId => _currentSessionId;
+
+  StreamSubscription<SessionModel?>? _sessionSub;
+
   // ── Seeker Initiates ────────────────────────────────────────────────────────
 
-  /// Called when the seeker taps "Connect Now" / "Request Listener".
-  void seekerSendsRequest({
+  Future<void> seekerSendsRequest({
     required String moniker,
     required String moodTag,
     required String concern,
     required SessionType sessionType,
-  }) {
-    isSimulated = false; // Reset to false for normal seeker flow
+  }) async {
+    isSimulated = false;
     _seekerMoniker = moniker;
     _seekerMoodTag = moodTag;
     _seekerConcern = concern;
     _sessionType = sessionType;
     _phase = SessionPhase.seekerRequesting;
     notifyListeners();
+
+    if (_firebaseUid != null) {
+      _currentSessionId = await SessionService().createSessionRequest(
+        seekerId: _firebaseUid!,
+        seekerMoniker: moniker,
+        seekerMoodTag: moodTag,
+        seekerConcern: concern,
+        sessionType: sessionType.toString(),
+      );
+      
+      _sessionSub?.cancel();
+      _sessionSub = SessionService().streamSession(_currentSessionId!).listen((session) {
+        if (session == null) return;
+        
+        if (session.status == 'payment_pending') {
+          _phase = SessionPhase.paymentPending;
+          _listenerName = session.listenerId ?? 'Matched Listener';
+          notifyListeners();
+        } else if (session.status == 'active') {
+          _phase = SessionPhase.callActive;
+          notifyListeners();
+        } else if (session.status == 'completed') {
+          _phase = SessionPhase.callEnded;
+          notifyListeners();
+        } else if (session.status == 'rejected' || session.status == 'cancelled') {
+          _phase = SessionPhase.idle;
+          notifyListeners();
+        }
+      });
+    }
   }
 
-  /// Called when the seeker cancels the request before a match is made.
   void seekerCancelsRequest() {
     isSimulated = false;
     _phase = SessionPhase.idle;
     _listenerName = '';
+    if (_currentSessionId != null) {
+      SessionService().cancelSession(_currentSessionId!);
+      _sessionSub?.cancel();
+      _currentSessionId = null;
+    }
     notifyListeners();
   }
 
   // ── Listener Responds ───────────────────────────────────────────────────────
 
-  /// Called when the listener swipes to accept the incoming request.
-  void listenerAcceptsRequest(String acceptingListenerName) {
+  void listenerAcceptsRequest(String acceptingListenerName, {String? sessionId}) {
+    final targetId = sessionId ?? _currentSessionId;
+    if (targetId != null) {
+      SessionService().acceptSession(targetId);
+      _currentSessionId = targetId; // Sync for listener side
+    }
     _listenerName = acceptingListenerName;
     _phase = SessionPhase.paymentPending;
     notifyListeners();
   }
 
-  /// Called when the listener declines (skips) the incoming request.
-  void listenerDeclinesRequest() {
+  void listenerDeclinesRequest({String? sessionId}) {
+    final targetId = sessionId ?? _currentSessionId;
+    if (targetId != null && _firebaseUid != null) {
+      SessionService().rejectSession(targetId, _firebaseUid!);
+    }
     _phase = SessionPhase.idle;
     notifyListeners();
   }
 
   // ── Payment ──────────────────────────────────────────────────────────────────
 
-  /// Called when the seeker completes payment successfully.
   void paymentSucceeded() {
+    if (_currentSessionId != null) {
+      SessionService().markPaymentComplete(_currentSessionId!);
+    }
     _phase = SessionPhase.callActive;
     notifyListeners();
   }
 
   // ── Call ─────────────────────────────────────────────────────────────────────
 
-  /// Called when the call ends (either timer or manual hang-up).
   void callEnded() {
     _phase = SessionPhase.callEnded;
     notifyListeners();
   }
 
-  /// Called after ratings are submitted or skipped — resets to idle.
   void sessionCompleted() {
     isSimulated = false;
     _phase = SessionPhase.idle;
     _listenerName = '';
+    if (_currentSessionId != null) {
+      SessionService().endSession(_currentSessionId!);
+      _sessionSub?.cancel();
+      _currentSessionId = null;
+    }
     notifyListeners();
   }
 }

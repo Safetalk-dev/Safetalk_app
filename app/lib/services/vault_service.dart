@@ -183,4 +183,68 @@ class VaultService {
     await initializeVault(newPin); // Generates a fresh salt
     await saveNotes(newPin, notes); // Encrypts notes under new key
   }
+
+  /// Encrypts a generic string using the user's PIN
+  Future<String> encryptString(String pin, String plaintext) async {
+    _ensureDataDirExists();
+    
+    final metadataFile = File(_metadataPath);
+    if (!metadataFile.existsSync()) {
+      throw CryptographicException('Vault not initialized.');
+    }
+    
+    final metadata = jsonDecode(await metadataFile.readAsString());
+    final salt = base64Decode(metadata['salt_base64'] as String);
+    final secretKey = await _deriveKey(pin, salt);
+
+    final cleartextBytes = utf8.encode(plaintext);
+    final nonce = _generateRandomBytes(12);
+
+    final secretBox = await _aesGcm.encrypt(
+      cleartextBytes,
+      secretKey: secretKey,
+      nonce: nonce,
+    );
+
+    return jsonEncode({
+      'ciphertext': base64Encode(secretBox.cipherText),
+      'nonce': base64Encode(secretBox.nonce),
+      'mac': base64Encode(secretBox.mac.bytes),
+    });
+  }
+
+  /// Decrypts a generic string using the user's PIN
+  Future<String> decryptString(String pin, String encryptedJson) async {
+    if (!isVaultInitialized()) {
+      throw CryptographicException('Vault is not initialized.');
+    }
+
+    try {
+      final metadataFile = File(_metadataPath);
+      final metadata = jsonDecode(await metadataFile.readAsString());
+      final salt = base64Decode(metadata['salt_base64'] as String);
+
+      final encryptedData = jsonDecode(encryptedJson);
+      final ciphertext = base64Decode(encryptedData['ciphertext'] as String);
+      final nonce = base64Decode(encryptedData['nonce'] as String);
+      final mac = base64Decode(encryptedData['mac'] as String);
+
+      final secretKey = await _deriveKey(pin, salt);
+
+      final secretBox = SecretBox(
+        ciphertext,
+        nonce: nonce,
+        mac: Mac(mac),
+      );
+
+      final cleartextBytes = await _aesGcm.decrypt(
+        secretBox,
+        secretKey: secretKey,
+      );
+
+      return utf8.decode(cleartextBytes);
+    } catch (e) {
+      throw CryptographicException('Incorrect PIN or corrupted data.');
+    }
+  }
 }

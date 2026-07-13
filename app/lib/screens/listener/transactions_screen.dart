@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../controllers/session_controller.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class ListenerTransactionsScreen extends StatefulWidget {
   const ListenerTransactionsScreen({super.key});
@@ -50,6 +51,8 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
       'isPremium': false,
     }
   ];
+
+  bool _isWithdrawing = false;
 
   void _triggerWithdrawalSimulation() {
     showModalBottomSheet(
@@ -169,18 +172,32 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Payout successfully initiated! ₹4,250 will be settled in your Axis Bank account within 24 hours.',
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                      onPressed: _isWithdrawing ? null : () async {
+                        setSheetState(() => _isWithdrawing = true);
+                        try {
+                          final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('processPayout');
+                          await callable.call({
+                            'listenerUid': SessionController().firebaseUid,
+                            'amount': 4250.0,
+                          });
+                          if (!mounted) return;
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Payout successfully initiated! ₹4,250 will be settled in your Axis Bank account soon.',
+                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                              ),
+                              backgroundColor: SafeTalkTheme.brandSage,
+                              behavior: SnackBarBehavior.floating,
                             ),
-                            backgroundColor: SafeTalkTheme.brandSage,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        } finally {
+                          if (mounted) setSheetState(() => _isWithdrawing = false);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: brandColor,
@@ -188,15 +205,17 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
                         shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
                         elevation: 0,
                       ),
-                      child: Text(
-                        'Confirm & Transfer to Bank',
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
-                      ),
+                      child: _isWithdrawing
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: SafeTalkTheme.bgMidnight))
+                          : Text(
+                              'Confirm & Transfer to Bank',
+                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed: () {
+                    onPressed: _isWithdrawing ? null : () {
                       Navigator.pop(context);
                     },
                     child: Text(

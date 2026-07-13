@@ -1,42 +1,53 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:app/main.dart';
+import 'package:app/screens/shared/login_screen.dart';
 
 void main() {
-  testWidgets('SafeTalk app launches and displays welcome screen', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const SafeTalkApp());
+  testWidgets('LoginScreen displays correctly', (WidgetTester tester) async {
+    // Set larger physical size so elements don't get clipped or pushed offscreen
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
 
-    // Verify that our Welcome starting elements render
+    // Build LoginScreen directly
+    await tester.pumpWidget(const MaterialApp(
+      home: LoginScreen(),
+    ));
+    await tester.pump(); // Use pump() instead of pumpAndSettle() due to looping logo animation
+
+    // Verify that our Login starting elements render
     expect(find.text('safe talk'), findsOneWidget);
-    expect(find.text('I need to share'), findsOneWidget);
-    expect(find.text('I am here to listen'), findsOneWidget);
+    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('CONFIDENTIAL EMAIL ADDRESS'), findsOneWidget);
   });
 
-  testWidgets('Selecting role transitions to specialized login page', (WidgetTester tester) async {
-    await tester.pumpWidget(const SafeTalkApp());
+  testWidgets('Toggling between Sign In and Sign Up modes on LoginScreen', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
 
-    // Tap "I need to share"
-    await tester.tap(find.text('I need to share'));
-    await tester.pump(const Duration(milliseconds: 500)); // Play route animations
+    await tester.pumpWidget(const MaterialApp(
+      home: LoginScreen(),
+    ));
+    await tester.pump();
 
-    // Verify we have navigated to the Seeker login
-    expect(find.text('Welcome, Seeker'), findsOneWidget);
-    expect(find.text('CONFIDENTIAL EMAIL ADDRESS'), findsOneWidget);
-    
-    // Tap back button
-    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
-    await tester.pump(const Duration(milliseconds: 500)); // Play back animations
+    // Verify we start in "Welcome Back" (Sign In) mode
+    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
 
-    // Verify we are back on the starting welcome page
-    expect(find.text('I need to share'), findsOneWidget);
+    // Tap "New to SafeTalk? Sign Up"
+    await tester.tap(find.text('New to SafeTalk? Sign Up'));
+    await tester.pump(const Duration(milliseconds: 100)); // pump once to start state change
+
+    // Verify we transition to "Create an Account" (Sign Up) mode
+    expect(find.text('Create an Account'), findsOneWidget);
+    expect(find.text('Create Account'), findsOneWidget);
+
+    // Tap "Already registered? Sign In instead"
+    await tester.tap(find.text('Already registered? Sign In instead'));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Verify we transition back to "Welcome Back" mode
+    expect(find.text('Welcome Back'), findsOneWidget);
   });
 }

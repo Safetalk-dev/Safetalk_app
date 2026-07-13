@@ -8,13 +8,23 @@ import '../../widgets/pin_sheet.dart';
 import '../../controllers/chat_controller.dart';
 import '../../services/listener_settings_service.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/session_service.dart';
+import '../../services/vault_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'voice_call_screen.dart';
+
 class SessionChatScreen extends StatefulWidget {
+  final String sessionId;
+  final String myUid;
   final String partnerName;
   final bool isSeeker; // true if seeker, false if listener/therapist
   final VoidCallback? onSessionEnd;
 
   const SessionChatScreen({
     super.key,
+    required this.sessionId,
+    required this.myUid,
     required this.partnerName,
     required this.isSeeker,
     this.onSessionEnd,
@@ -29,7 +39,9 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
   final ScrollController _scrollController = ScrollController();
   int _sessionTimeRemaining = 600; // 10 minutes session countdown standard
   Timer? _sessionTimer;
-  final List<Map<String, dynamic>> _messages = [];
+  
+  final SessionService _sessionService = SessionService();
+  final VaultService _vaultService = VaultService();
 
   // Counselor Notes & Dialog Controls
   final TextEditingController _notesController = TextEditingController();
@@ -54,15 +66,6 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
       );
       _notesController.text = activeThread['notes'] ?? '';
     }
-
-    // Initialize with a welcome message from the companion
-    _messages.add({
-      'sender': widget.isSeeker ? 'listener' : 'user',
-      'text': widget.isSeeker
-          ? "Hello, I am right here with you. Take a deep breath and share whatever is on your mind."
-          : "Hello, I'm feeling a bit anxious and overwhelmed today.",
-      'time': 'Just now'
-    });
 
     // Active session timer
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -106,52 +109,18 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
     });
   }
 
-  void _sendMessage() {
+  void _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     final messageText = _messageController.text.trim();
     _messageController.clear();
 
-    setState(() {
-      _messages.add({
-        'sender': widget.isSeeker ? 'user' : 'listener',
-        'text': messageText,
-        'time': 'Just now',
-      });
-    });
-    _scrollToBottom();
-
-    // Trigger dynamic simulation replies
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      String simulatedReply;
-      
-      if (widget.isSeeker) {
-        // Seeker gets helper replies
-        if (messageText.toLowerCase().contains('anxious') || messageText.toLowerCase().contains('stress')) {
-          simulatedReply = "I hear you, and it is completely okay to feel anxious. Let's take a slow breath together. Count to 4.";
-        } else if (messageText.toLowerCase().contains('thank')) {
-          simulatedReply = "It is my absolute honor to hold this space for you. You are doing great.";
-        } else {
-          simulatedReply = "Thank you for sharing that with me. I'm listening closely. Please tell me more.";
-        }
-      } else {
-        // Listener gets seeker replies
-        if (messageText.toLowerCase().contains('breath') || messageText.toLowerCase().contains('calm')) {
-          simulatedReply = "Okay, I am trying to focus on my breath now. It feels a bit lighter already.";
-        } else {
-          simulatedReply = "Thank you. That makes me feel heard. I was holding so much tension.";
-        }
-      }
-
-      setState(() {
-        _messages.add({
-          'sender': widget.isSeeker ? 'listener' : 'user',
-          'text': simulatedReply,
-          'time': 'Just now',
-        });
-      });
+    try {
+      final encryptedText = await _vaultService.encryptString(widget.sessionId, messageText);
+      await _sessionService.sendMessage(widget.sessionId, encryptedText, widget.myUid);
       _scrollToBottom();
-    });
+    } catch (e) {
+      debugPrint('Encryption error: $e');
+    }
   }
 
   void _concludeSession() {
@@ -696,6 +665,45 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // Call Button
+                      HapticTouchable(
+                        onTap: () async {
+                          try {
+                            final callable = FirebaseFunctions.instance.httpsCallable('generateAgoraToken');
+                            final result = await callable.call({'channelName': widget.sessionId});
+                            final data = result.data as Map<String, dynamic>;
+                            
+                            if (!mounted) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VoiceCallScreen(
+                                  channelName: data['channelName'],
+                                  token: data['token'],
+                                  appId: data['appId'],
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to connect call: $e')));
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: SafeTalkTheme.brandGold.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: SafeTalkTheme.brandGold.withValues(alpha: 0.3)),
+                          ),
+                          child: const Icon(
+                            Icons.phone_rounded,
+                            color: SafeTalkTheme.brandGold,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
 
                       // Exit Button
                       HapticTouchable(
@@ -721,70 +729,95 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
 
               // Chat Messages Area
               Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = _messages[index];
-                    final isMe = widget.isSeeker
-                        ? msg['sender'] == 'user'
-                        : msg['sender'] == 'listener';
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _sessionService.streamMessages(widget.sessionId),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error loading messages'));
+                    }
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                    // Asymmetric borders
-                    final radius = isMe
-                        ? const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(4),
-                            topRight: Radius.circular(20),
-                          )
-                        : const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                            bottomLeft: Radius.circular(4),
-                          );
+                    final _messages = snapshot.data!;
+                    
+                    // Schedule scroll to bottom when new messages arrive
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_scrollController.hasClients) {
+                        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                      }
+                    });
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: Row(
-                        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-                        children: [
-                          if (!isMe) ...[
-                            CircleAvatar(
-                              radius: 12,
-                              backgroundColor: brandColor.withValues(alpha: 0.2),
-                              child: Text(
-                                widget.partnerName[0],
-                                style: SafeTalkTheme.captionStyle(color: brandColor).copyWith(fontSize: 9),
+                    return ListView.builder(
+                      controller: _scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
+                        final isMe = msg['senderId'] == widget.myUid;
+
+                        // Asymmetric borders
+                        final radius = isMe
+                            ? const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(4),
+                                topRight: Radius.circular(20),
+                              )
+                            : const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                                bottomLeft: Radius.circular(4),
+                              );
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Row(
+                            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            children: [
+                              if (!isMe) ...[
+                                CircleAvatar(
+                                  radius: 12,
+                                  backgroundColor: brandColor.withValues(alpha: 0.2),
+                                  child: Text(
+                                    widget.partnerName.isNotEmpty ? widget.partnerName[0] : 'U',
+                                    style: SafeTalkTheme.captionStyle(color: brandColor).copyWith(fontSize: 9),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: isMe ? brandColor : SafeTalkTheme.cardBg,
+                                    borderRadius: radius,
+                                    border: isMe
+                                        ? null
+                                        : Border.all(color: SafeTalkTheme.borderSage, width: 1.2),
+                                  ),
+                                  child: FutureBuilder<String>(
+                                    future: _vaultService.decryptString(widget.sessionId, msg['text'] ?? ''),
+                                    builder: (context, decSnapshot) {
+                                      final decText = decSnapshot.hasData ? decSnapshot.data! : (decSnapshot.hasError ? 'Decrypt Error' : '...');
+                                      return Text(
+                                        decText,
+                                        style: SafeTalkTheme.bodyStyle(
+                                          color: isMe ? SafeTalkTheme.bgMidnight : SafeTalkTheme.textPrimary,
+                                        ).copyWith(fontSize: 14.5),
+                                      );
+                                    }
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isMe ? brandColor : SafeTalkTheme.cardBg,
-                                borderRadius: radius,
-                                border: isMe
-                                    ? null
-                                    : Border.all(color: SafeTalkTheme.borderSage, width: 1.2),
-                              ),
-                              child: Text(
-                                msg['text'],
-                                style: SafeTalkTheme.bodyStyle(
-                                  color: isMe ? SafeTalkTheme.bgMidnight : SafeTalkTheme.textPrimary,
-                                ).copyWith(fontSize: 14.5),
-                              ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     );
-                  },
+                  }
                 ),
               ),
 
@@ -1128,6 +1161,7 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
                       style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
                     ),
                   ),
+
                   IconButton(
                     icon: const Icon(Icons.close_rounded, color: SafeTalkTheme.textSecondary),
                     onPressed: () {

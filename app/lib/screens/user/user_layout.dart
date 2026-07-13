@@ -12,6 +12,10 @@ import '../shared/history_screen.dart';
 import '../../controllers/session_controller.dart';
 import '../../controllers/chat_controller.dart';
 import '../../widgets/haptic_touchable.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/user_service.dart';
+import '../../services/matcher_service.dart';
+import '../../services/push_notification_service.dart';
 
 class UserLayout extends StatefulWidget {
   final VoidCallback onLogout;
@@ -35,48 +39,57 @@ class _UserLayoutState extends State<UserLayout> {
   bool _dailyCheckInCompleted = false;
 
   // Centralized List of All Peer Listeners with their specialties & bio details
-  final List<Map<String, dynamic>> _allListeners = [
-    {
-      'name': 'Amber R.',
-      'rating': '4.9',
-      'sessions': 8,
-      'active': true,
-      'avatarColor': SafeTalkTheme.brandSage,
-      'specialties': ['Anxiety', 'Academic Stress', 'Relationships'],
-      'bio': 'A compassionate ear. I believe in validation, slow containment, and holding a judgment-free harbor for your worries.',
-      'latestNote': 'Last spoke on Fri: discussed boundary setting at school.',
-    },
-    {
-      'name': 'Liam K.',
-      'rating': '4.8',
-      'sessions': 3,
-      'active': true,
-      'avatarColor': SafeTalkTheme.brandSageLight,
-      'specialties': ['Career Burnout', 'LGBTQ+', 'Grief'],
-      'bio': 'Certified peer counselor specializing in heavy work stress, career transitions, and life uncertainties. Let\'s talk.',
-      'latestNote': 'Last spoke 1 week ago: work stress containment.',
-    },
-    {
-      'name': 'Sophia M.',
-      'rating': '5.0',
-      'sessions': 14,
-      'active': false,
-      'avatarColor': SafeTalkTheme.brandTerracotta,
-      'specialties': ['Mindfulness', 'Panic Attacks', 'Venting'],
-      'bio': 'Focusing on calming somatic techniques, emotional release, and quiet deep listening. You are safe to drop your armor here.',
-      'latestNote': 'Last spoke 2 weeks ago: somatic mindfulness guidance.',
-    },
-    {
-      'name': 'Devon W.',
-      'rating': '4.7',
-      'sessions': 2,
-      'active': true,
-      'avatarColor': SafeTalkTheme.brandSage,
-      'specialties': ['Family Dynamics', 'Depression Support'],
-      'bio': 'A patient father and seasoned peer helper. Let\'s sort through the noise in your head together at your own pace.',
-      'latestNote': 'Last spoke 1 month ago: discussed balancing parent schedules.',
-    },
-  ];
+  List<Map<String, dynamic>> _allListeners = [];
+  bool _isLoadingListeners = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService().initialize(context);
+    });
+  }
+
+  Future<void> _loadListeners() async {
+    try {
+      final authUser = FirebaseAuth.instance.currentUser;
+      List<String> langs = ['en'];
+      
+      if (authUser != null) {
+        final user = await UserService().getUser(authUser.uid);
+        if (user != null && user.seekerData != null && user.seekerData!.preferredLanguages.isNotEmpty) {
+          langs = user.seekerData!.preferredLanguages;
+        }
+      }
+      
+      final matcher = MatcherService();
+      final listeners = await matcher.getOnlineListeners(langs);
+      
+      if (mounted) {
+        setState(() {
+          _allListeners = listeners.map((l) => {
+            'uid': l.uid,
+            'name': l.displayName.isEmpty ? 'Anonymous Listener' : l.displayName,
+            'rating': l.listenerData?.stats?.rating.toStringAsFixed(1) ?? '5.0',
+            'sessions': l.listenerData?.stats?.minutesListened ?? 0,
+            'active': l.listenerData?.isOnline ?? false,
+            'avatarColor': SafeTalkTheme.brandSage,
+            'specialties': l.listenerData?.specialties.isNotEmpty == true ? l.listenerData!.specialties : ['Listening'],
+            'bio': l.listenerData?.bio?.isNotEmpty == true ? l.listenerData!.bio : 'A compassionate ear ready to listen without judgment.',
+            'latestNote': 'No previous sessions',
+          }).toList();
+          _isLoadingListeners = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingListeners = false;
+        });
+      }
+    }
+  }
 
   // List of listeners marked as regulars
   final List<String> _regularListenerNames = ['Amber R.', 'Liam K.'];
@@ -113,22 +126,12 @@ class _UserLayoutState extends State<UserLayout> {
     final sessionType = SessionController().sessionType;
     Widget targetScreen;
     
-    if (sessionType == SessionType.messages) {
-      targetScreen = SessionChatScreen(
-        partnerName: listenerName,
-        isSeeker: true,
-      );
-    } else if (sessionType == SessionType.videoCall) {
-      targetScreen = VideoCallScreen(
-        partnerName: listenerName,
-        isSeekerCaller: true,
-      );
-    } else {
-      targetScreen = VoiceCallScreen(
-        partnerName: listenerName,
-        isSeekerCaller: true,
-      );
-    }
+    targetScreen = SessionChatScreen(
+      sessionId: SessionController().currentSessionId ?? '',
+      myUid: SessionController().firebaseUid ?? '',
+      partnerName: listenerName,
+      isSeeker: true,
+    );
     
     Navigator.push(
       context,
@@ -185,6 +188,8 @@ class _UserLayoutState extends State<UserLayout> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => SessionChatScreen(
+                    sessionId: SessionController().currentSessionId ?? '',
+                    myUid: SessionController().firebaseUid ?? '',
                     partnerName: name,
                     isSeeker: true,
                   ),
@@ -240,6 +245,8 @@ class _UserLayoutState extends State<UserLayout> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => SessionChatScreen(
+                    sessionId: SessionController().currentSessionId ?? '',
+                    myUid: SessionController().firebaseUid ?? '',
                     partnerName: name,
                     isSeeker: true,
                   ),
