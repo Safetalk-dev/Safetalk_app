@@ -1,0 +1,38 @@
+SafeTalk is a premium, secure, and fully anonymous safe-listening and counseling platform. It bridges the gap between active emotional support, professional clinical therapy, and total seeker confidentiality.
+
+🔒 ABSOLUTE PRIVACY
+Every session is protected by military-grade AES-GCM-256 double encryption. Your conversations never touch an external cloud in cleartext. Zero digital footprints. Zero permanent logs. Complete forensic protection.
+
+💬 ON-DEMAND SUPPORT
+When anxiety, stress, or toxic life situations strike, immediately connect with a qualified, judgment-free listener. Choose your preferred communication mode — secure messaging, voice calls, or video sessions — all for a simple, unified ₹150 fee.
+
+🎯 HOW IT WORKS
+1. Tap "Connect Now" and select your session mode
+2. Complete a quick, secure payment via Razorpay
+3. Get instantly matched with an available certified peer helper or licensed therapist
+4. Speak freely in a timed, encrypted session capsule
+5. Rate your experience — session data is wiped clean
+
+👥 FOR SEEKERS
+• Anonymous matching under temporary monikers — no one knows who you are
+• 10-minute messaging and voice sessions, 7-minute video sessions
+• No permanent records — conversations are deleted post-session
+• Breathing exercises and calming UI designed to reduce anxiety
+
+🩺 FOR COUNSELORS & THERAPISTS
+• Secure dashboard to manage incoming match queues
+• PIN-protected encrypted vault for clinical case notes
+• Verified clinical credential system with prestige interface
+• Earn per session with transparent ledger tracking
+
+✨ PREMIUM DESIGN
+SafeTalk features a calming glassmorphic interface with dynamic theme shifting — Soothing Sage Green for peer helpers, Royal Amethyst Purple for verified therapists. The luminous, zero-fatigue design creates a safe digital haven.
+
+🔐 SECURITY FEATURES
+• PBKDF2 HMAC-SHA256 key derivation with 50,000 iterations
+• AES-GCM-256 encryption with unique nonces per record
+• Zero-knowledge local vault architecture
+• Volatile RAM-only decryption with automatic key wiping
+• PIN-locked counselor journals
+
+SafeTalk makes professional peer support and clinical therapy accessible, affordable, and absolutely confidential. Your mental health journey deserves protection.

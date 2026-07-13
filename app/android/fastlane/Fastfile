@@ -32,4 +32,24 @@ platform :android do
       skip_upload_screenshots: true
     )
   end
+
+  desc "Submit a signed release to Google Play Production Track"
+  lane :production do |options|
+    # Build the signed app bundle from Flutter
+    sh("cd ../.. && flutter build appbundle --release")
+
+    # Default to 20% staged rollout unless overridden
+    rollout = options[:rollout] || "0.2"
+
+    # Upload to Google Play Production Track with full metadata
+    upload_to_play_store(
+      track: 'production',
+      rollout: rollout,
+      aab: '../build/app/outputs/bundle/release/app-release.aab',
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+  end
 end

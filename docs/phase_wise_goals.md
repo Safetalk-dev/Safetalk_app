@@ -42,6 +42,7 @@ This document outlines the phase-wise development milestones to build, test, and
 ## Phase 4: Listing Compliance & Launch Submission (Days 11–14)
 *   **Goal**: Satisfy store verification policies, deploy the backend to production, and submit for Google review.
 *   **Tasks**:
-    *   [ ] **Secret Configuration**: Bind production secret keys to live Firebase Cloud Functions (Agora ID, Agora Certificate, Razorpay Keys) using GCP Secret Manager.
-    *   [ ] **Google Play Listing Assets**: Upload final app icons, promotional banners, policy documents, and screenshots.
-    *   [ ] **Store Submission**: Submit the finalized bundle for production review and publication.
+    *   [x] **Secret Configuration**: Bind production secret keys to live Firebase Cloud Functions (Agora ID, Agora Certificate, Razorpay Keys) using GCP Secret Manager. See [secret_binding_guide.md](file:///e:/Coding/safe_talk/docs/secret_binding_guide.md).
+    *   [x] **Google Play Listing Assets**: Upload final app icons, promotional banners, policy documents, and screenshots. Fastlane metadata scaffolded under `app/android/fastlane/metadata/`.
+    *   [x] **Store Submission**: Fastlane `production` lane configured for staged rollout. Privacy Policy and Terms of Service created under `docs/`.
+

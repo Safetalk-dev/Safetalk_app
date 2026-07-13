@@ -1,0 +1,9 @@
+SafeTalk v1.0.0 — Initial Release
+
+• Anonymous peer counseling and therapy matching
+• Secure messaging, voice, and video sessions
+• AES-GCM-256 double-encrypted counselor vaults
+• Razorpay payment integration (₹150 per session)
+• Real-time push notifications for matches and messages
+• Dynamic Sage Green / Royal Amethyst theme shifting
+• Glassmorphic, calming UI with breathing exercises
