@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,8 +34,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Connect to local emulators in debug mode
-  if (kDebugMode) {
+  // Connect to local emulators ONLY when explicitly enabled via --dart-define=USE_FIREBASE_EMULATOR=true
+  const bool kUseFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+  if (kUseFirebaseEmulator) {
     try {
       final host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
       
@@ -53,6 +53,8 @@ void main() async {
     } catch (e) {
       debugPrint('Error connecting to Firebase Emulators: $e');
     }
+  } else {
+    debugPrint('SafeTalk: Connected to live Firebase cloud project.');
   }
   
   // Asynchronously load the service settings before the UI renders to prevent race conditions

@@ -11,33 +11,8 @@ class ListenerRegularsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Regular Seekers directory mockup
-    final List<Map<String, dynamic>> seekers = [
-      {
-        'moniker': 'Pine Pebble #107',
-        'sessions': 8,
-        'lastActive': 'May 24th',
-        'primaryConcern': 'Academic Pressure & Imposter Syndrome',
-        'notes': 'Struggles with perfectionism. We worked on cognitive restructuring, validating effort over outcome.',
-        'color': SafeTalkTheme.brandTerracotta,
-      },
-      {
-        'moniker': 'Mist Pebble #44',
-        'sessions': 5,
-        'lastActive': 'May 23rd',
-        'primaryConcern': 'Workplace Burnout & Boundaries',
-        'notes': 'Spoke about setting boundaries with working weekend hours. Encouraged saying "no" firmly and cleanly.',
-        'color': SafeTalkTheme.brandSageLight,
-      },
-      {
-        'moniker': 'Forest Breeze #99',
-        'sessions': 12,
-        'lastActive': 'May 18th',
-        'primaryConcern': 'Social Isolation / Relocation Anxiety',
-        'notes': 'Spoke about loneliness after moving. Explored local community connections and joining interest clubs.',
-        'color': SafeTalkTheme.brandGold,
-      },
-    ];
+    // Regular Seekers directory
+    final List<Map<String, dynamic>> seekers = [];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -59,7 +34,43 @@ class ListenerRegularsScreen extends StatelessWidget {
 
           // Seekers List
           Expanded(
-            child: ListView.builder(
+            child: seekers.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: SafeTalkTheme.cardBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                            ),
+                            child: const Icon(
+                              Icons.psychology_outlined,
+                              color: SafeTalkTheme.brandSage,
+                              size: 40,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'No Seekers in Your Circle',
+                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'When you complete repeat sessions with anonymous seekers, they will appear here with encrypted journal notes.',
+                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
               physics: const BouncingScrollPhysics(),
               itemCount: seekers.length,
               itemBuilder: (context, index) {

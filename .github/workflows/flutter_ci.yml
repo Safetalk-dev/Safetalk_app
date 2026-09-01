@@ -1,5 +1,14 @@
 name: Flutter CI/CD Pipeline
 
+# Required GitHub repository secrets:
+#   ANDROID_KEYSTORE_BASE64   - base64-encoded upload-keystore.jks (base64 -w0 upload-keystore.jks)
+#   ANDROID_KEY_ALIAS         - key alias for the release signing key
+#   ANDROID_KEY_PASSWORD      - password for the release signing key
+#   ANDROID_STORE_PASSWORD    - password for the keystore itself
+#   GOOGLE_SERVICES_JSON      - base64-encoded app/android/app/google-services.json (base64 -w0 google-services.json)
+#   FIREBASE_OPTIONS_DART     - base64-encoded app/lib/firebase_options.dart (base64 -w0 firebase_options.dart)
+# Produce a base64 value with: base64 -w0 <file> (macOS: base64 -i <file> | tr -d '\n')
+
 on:
   push:
     branches: [ main ]
@@ -22,9 +31,28 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.22.x' # Align with app sdk requirements
+        flutter-version: '3.41.x' # Matches verified local toolchain; bundled Dart satisfies app sdk ^3.11.5
         channel: 'stable'
         cache: true
+
+    - name: Setup Firebase Config Files
+      env:
+        GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
+      run: |
+        if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+          echo "Decoding google-services.json..."
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > app/android/app/google-services.json
+        else
+          echo "No GOOGLE_SERVICES_JSON secret detected. Build will likely fail without it."
+        fi
+
+        if [ -n "$FIREBASE_OPTIONS_DART" ]; then
+          echo "Decoding firebase_options.dart..."
+          echo "$FIREBASE_OPTIONS_DART" | base64 --decode > app/lib/firebase_options.dart
+        else
+          echo "No FIREBASE_OPTIONS_DART secret detected. Build will likely fail without it."
+        fi
 
     - name: Install dependencies
       run: |
@@ -34,7 +62,7 @@ jobs:
     - name: Verify formatting
       run: |
         cd app
-        flutter format --set-exit-if-changed lib/
+        dart format --set-exit-if-changed lib/
 
     - name: Run analyzer
       run: |
@@ -59,10 +87,10 @@ jobs:
           
           # Write key credentials properties file for gradle lookup
           cat <<EOF > app/android/key.properties
-          storePassword=$ANDROID_STORE_PASSWORD
-          keyPassword=$ANDROID_KEY_PASSWORD
-          keyAlias=$ANDROID_KEY_ALIAS
-          storeFile=upload-keystore.jks
+        storePassword=$ANDROID_STORE_PASSWORD
+        keyPassword=$ANDROID_KEY_PASSWORD
+        keyAlias=$ANDROID_KEY_ALIAS
+        storeFile=upload-keystore.jks
         EOF
         else
           echo "No keystore secrets detected. Building unsigned binary only."

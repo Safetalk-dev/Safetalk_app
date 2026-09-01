@@ -7,9 +7,6 @@ firestore-debug.log
 **/firestore-debug.log
 ui-debug.log
 
-# Firebase Functions lockfile (regenerated on npm install)
-firebase/functions/package-lock.json
-
 # Flutter/Firebase generated config (contains API keys)
 app/android/app/google-services.json
 app/lib/firebase_options.dart

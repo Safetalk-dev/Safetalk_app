@@ -124,14 +124,50 @@ class _ListenerMessagesScreenState extends State<ListenerMessagesScreen> {
 
           // Thread list builder
           Expanded(
-            child: ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              itemCount: threads.length,
-              itemBuilder: (context, index) {
-                final thread = threads[index];
-                return Padding(
-                  key: ValueKey(thread['name']),
-                  padding: const EdgeInsets.only(bottom: 16.0),
+            child: threads.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: SafeTalkTheme.cardBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                            ),
+                            child: Icon(
+                              Icons.forum_outlined,
+                              color: brandColor,
+                              size: 40,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'No Seeker Channels',
+                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Active chat channels with anonymous seekers will appear here.',
+                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: threads.length,
+                    itemBuilder: (context, index) {
+                      final thread = threads[index];
+                      return Padding(
+                        key: ValueKey(thread['name']),
+                        padding: const EdgeInsets.only(bottom: 16.0),
                   child: GestureDetector(
                     onTap: () {
                       ChatController().markListenerThreadRead(thread['name']);

@@ -12,45 +12,8 @@ class ListenerTransactionsScreen extends StatefulWidget {
 
 class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen> {
 
-  // Mock list of transactions
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      'id': 'TXN-984210',
-      'seekerName': 'Pine Pebble #107',
-      'type': 'Voice Call Support',
-      'date': 'May 28, 2026 • 3:14 PM',
-      'amount': 150.0,
-      'status': 'Settled',
-      'isPremium': false,
-    },
-    {
-      'id': 'TXN-983104',
-      'seekerName': 'Mist Pebble #44',
-      'type': 'Secure Chat Support',
-      'date': 'May 27, 2026 • 9:45 AM',
-      'amount': 150.0,
-      'status': 'Settled',
-      'isPremium': false,
-    },
-    {
-      'id': 'TXN-981892',
-      'seekerName': 'River Stone #82',
-      'type': 'Video Call Consultation',
-      'date': 'May 26, 2026 • 6:18 PM',
-      'amount': 499.0,
-      'status': 'Settled',
-      'isPremium': true,
-    },
-    {
-      'id': 'TXN-979920',
-      'seekerName': 'Fern Leaf #29',
-      'type': 'Voice Call Support',
-      'date': 'May 24, 2026 • 11:20 AM',
-      'amount': 150.0,
-      'status': 'Settled',
-      'isPremium': false,
-    }
-  ];
+  // List of transactions
+  final List<Map<String, dynamic>> _transactions = [];
 
   bool _isWithdrawing = false;
 
@@ -274,7 +237,7 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '₹4,250.00',
+                          '₹0.00',
                           style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
                         ),
                       ],
@@ -301,7 +264,7 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '₹24,850.00',
+                          '₹0.00',
                           style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
                         ),
                       ],
@@ -315,7 +278,7 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '₹20,600.00',
+                          '₹0.00',
                           style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandSageLight, bold: true),
                         ),
                       ],
@@ -406,82 +369,105 @@ class _ListenerTransactionsScreenState extends State<ListenerTransactionsScreen>
             ],
           ),
           const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _transactions.length,
-            itemBuilder: (context, index) {
-              final txn = _transactions[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: SafeTalkTheme.glassCardDecoration,
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: txn['isPremium']
-                            ? SafeTalkTheme.brandGold.withValues(alpha: 0.15)
-                            : brandColor.withValues(alpha: 0.15),
-                        child: Icon(
-                          txn['isPremium'] ? Icons.videocam_rounded : Icons.phone_rounded,
-                          color: txn['isPremium'] ? SafeTalkTheme.brandGold : brandColorLight,
-                          size: 16,
+          if (_transactions.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: SafeTalkTheme.glassCardDecoration,
+              child: Column(
+                children: [
+                  Icon(Icons.receipt_long_outlined, color: brandColorLight, size: 36),
+                  const SizedBox(height: 10),
+                  Text(
+                    'No Transactions Yet',
+                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'When you complete counseling sessions, your session payments and settlements will appear here.',
+                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _transactions.length,
+              itemBuilder: (context, index) {
+                final txn = _transactions[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: SafeTalkTheme.glassCardDecoration,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: txn['isPremium']
+                              ? SafeTalkTheme.brandGold.withValues(alpha: 0.15)
+                              : brandColor.withValues(alpha: 0.15),
+                          child: Icon(
+                            txn['isPremium'] ? Icons.videocam_rounded : Icons.phone_rounded,
+                            color: txn['isPremium'] ? SafeTalkTheme.brandGold : brandColorLight,
+                            size: 16,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                txn['seekerName'],
+                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${txn['type']} • ${txn['id']}',
+                                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(fontSize: 11),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                txn['date'],
+                                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted).copyWith(fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              txn['seekerName'],
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${txn['type']} • ${txn['id']}',
-                              style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(fontSize: 11),
+                              '+₹${txn['amount'].toStringAsFixed(0)}',
+                              style: SafeTalkTheme.bodyStyle(
+                                color: txn['isPremium'] ? SafeTalkTheme.brandGold : brandColorLight,
+                                bold: true,
+                              ).copyWith(fontSize: 14),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              txn['date'],
-                              style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted).copyWith(fontSize: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: SafeTalkTheme.brandSage.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'SETTLED',
+                                style: TextStyle(color: SafeTalkTheme.brandSage, fontSize: 8, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '+₹${txn['amount'].toStringAsFixed(0)}',
-                            style: SafeTalkTheme.bodyStyle(
-                              color: txn['isPremium'] ? SafeTalkTheme.brandGold : brandColorLight,
-                              bold: true,
-                            ).copyWith(fontSize: 14),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: SafeTalkTheme.brandSage.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'SETTLED',
-                              style: TextStyle(color: SafeTalkTheme.brandSage, fontSize: 8, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
           const SizedBox(height: 20),
         ],
       ),

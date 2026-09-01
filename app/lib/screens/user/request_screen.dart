@@ -129,7 +129,7 @@ class _RequestListenerScreenState extends State<RequestListenerScreen> {
       SessionController().paymentSucceeded();
       final listenerName = SessionController().listenerName.isNotEmpty
           ? SessionController().listenerName
-          : 'Amber R.';
+          : 'Listener';
       widget.onMatched(listenerName);
     });
   }
@@ -236,7 +236,7 @@ class _RequestListenerScreenState extends State<RequestListenerScreen> {
     if (_matchFound) {
       final matchedListenerName = SessionController().listenerName.isNotEmpty
           ? SessionController().listenerName
-          : 'Amber R.';
+          : 'Listener';
 
       return Center(
         child: SingleChildScrollView(
@@ -975,7 +975,7 @@ class _RequestListenerScreenState extends State<RequestListenerScreen> {
         SessionController().paymentSucceeded();
         final listenerName = SessionController().listenerName.isNotEmpty
             ? SessionController().listenerName
-            : 'Amber R.';
+            : 'Listener';
         widget.onMatched(listenerName);
       });
     });

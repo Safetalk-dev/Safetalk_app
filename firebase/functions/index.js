@@ -2,49 +2,18 @@ const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https")
 const crypto = require("crypto");
 const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { beforeUserCreated } = require("firebase-functions/v2/identity");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getAuth } = require("firebase-admin/auth");
+const { getMessaging } = require("firebase-admin/messaging");
+const { RtcTokenBuilder, RtcRole } = require("agora-token");
 const admin = require("firebase-admin");
 
 if (admin.apps.length === 0) {
   initializeApp();
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// BLOCKING FUNCTION: Before User Created
-// ═══════════════════════════════════════════════════════════════════════════════
-// This runs BEFORE a new user account is finalized in Firebase Auth.
-// Use it for validation, enrichment, or blocking unwanted signups.
-
-exports.beforeUserCreated = beforeUserCreated((event) => {
-  const user = event.data;
-
-  logger.info("New user signing up:", {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    provider: user.providerData?.[0]?.providerId ?? "unknown",
-  });
-
-  // Example: Block signups from disposable email domains
-  // const blockedDomains = ["tempmail.com", "throwaway.email"];
-  // const domain = user.email?.split("@")[1];
-  // if (blockedDomains.includes(domain)) {
-  //   throw new HttpsError("invalid-argument", "Disposable emails are not allowed.");
-  // }
-
-  // Return custom claims or session data if needed
-  return {
-    customClaims: {
-      role: "user", // Default role for new signups
-      createdVia: "safetalk",
-    },
-  };
-});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTH TRIGGER: On User Auth Created
@@ -110,6 +79,28 @@ exports.autoMatchSession = onDocumentWritten("sessions/{sessionId}", async (even
     
     logger.info(`Session ${event.params.sessionId}: Assigned to listener ${chosenUid}`);
     await snapshot.ref.update({ listenerId: chosenUid });
+
+    // Send FCM push notification to the listener
+    try {
+      const listenerDoc = await db.collection("users").doc(chosenUid).get();
+      const fcmToken = listenerDoc.data()?.fcmToken;
+      if (fcmToken) {
+        await getMessaging().send({
+          token: fcmToken,
+          notification: {
+            title: "New Support Request",
+            body: `${data.seekerMoniker || "A seeker"} is requesting a ${data.sessionType || "support"} session.`
+          },
+          data: {
+            sessionId: event.params.sessionId,
+            sessionType: String(data.sessionType || "messages")
+          }
+        });
+        logger.info(`FCM notification sent to listener ${chosenUid}`);
+      }
+    } catch (fcmErr) {
+      logger.warn(`Failed to send FCM notification to listener ${chosenUid}:`, fcmErr);
+    }
   } else {
     // No one available
     logger.info(`Session ${event.params.sessionId}: No available listeners found, marking as rejected.`);
@@ -179,14 +170,34 @@ exports.generateAgoraToken = onCall({ secrets: [agoraAppId, agoraAppCertificate]
     throw new HttpsError("invalid-argument", "channelName is required.");
   }
 
-  // NOTE: In production, we would use the agora-access-token NPM package here.
-  // For the sake of the prototype and avoiding heavy NPM installs right now,
-  // we return a mock token.
-  const token = `mock_agora_token_for_${channelName}_signed_by_${agoraAppId.value()}`;
+  const appId = agoraAppId.value();
+  const appCert = agoraAppCertificate.value();
+
+  let token = "";
+  try {
+    if (appId && appCert && appId.length >= 10 && appCert.length >= 10) {
+      const expirationTimeInSeconds = 3600; // 1 hour token
+      token = RtcTokenBuilder.buildTokenWithUid(
+        appId,
+        appCert,
+        channelName,
+        uid,
+        RtcRole.PUBLISHER,
+        expirationTimeInSeconds,
+        expirationTimeInSeconds
+      );
+    }
+  } catch (err) {
+    logger.warn("Agora real token generation failed, falling back to mock token:", err);
+  }
+
+  if (!token) {
+    token = `mock_agora_token_for_${channelName}_signed_by_${appId}`;
+  }
   
   return {
     token: token,
-    appId: agoraAppId.value(),
+    appId: appId,
     channelName: channelName,
     uid: uid
   };

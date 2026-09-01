@@ -5,8 +5,6 @@ import 'request_screen.dart';
 import 'regulars_screen.dart';
 import 'profile_screen.dart';
 import 'notification_screen.dart';
-import '../shared/voice_call_screen.dart';
-import '../shared/video_call_screen.dart';
 import '../shared/session_chat_screen.dart';
 import '../shared/history_screen.dart';
 import '../../controllers/session_controller.dart';
@@ -32,34 +30,58 @@ class _UserLayoutState extends State<UserLayout> {
   bool _showingNotifications = false;
 
   // Central Seeker State Variables
-  String _username = "Mist Pebble #482";
-  String _realName = "Logan";
+  String _username = "Seeker";
+  String _realName = "Seeker";
   bool _isAnonymous = true;
-  final List<double> _moodScores = [0.7, 0.4, 0.8, 0.3, 0.6, 0.75, 0.85];
+  final List<double> _moodScores = [];
   bool _dailyCheckInCompleted = false;
 
   // Centralized List of All Peer Listeners with their specialties & bio details
   List<Map<String, dynamic>> _allListeners = [];
   bool _isLoadingListeners = true;
 
+  // List of listeners marked as regulars
+  final List<String> _regularListenerNames = [];
+
   @override
   void initState() {
     super.initState();
-    _loadListeners();
+    _loadUserDataAndListeners();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationService().initialize(context);
     });
   }
 
-  Future<void> _loadListeners() async {
+  Future<void> _loadUserDataAndListeners() async {
     try {
       final authUser = FirebaseAuth.instance.currentUser;
       List<String> langs = ['en'];
       
       if (authUser != null) {
         final user = await UserService().getUser(authUser.uid);
-        if (user != null && user.seekerData != null && user.seekerData!.preferredLanguages.isNotEmpty) {
-          langs = user.seekerData!.preferredLanguages;
+        if (user != null) {
+          if (mounted) {
+            setState(() {
+              _username = user.displayName.isNotEmpty ? user.displayName : (authUser.displayName ?? 'Seeker');
+              _realName = authUser.displayName?.isNotEmpty == true
+                  ? authUser.displayName!
+                  : (authUser.email?.split('@').first ?? user.displayName);
+              if (user.seekerData != null && user.seekerData!.safeCircle.isNotEmpty) {
+                _regularListenerNames.clear();
+                _regularListenerNames.addAll(user.seekerData!.safeCircle);
+              }
+            });
+          }
+          if (user.seekerData != null && user.seekerData!.preferredLanguages.isNotEmpty) {
+            langs = user.seekerData!.preferredLanguages;
+          }
+        } else if (authUser.displayName != null && authUser.displayName!.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _username = authUser.displayName!;
+              _realName = authUser.displayName!;
+            });
+          }
         }
       }
       
@@ -76,7 +98,7 @@ class _UserLayoutState extends State<UserLayout> {
             'active': l.listenerData?.isOnline ?? false,
             'avatarColor': SafeTalkTheme.brandSage,
             'specialties': l.listenerData?.specialties.isNotEmpty == true ? l.listenerData!.specialties : ['Listening'],
-            'bio': l.listenerData?.bio?.isNotEmpty == true ? l.listenerData!.bio : 'A compassionate ear ready to listen without judgment.',
+            'bio': (l.listenerData?.bio.isNotEmpty ?? false) ? l.listenerData!.bio : 'A compassionate ear ready to listen without judgment.',
             'latestNote': 'No previous sessions',
           }).toList();
           _isLoadingListeners = false;
@@ -90,9 +112,6 @@ class _UserLayoutState extends State<UserLayout> {
       }
     }
   }
-
-  // List of listeners marked as regulars
-  final List<String> _regularListenerNames = ['Amber R.', 'Liam K.'];
 
   void _toggleRegularStatus(String name) {
     setState(() {

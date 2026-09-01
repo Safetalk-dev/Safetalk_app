@@ -83,6 +83,32 @@ storeFile=upload-keystore.jks
 
 > This file is gitignored and must be created manually on each development machine or injected via CI secrets.
 
+### Register SHA-1 Fingerprints with Firebase (Required for Google Sign-In)
+
+Generating and configuring the upload keystore above is not sufficient on its own for Google Sign-In to work. Google Play Services authenticates the *combination* of the app's package name (`com.safetalk.app`) and the SHA-1 fingerprint of the certificate that signed the running build. If that pair is not registered as an Android OAuth client on the Google Cloud project backing this Firebase project, sign-in fails on-device with `ApiException: 10` (`DEVELOPER_ERROR`) — no client-side code change can work around this; it is a console-side registration step.
+
+> **Register all three fingerprints below.** Registering only one produces a deceptive symptom: sign-in works fine in local testing, then fails for every user who installs from Play.
+
+1. **Debug keystore** — used by `flutter run` and local debug builds:
+
+   ```bash
+   keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android -keypass android
+   ```
+
+2. **Upload keystore** — used for release builds and internal testing, generated above:
+
+   ```bash
+   keytool -list -v -alias upload -keystore app/android/app/upload-keystore.jks
+   ```
+
+3. **Play App Signing key** — obtained from **Play Console → Release → Setup → App signing**. Google re-signs your uploaded bundle with its own key before distributing it, so the SHA-1 that end users actually run under is *not* the upload key's — this fingerprint must be registered too, or production installs will fail even though your own test builds work.
+
+For each fingerprint, copy the `SHA1:` value from the `keytool`/Play Console output and register it in **Firebase Console → Project settings → Your apps → Android app → Add fingerprint**.
+
+**Verify registration took effect** by re-downloading `google-services.json` from Firebase Console and checking its `oauth_client` array:
+- A registered Android fingerprint produces an entry with `"client_type": 1`.
+- A config containing only a `"client_type": 3` (web) entry means no Android fingerprint is registered yet, and Google Sign-In will fail with Code 10.
+
 ---
 
 ## 3. GitHub Secrets Checklist

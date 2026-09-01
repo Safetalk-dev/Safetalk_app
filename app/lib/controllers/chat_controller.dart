@@ -13,79 +13,10 @@ class ChatController extends ChangeNotifier {
   }
 
   // --- SEEKER THREADS (USER SIDE) ---
-  final List<Map<String, dynamic>> userThreads = [
-    {
-      'name': 'Amber R.',
-      'status': 'Active listening',
-      'avatarColor': SafeTalkTheme.brandSage,
-      'online': true,
-      'unread': true,
-      'lastMessage': 'Thank you for sharing that with me. I\'m holding this space for you. You are doing the absolute best you can, and that is enough.',
-      'time': 'Just now',
-      'messages': [
-        {'sender': 'user', 'text': 'Hello, is anyone there? I\'m feeling very anxious.'},
-        {'sender': 'listener', 'text': 'Hello. Yes, I am right here with you. Take all the time you need to share.'},
-        {'sender': 'user', 'text': 'I\'ve been feeling really overwhelmed with finals recently.'},
-        {'sender': 'listener', 'text': 'I hear you. Finals bring so much pressure. It is completely natural to feel overwhelmed.'},
-        {'sender': 'user', 'text': 'Sometimes I feel like I\'m not doing enough even when I study all day.'},
-        {'sender': 'listener', 'text': 'Thank you for sharing that with me. I\'m holding this space for you. You are doing the absolute best you can, and that is enough.'},
-      ]
-    },
-    {
-      'name': 'Liam K.',
-      'status': 'Last session: Sun',
-      'avatarColor': SafeTalkTheme.brandSageLight,
-      'online': true,
-      'unread': false,
-      'lastMessage': 'How are you holding up after our conversation about work stressors?',
-      'time': '2 days ago',
-      'messages': [
-        {'sender': 'user', 'text': 'Work has been getting very toxic.'},
-        {'sender': 'listener', 'text': 'I\'m sorry to hear that. What happened?'},
-        {'sender': 'user', 'text': 'My boss asked me to work over the weekend again.'},
-        {'sender': 'listener', 'text': 'How are you holding up after our conversation about work stressors?'},
-      ]
-    },
-  ];
+  final List<Map<String, dynamic>> userThreads = [];
 
   // --- LISTENER THREADS (LISTENER SIDE) ---
-  final List<Map<String, dynamic>> listenerThreads = [
-    {
-      'name': 'Pine Pebble #107',
-      'status': 'Active Match • 97%',
-      'avatarColor': SafeTalkTheme.brandTerracotta,
-      'online': true,
-      'unread': true,
-      'lastMessage': 'Sometimes I feel like I\'m not doing enough even when I study all day.',
-      'time': 'Just now',
-      'notes': 'Seeker expressed intense anxiety regarding upcoming college final exams. Guided through validation and emotional grounding. Scheduled follow-up regular session.',
-      'messages': [
-        {'sender': 'user', 'text': 'Hello, is anyone there? I\'m feeling very anxious.'},
-        {'sender': 'listener', 'text': 'Hello. Yes, I am right here with you. Take all the time you need to share.'},
-        {'sender': 'user', 'text': 'I\'ve been feeling really overwhelmed with finals recently.'},
-        {'sender': 'listener', 'text': 'I hear you. Finals bring so much pressure. It is completely natural to feel overwhelmed.'},
-        {'sender': 'user', 'text': 'Sometimes I feel like I\'m not doing enough even when I study all day.'},
-        {'sender': 'listener', 'text': 'Thank you for sharing that with me. I\'m holding this space for you. You are doing the absolute best you can, and that is enough.'},
-      ]
-    },
-    {
-      'name': 'Mist Pebble #44',
-      'status': 'Completed: Yesterday',
-      'avatarColor': SafeTalkTheme.brandSageLight,
-      'online': false,
-      'unread': false,
-      'lastMessage': 'Thank you so much. The breathing really helped.',
-      'time': '1 day ago',
-      'notes': 'Spoke about work stressors. Boss requesting weekend hours. Seeker successfully set a boundary to rest on Sunday.',
-      'messages': [
-        {'sender': 'user', 'text': 'Work is really toxic. I feel so burnt out.'},
-        {'sender': 'listener', 'text': 'Burnout is a heavy burden. Have you been able to set any boundaries for self-care?'},
-        {'sender': 'user', 'text': 'I told my boss I couldn\'t work Sunday. He actually agreed!'},
-        {'sender': 'listener', 'text': 'That is a beautiful victory. You protected your rest.'},
-        {'sender': 'user', 'text': 'Thank you so much. The breathing really helped.'},
-      ]
-    },
-  ];
+  final List<Map<String, dynamic>> listenerThreads = [];
 
   // PIN used to encrypt/decrypt listener notes
   String? _userPin;

@@ -8,7 +8,6 @@ import '../../widgets/pin_sheet.dart';
 import '../../controllers/chat_controller.dart';
 import '../../services/listener_settings_service.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/session_service.dart';
 import '../../services/vault_service.dart';
 import 'package:cloud_functions/cloud_functions.dart';

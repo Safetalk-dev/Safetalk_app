@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 /// AuthService is the single source of truth for all Firebase Authentication
 /// operations in SafeTalk.
@@ -14,7 +15,9 @@ class AuthService {
   AuthService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '124622276181-2n4dn9nln4c3p90qof67dsij13bv7vtv.apps.googleusercontent.com',
+  );
 
   // ── Getters ─────────────────────────────────────────────────────────────────
 
@@ -85,18 +88,26 @@ class AuthService {
   // ── Google Sign-In ──────────────────────────────────────────────────────────
 
   /// Initiates the Google Sign-In flow.
-  /// Returns null on success, or an error message string on failure.
+  ///
+  /// Returns null when the user is signed in successfully OR when the user
+  /// cancels the sign-in flow (e.g. dismisses the account picker) — in both
+  /// cases there is nothing for the UI to report as an error. Returns a
+  /// non-null, user-displayable error message string on an actual failure.
   Future<String?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      // User cancelled the sign-in flow
+      // User cancelled the sign-in flow — not an error, nothing to report.
       if (googleUser == null) {
-        return 'Google sign-in was cancelled.';
+        return null;
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
+      if (googleAuth.idToken == null && googleAuth.accessToken == null) {
+        return 'Could not retrieve Google authentication credentials. Please check your network and Google Play Services.';
+      }
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -107,10 +118,16 @@ class AuthService {
       return null; // Success
     } on FirebaseAuthException catch (e) {
       return _mapFirebaseError(e.code, e.message);
+    } on PlatformException catch (e) {
+      if (e.code == 'sign_in_failed' || (e.message?.contains('10') ?? false)) {
+        return 'Google sign-in configuration error (Code 10). Please ensure SHA-1 fingerprint is registered in Firebase Console.';
+      }
+      return _mapFirebaseError(e.code, e.message);
     } catch (e) {
       if (e.toString().contains('MissingPlugin')) {
-        return 'Google Sign-In is not available on this platform.';
+        return 'Google Sign-In is not supported on this platform.';
       }
+      debugPrint('Google sign-in failed: ${e.toString()}');
       return 'Google sign-in failed. Please try again.';
     }
   }

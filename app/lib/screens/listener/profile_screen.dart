@@ -6,6 +6,8 @@ import '../../controllers/chat_controller.dart';
 import '../../controllers/session_controller.dart';
 import '../../services/listener_settings_service.dart';
 import '../../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/user_service.dart';
 
 class ListenerProfileScreen extends StatefulWidget {
   final bool isOnline;
@@ -26,27 +28,44 @@ class ListenerProfileScreen extends StatefulWidget {
 class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
   late bool _panicCallToggle;
   late bool _supervisionToggle;
-  String listenerName = "Listener Amber R.";
+  String listenerName = AuthService().displayName.isNotEmpty && AuthService().displayName != 'Anonymous'
+      ? AuthService().displayName
+      : "Listener";
   
   String get listenerRank => SessionController().isTherapist 
       ? "Licensed Clinical Therapist (Prestige Cl.)" 
       : "Certified Empathetic Peer Specialist";
 
-  double _pendingPayout = 399.0;
+  double _pendingPayout = 0.0;
   bool _isPayoutRequesting = false;
 
   // Therapist verification states
   bool _isVerifying = false;
-  final TextEditingController _licenseController = TextEditingController(text: "LCSW-99824-A");
-  final TextEditingController _boardController = TextEditingController(text: "Board of Behavioral Sciences");
+  final TextEditingController _licenseController = TextEditingController();
+  final TextEditingController _boardController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _loadListenerData();
     ChatController().addListener(_onChatControllerChanged);
     SessionController().addListener(_onSessionControllerChanged);
     _panicCallToggle = ListenerSettingsService().panicCallEnabled;
     _supervisionToggle = ListenerSettingsService().supervisionEnabled;
+  }
+
+  Future<void> _loadListenerData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final user = await UserService().getUser(uid);
+      if (user != null && mounted) {
+        setState(() {
+          if (user.displayName.isNotEmpty) {
+            listenerName = user.displayName;
+          }
+        });
+      }
+    }
   }
 
   @override

@@ -16,32 +16,7 @@ class _UserNotificationScreenState extends State<UserNotificationScreen> {
   @override
   void initState() {
     super.initState();
-    _notifications = [
-      {
-        'title': 'Session Summary Available',
-        'desc': 'Your encrypted summary with Peer Amber R. is compiled. This will self-delete in 3 days.',
-        'time': '10m ago',
-        'unread': true,
-        'icon': Icons.lock_person_rounded,
-        'color': SafeTalkTheme.brandTerracotta,
-      },
-      {
-        'title': 'Listener Online Alert',
-        'desc': 'Your favorite listener Sophia M. just went online in the Somatic calm category.',
-        'time': '2h ago',
-        'unread': false,
-        'icon': Icons.check_circle_outline_rounded,
-        'color': SafeTalkTheme.brandSage,
-      },
-      {
-        'title': 'Time for a Pause',
-        'desc': 'You have engaged in 3 sessions this week. Let\'s practice a quick 2-minute box-breathing exercise to center yourself.',
-        'time': '1 day ago',
-        'unread': false,
-        'icon': Icons.spa_outlined,
-        'color': SafeTalkTheme.brandGold,
-      },
-    ];
+    _notifications = [];
   }
 
   void _clearAll() {

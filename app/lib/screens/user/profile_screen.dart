@@ -30,6 +30,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   // Username Edit States
   bool _isEditingUsername = false;
   late TextEditingController _usernameController;
+  final List<Map<String, dynamic>> _billingHistory = [];
 
   @override
   void initState() {
@@ -188,28 +189,54 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 const SizedBox(height: 24),
                 
                 // Dynamic painted graph using layout's scores list
-                SizedBox(
-                  height: 120,
-                  width: double.infinity,
-                  child: CustomPaint(
-                    painter: MoodChartPainter(points: widget.moodScores),
+                if (widget.moodScores.isEmpty)
+                  Container(
+                    height: 120,
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: SafeTalkTheme.bgMidnight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.show_chart_rounded, color: SafeTalkTheme.textSecondary, size: 28),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No daily check-ins recorded yet',
+                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Complete check-ins on Explore to track your trends',
+                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
+                        ),
+                      ],
+                    ),
+                  )
+                else ...[
+                  SizedBox(
+                    height: 120,
+                    width: double.infinity,
+                    child: CustomPaint(
+                      painter: MoodChartPainter(points: widget.moodScores),
+                    ),
                   ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildLegendItem(SafeTalkTheme.brandTerracotta, '1 - 4 (Heavy/Anxious)'),
-                      const SizedBox(width: 24),
-                      _buildLegendItem(SafeTalkTheme.brandSage, '5 - 10 (Calm/Centered)'),
-                    ],
+                  const SizedBox(height: 16),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildLegendItem(SafeTalkTheme.brandTerracotta, '1 - 4 (Heavy/Anxious)'),
+                        const SizedBox(width: 24),
+                        _buildLegendItem(SafeTalkTheme.brandSage, '5 - 10 (Calm/Centered)'),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -343,54 +370,51 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           const SizedBox(height: 12),
 
           // Ledger Card
-          Container(
-            decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-              border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.2), width: 1.5),
-            ),
-            child: Column(
-              children: [
-                _buildBillingItem(
-                  context,
-                  listenerName: 'Listener Amber R.',
-                  date: '26 May 2026',
-                  status: 'Settled via Google Pay',
-                  amount: '₹499',
-                  method: 'Google Pay (UPI)',
-                  txnId: 'ST-TXN-90281-GP',
+          _billingHistory.isEmpty
+              ? Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                  decoration: SafeTalkTheme.glassCardDecoration.copyWith(
+                    border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.receipt_long_outlined, color: SafeTalkTheme.textSecondary, size: 36),
+                      const SizedBox(height: 10),
+                      Text(
+                        'No billing history yet',
+                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Your completed session receipts will appear here.',
+                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : Container(
+                  decoration: SafeTalkTheme.glassCardDecoration.copyWith(
+                    border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.2), width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < _billingHistory.length; i++) ...[
+                        if (i > 0) const Divider(color: SafeTalkTheme.borderSage, height: 1),
+                        _buildBillingItem(
+                          context,
+                          listenerName: _billingHistory[i]['listenerName'] ?? '',
+                          date: _billingHistory[i]['date'] ?? '',
+                          status: _billingHistory[i]['status'] ?? 'Settled',
+                          amount: _billingHistory[i]['amount'] ?? '',
+                          method: _billingHistory[i]['method'] ?? 'UPI',
+                          txnId: _billingHistory[i]['txnId'] ?? '',
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                const Divider(color: SafeTalkTheme.borderSage, height: 1),
-                _buildBillingItem(
-                  context,
-                  listenerName: 'Listener Sage P.',
-                  date: '24 May 2026',
-                  status: 'Settled via PhonePe',
-                  amount: '₹499',
-                  method: 'PhonePe (UPI)',
-                  txnId: 'ST-TXN-88412-PP',
-                ),
-                const Divider(color: SafeTalkTheme.borderSage, height: 1),
-                _buildBillingItem(
-                  context,
-                  listenerName: 'Listener Joy M.',
-                  date: '19 May 2026',
-                  status: 'Settled via Custom UPI VPA',
-                  amount: '₹499',
-                  method: 'UPI ID (safe@upi)',
-                  txnId: 'ST-TXN-76192-UP',
-                ),
-                const Divider(color: SafeTalkTheme.borderSage, height: 1),
-                _buildBillingItem(
-                  context,
-                  listenerName: 'Listener Harmony T.',
-                  date: '15 May 2026',
-                  status: 'Settled via Paytm',
-                  amount: '₹499',
-                  method: 'Paytm (UPI)',
-                  txnId: 'ST-TXN-65103-PM',
-                ),
-              ],
-            ),
-          ),
 
           const SizedBox(height: 36),
 
@@ -694,6 +718,14 @@ class MoodChartPainter extends CustomPainter {
     canvas.drawLine(Offset(0, size.height * 0.75), Offset(size.width, size.height * 0.75), gridPaint);
 
     if (points.isEmpty) return;
+
+    if (points.length == 1) {
+      final dotPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = points[0] >= 0.5 ? SafeTalkTheme.brandSage : SafeTalkTheme.brandTerracotta;
+      canvas.drawCircle(Offset(size.width / 2, size.height * (1 - points[0])), 6, dotPaint);
+      return;
+    }
 
     final double stepX = size.width / (points.length - 1);
     

@@ -3,8 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../controllers/session_controller.dart';
-import '../shared/voice_call_screen.dart';
-import '../shared/video_call_screen.dart';
 import '../shared/session_chat_screen.dart';
 import '../../widgets/breathing_pulse.dart';
 

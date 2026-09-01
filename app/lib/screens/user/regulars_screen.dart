@@ -181,14 +181,50 @@ class UserRegularsScreen extends StatelessWidget {
 
           // Grid/List of regular helpers
           Expanded(
-            child: ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              itemCount: circleList.length,
-              itemBuilder: (context, index) {
-                final regular = circleList[index];
-                return Padding(
-                  key: ValueKey(regular['name']),
-                  padding: const EdgeInsets.only(bottom: 20.0),
+            child: circleList.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: SafeTalkTheme.cardBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                            ),
+                            child: const Icon(
+                              Icons.favorite_border_rounded,
+                              color: SafeTalkTheme.brandSage,
+                              size: 40,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Your Safe Circle is Empty',
+                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Star companions you connect with from the Explore tab to quickly find and reconnect with them here.',
+                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: circleList.length,
+                    itemBuilder: (context, index) {
+                      final regular = circleList[index];
+                      return Padding(
+                        key: ValueKey(regular['name']),
+                        padding: const EdgeInsets.only(bottom: 20.0),
                   child: GestureDetector(
                     onTap: () {
                       Navigator.push(

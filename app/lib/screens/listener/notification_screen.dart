@@ -16,32 +16,7 @@ class _ListenerNotificationScreenState extends State<ListenerNotificationScreen>
   @override
   void initState() {
     super.initState();
-    _notifications = [
-      {
-        'title': 'Queue Surge Warning',
-        'desc': 'High volume of anonymous seekers reporting exam anxiety. Consider extending your shift if possible.',
-        'time': '5m ago',
-        'unread': true,
-        'icon': Icons.bolt_rounded,
-        'color': SafeTalkTheme.brandTerracotta,
-      },
-      {
-        'title': 'Weekly Counseling Digest',
-        'desc': 'Your professional performance metrics report for last week is ready. You helped 24 seekers in total.',
-        'time': '3h ago',
-        'unread': false,
-        'icon': Icons.insights_rounded,
-        'color': SafeTalkTheme.brandSage,
-      },
-      {
-        'title': 'Clinical Policy Update',
-        'desc': 'Reminder: Ensure you clear all locally saved seeker notes or double-encrypt them using the vault options.',
-        'time': '1 day ago',
-        'unread': false,
-        'icon': Icons.shield_rounded,
-        'color': SafeTalkTheme.brandGold,
-      },
-    ];
+    _notifications = [];
   }
 
   void _clearAll() {

@@ -5,6 +5,9 @@ import '../../controllers/chat_controller.dart';
 import '../../widgets/haptic_touchable.dart';
 import '../shared/history_screen.dart';
 import 'messages_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/user_service.dart';
+import '../../services/auth_service.dart';
 
 class ListenerDashboardScreen extends StatefulWidget {
   final bool isOnline;
@@ -23,36 +26,47 @@ class ListenerDashboardScreen extends StatefulWidget {
 }
 
 class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
-  // Mock recent seekers connected
-  final List<Map<String, dynamic>> _recentSeekers = [
-    {
-      'name': 'Pine Pebble #107',
-      'mood': 'Anxious / Overwhelmed',
-      'lastActive': '10 mins ago',
-      'avatarColor': SafeTalkTheme.brandSage,
-      'isRegular': true,
-    },
-    {
-      'name': 'Mist Pebble #44',
-      'mood': 'Work Burnout Support',
-      'lastActive': 'Yesterday',
-      'avatarColor': SafeTalkTheme.brandSageLight,
-      'isRegular': true,
-    },
-    {
-      'name': 'River Stone #82',
-      'mood': 'Lonely / Need to Vent',
-      'lastActive': '2 days ago',
-      'avatarColor': SafeTalkTheme.brandTerracotta,
-      'isRegular': false,
+  // Recent seekers connected
+  final List<Map<String, dynamic>> _recentSeekers = [];
+  String _displayName = '';
+  int _sessionsCount = 0;
+  String _rating = '5.00';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadListenerData();
+  }
+
+  Future<void> _loadListenerData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final user = await UserService().getUser(uid);
+      if (user != null && mounted) {
+        setState(() {
+          _displayName = user.displayName;
+          final stats = user.listenerData?.stats;
+          if (stats != null) {
+            _sessionsCount = stats.minutesListened ~/ 10;
+            _rating = stats.rating.toStringAsFixed(2);
+          }
+        });
+      }
     }
-  ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final isTherapist = SessionController().isTherapist;
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
+
+    String greetingName = _displayName.isNotEmpty ? _displayName : AuthService().displayName;
+    if (greetingName.isEmpty || greetingName == 'Anonymous') {
+      greetingName = isTherapist ? 'Dr. Specialist' : 'Peer Listener';
+    } else if (!greetingName.toLowerCase().startsWith('dr.') && !greetingName.toLowerCase().startsWith('listener')) {
+      greetingName = isTherapist ? 'Dr. $greetingName' : 'Listener $greetingName';
+    }
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -83,7 +97,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isTherapist ? 'Dr. Amber R. (PsyD)' : 'Listener Amber R.',
+                      greetingName,
                       style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 20),
                     ),
                   ],
@@ -143,7 +157,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             children: [
               Expanded(
                 child: _buildStatItem(
-                  '₹24,850',
+                  '₹${_sessionsCount * 150}',
                   'Total Earnings',
                   Icons.payments_rounded,
                   brandColorLight,
@@ -152,7 +166,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatItem(
-                  '4.95 / 5',
+                  '$_rating / 5',
                   'Satisfaction Rate',
                   Icons.star_rounded,
                   SafeTalkTheme.brandGold,
@@ -165,7 +179,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             children: [
               Expanded(
                 child: _buildStatItem(
-                  '104',
+                  '$_sessionsCount',
                   'Sessions Completed',
                   Icons.forum_rounded,
                   SafeTalkTheme.brandSageLight,
@@ -174,7 +188,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatItem(
-                  '32.5 hrs',
+                  '${(_sessionsCount * 0.25).toStringAsFixed(1)} hrs',
                   'Online Duration',
                   Icons.timer_outlined,
                   SafeTalkTheme.brandTerracotta,
@@ -187,7 +201,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             children: [
               Expanded(
                 child: _buildStatItem(
-                  '18 Seekers',
+                  '0 Seekers',
                   'In Safe Circle',
                   Icons.favorite_rounded,
                   const Color(0xFFE084A0),
@@ -196,7 +210,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatItem(
-                  '98%',
+                  '100%',
                   'Response Rate',
                   Icons.bolt_rounded,
                   SafeTalkTheme.brandGold,
@@ -333,109 +347,132 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _recentSeekers.length,
-            itemBuilder: (context, index) {
-              final seeker = _recentSeekers[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: HapticTouchable(
-                  onTap: () {
-                    final threads = ChatController().listenerThreads;
-                    final thread = threads.firstWhere(
-                      (t) => t['name'] == seeker['name'],
-                      orElse: () => {
-                        'name': seeker['name'],
-                        'status': 'Last active: ${seeker['lastActive']}',
-                        'avatarColor': seeker['avatarColor'],
-                        'online': false,
-                        'unread': false,
-                        'lastMessage': seeker['mood'],
-                        'time': seeker['lastActive'],
-                        'notes': '',
-                        'messages': [
-                          {'sender': 'user', 'text': 'Hello, is anyone there?'},
-                          {'sender': 'listener', 'text': 'Hello. Yes, I am right here with you.'},
-                        ]
-                      },
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatHistoryTranscriptScreen(
-                          session: thread,
-                          isSeeker: false,
+          if (_recentSeekers.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: SafeTalkTheme.glassCardDecoration,
+              child: Column(
+                children: [
+                  Icon(Icons.forum_outlined, color: brandColorLight, size: 36),
+                  const SizedBox(height: 10),
+                  Text(
+                    'No Recent Seekers',
+                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Stay online to receive incoming matching support requests from seekers.',
+                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _recentSeekers.length,
+              itemBuilder: (context, index) {
+                final seeker = _recentSeekers[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: HapticTouchable(
+                    onTap: () {
+                      final threads = ChatController().listenerThreads;
+                      final thread = threads.firstWhere(
+                        (t) => t['name'] == seeker['name'],
+                        orElse: () => {
+                          'name': seeker['name'],
+                          'status': 'Last active: ${seeker['lastActive']}',
+                          'avatarColor': seeker['avatarColor'],
+                          'online': false,
+                          'unread': false,
+                          'lastMessage': seeker['mood'],
+                          'time': seeker['lastActive'],
+                          'notes': '',
+                          'messages': [
+                            {'sender': 'user', 'text': 'Hello, is anyone there?'},
+                            {'sender': 'listener', 'text': 'Hello. Yes, I am right here with you.'},
+                          ]
+                        },
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatHistoryTranscriptScreen(
+                            session: thread,
+                            isSeeker: false,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: SafeTalkTheme.glassCardDecoration,
-                    child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: seeker['avatarColor'].withValues(alpha: 0.15),
-                        child: Text(
-                          seeker['name'][0],
-                          style: SafeTalkTheme.bodyStyle(color: seeker['avatarColor'], bold: true).copyWith(fontSize: 12),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: SafeTalkTheme.glassCardDecoration,
+                      child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: seeker['avatarColor'].withValues(alpha: 0.15),
+                          child: Text(
+                            seeker['name'][0],
+                            style: SafeTalkTheme.bodyStyle(color: seeker['avatarColor'], bold: true).copyWith(fontSize: 12),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    seeker['name'],
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (seeker['isRegular']) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: brandColor.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
                                     child: Text(
-                                      'REGULAR',
-                                      style: SafeTalkTheme.captionStyle(color: brandColorLight)
-                                          .copyWith(fontSize: 8, fontWeight: FontWeight.bold),
+                                      seeker['name'],
+                                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
+                                  if (seeker['isRegular']) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: brandColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'REGULAR',
+                                        style: SafeTalkTheme.captionStyle(color: brandColorLight)
+                                            .copyWith(fontSize: 8, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Focus: ${seeker['mood']}',
-                              style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Focus: ${seeker['mood']}',
+                                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      Text(
-                        seeker['lastActive'],
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
-                      ),
-                    ],
+                        Text(
+                          seeker['lastActive'],
+                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
           ),
           const SizedBox(height: 20),
         ],

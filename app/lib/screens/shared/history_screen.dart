@@ -15,73 +15,13 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  // Mock list of past sessions
-  final List<Map<String, dynamic>> _pastSessions = [
-    {
-      'id': 'SES-984210',
-      'name': 'Amber R.', // Seeker sees Companion name, Listener sees Seeker name (e.g. Pine Pebble #107)
-      'seekerName': 'Pine Pebble #107',
-      'type': 'Secure Chat Support',
-      'icon': Icons.chat_bubble_rounded,
-      'date': 'Today • 3:14 PM',
-      'amount': 150.0,
-      'rating': 5,
-      'isPremium': false,
-      'notes': 'Seeker expressed intense anxiety regarding upcoming college final exams. Guided through validation and emotional grounding. Scheduled follow-up regular session.',
-      'messages': [
-        {'sender': 'user', 'text': 'Hello, is anyone there? I\'m feeling very anxious.'},
-        {'sender': 'listener', 'text': 'Hello. Yes, I am right here with you. Take all the time you need to share.'},
-        {'sender': 'user', 'text': 'I\'ve been feeling really overwhelmed with finals recently.'},
-        {'sender': 'listener', 'text': 'I hear you. Finals bring so much pressure. It is completely natural to feel overwhelmed.'},
-        {'sender': 'user', 'text': 'Sometimes I feel like I\'m not doing enough even when I study all day.'},
-        {'sender': 'listener', 'text': 'Thank you for sharing that with me. I\'m holding this space for you. You are doing the absolute best you can, and that is enough.'},
-      ]
-    },
-    {
-      'id': 'SES-983104',
-      'name': 'Liam K.',
-      'seekerName': 'Mist Pebble #44',
-      'type': 'Voice Call Support',
-      'icon': Icons.phone_rounded,
-      'date': 'Yesterday • 9:45 AM',
-      'amount': 150.0,
-      'rating': 4,
-      'isPremium': false,
-      'duration': '20 minutes',
-      'notes': 'Spoke about work stressors. Boss requesting weekend hours. Seeker successfully set a boundary to rest on Sunday.',
-    },
-    {
-      'id': 'SES-981892',
-      'name': 'Sophia M.',
-      'seekerName': 'River Stone #82',
-      'type': 'Video Call Consultation',
-      'icon': Icons.videocam_rounded,
-      'date': 'May 26, 2026 • 6:18 PM',
-      'amount': 499.0,
-      'rating': 5,
-      'isPremium': true,
-      'duration': '20 minutes',
-      'notes': 'Somatic mindfulness guidance. Checked breathing rhythms, guided 4-7-8 breathing containment.',
-    },
-    {
-      'id': 'SES-979920',
-      'name': 'Liam K.',
-      'seekerName': 'Fern Leaf #29',
-      'type': 'Voice Call Support',
-      'icon': Icons.phone_rounded,
-      'date': 'May 24, 2026 • 11:20 AM',
-      'amount': 150.0,
-      'rating': 5,
-      'isPremium': false,
-      'duration': '15 minutes',
-      'notes': 'Guided through panic response containment. Practiced focus counts 1 to 10.',
-    }
-  ];
+  // List of past sessions
+  final List<Map<String, dynamic>> _pastSessions = [];
 
   void _showSessionDetail(Map<String, dynamic> session) {
     if (session['type'] == 'Secure Chat Support') {
       // Synchronize with ChatController in real-time
-      final nameToFind = widget.isSeeker ? 'Amber R.' : 'Pine Pebble #107';
+      final nameToFind = session['name'] ?? (widget.isSeeker ? 'Listener' : 'Seeker');
       final threads = widget.isSeeker 
           ? ChatController().userThreads 
           : ChatController().listenerThreads;
@@ -152,13 +92,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              itemCount: _pastSessions.length,
-              itemBuilder: (context, index) {
-                final session = _pastSessions[index];
-                final displayName = widget.isSeeker ? session['name'] : session['seekerName'];
+            child: _pastSessions.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: SafeTalkTheme.cardBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                            ),
+                            child: Icon(
+                              Icons.history_rounded,
+                              color: brandColorLight,
+                              size: 40,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'No Session History Yet',
+                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.isSeeker
+                                ? 'Completed support sessions and consultation transcripts will appear here.'
+                                : 'Completed counseling sessions with seekers will be securely logged here.',
+                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    itemCount: _pastSessions.length,
+                    itemBuilder: (context, index) {
+                      final session = _pastSessions[index];
+                      final displayName = widget.isSeeker ? session['name'] : session['seekerName'];
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
@@ -1227,9 +1205,9 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                               const SizedBox(height: 24),
                               const Divider(color: SafeTalkTheme.borderSage, height: 1),
                               const SizedBox(height: 24),
-                              _buildStatItem('Companion Name', isSeeker ? (session['name'] ?? 'Amber R.') : 'You (Listener)'),
+                              _buildStatItem('Companion Name', isSeeker ? (session['name'] ?? 'Listener') : 'You (Listener)'),
                               const SizedBox(height: 14),
-                              _buildStatItem('Seeker Pseudonym', isSeeker ? 'You (Seeker)' : (session['seekerName'] ?? 'Pine Pebble #107')),
+                              _buildStatItem('Seeker Pseudonym', isSeeker ? 'You (Seeker)' : (session['seekerName'] ?? 'Anonymous Seeker')),
                               const SizedBox(height: 14),
                               _buildStatItem('Call Duration', session['duration'] ?? '15 minutes'),
                               const SizedBox(height: 14),
