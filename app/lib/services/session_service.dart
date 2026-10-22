@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app/models/session_model.dart';
+import 'package:app/services/chat_crypto_service.dart';
 
 class SessionService {
   final FirebaseFirestore _firestore;
@@ -16,18 +17,22 @@ class SessionService {
     required String sessionType,
   }) async {
     final docRef = _firestore.collection('sessions').doc();
-    final session = SessionModel(
-      id: docRef.id,
-      seekerId: seekerId,
-      seekerMoniker: seekerMoniker,
-      seekerMoodTag: seekerMoodTag,
-      seekerConcern: seekerConcern,
-      status: 'pending',
-      sessionType: sessionType,
-      requestedAt: DateTime.now(),
-    );
+    final sessionKey = ChatCryptoService.generateSessionKey();
+    final json = {
+      'seekerId': seekerId,
+      'seekerMoniker': seekerMoniker,
+      'seekerMoodTag': seekerMoodTag,
+      'seekerConcern': seekerConcern,
+      'status': 'pending',
+      'sessionType': SessionModel.normalizeSessionType(sessionType),
+      'sessionKey': sessionKey,
+      'requestedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'rejectedBy': [],
+    };
 
-    await docRef.set(session.toJson());
+    await docRef.set(json);
     return docRef.id;
   }
 
@@ -100,6 +105,7 @@ class SessionService {
   Future<void> acceptSession(String sessionId) async {
     await _firestore.collection('sessions').doc(sessionId).update({
       'status': 'payment_pending',
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -108,20 +114,16 @@ class SessionService {
     await _firestore.collection('sessions').doc(sessionId).update({
       'listenerId': FieldValue.delete(),
       'rejectedBy': FieldValue.arrayUnion([listenerId]),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Seeker completes payment
-  Future<void> markPaymentComplete(String sessionId) async {
-    await _firestore.collection('sessions').doc(sessionId).update({
-      'status': 'active',
-    });
-  }
-  
   /// End session
   Future<void> endSession(String sessionId) async {
     await _firestore.collection('sessions').doc(sessionId).update({
       'status': 'completed',
+      'completedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -129,6 +131,7 @@ class SessionService {
   Future<void> cancelSession(String sessionId) async {
     await _firestore.collection('sessions').doc(sessionId).update({
       'status': 'cancelled',
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 }

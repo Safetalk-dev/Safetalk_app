@@ -131,7 +131,7 @@ class SessionController extends ChangeNotifier {
         seekerMoniker: moniker,
         seekerMoodTag: moodTag,
         seekerConcern: concern,
-        sessionType: sessionType.toString(),
+        sessionType: sessionType.name,
       );
       
       _sessionSub?.cancel();
@@ -193,9 +193,8 @@ class SessionController extends ChangeNotifier {
   // ── Payment ──────────────────────────────────────────────────────────────────
 
   void paymentSucceeded() {
-    if (_currentSessionId != null) {
-      SessionService().markPaymentComplete(_currentSessionId!);
-    }
+    // A2.3 (D-07): Client does not write status: "active" to Firestore directly.
+    // In live mode, phase updates reactively via streamSession when razorpayWebhook sets status: "active".
     _phase = SessionPhase.callActive;
     notifyListeners();
   }

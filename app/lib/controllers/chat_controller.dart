@@ -152,7 +152,7 @@ class ChatController extends ChangeNotifier {
         'avatarColor': avatarColor ?? SafeTalkTheme.brandSage,
         'online': true,
         'unread': false,
-        'lastMessage': 'Say hello! Your conversation is private and encrypted.',
+        'lastMessage': 'Say hello! Your conversation is private to you and your listener.',
         'time': 'Now',
         'messages': [
           {

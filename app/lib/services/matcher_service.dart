@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app/models/user_model.dart';
 
@@ -24,7 +25,7 @@ class MatcherService {
           .map((doc) => UserModel.fromJson(doc.data()))
           .toList();
     } catch (e) {
-      print('Error fetching listeners: $e');
+      debugPrint('Error fetching listeners: $e');
       return [];
     }
   }

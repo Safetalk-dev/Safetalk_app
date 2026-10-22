@@ -9,7 +9,9 @@ import '../../widgets/haptic_touchable.dart';
 import '../../controllers/session_controller.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/session_service.dart';
+import '../../services/user_service.dart';
 import '../../models/session_model.dart';
 import '../../services/push_notification_service.dart';
 
@@ -22,10 +24,10 @@ class ListenerLayout extends StatefulWidget {
   State<ListenerLayout> createState() => _ListenerLayoutState();
 }
 
-class _ListenerLayoutState extends State<ListenerLayout> {
+class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObserver {
   int _currentIndex = 0;
   bool _showingNotifications = false;
-  bool _isOnline = true;
+  bool _isOnline = false;
   bool _hasIncomingRequest = false;
 
   StreamSubscription<List<SessionModel>>? _incomingSub;
@@ -34,11 +36,25 @@ class _ListenerLayoutState extends State<ListenerLayout> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     SessionController().addListener(_onSessionChanged);
+    _loadInitialOnlineStatus();
     _listenToIncomingRequests();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationService().initialize(context);
     });
+  }
+
+  Future<void> _loadInitialOnlineStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final user = await UserService().getUser(uid);
+      if (mounted && user != null && user.listenerData != null) {
+        setState(() {
+          _isOnline = user.listenerData!.isOnline;
+        });
+      }
+    }
   }
 
   void _listenToIncomingRequests() {
@@ -56,21 +72,46 @@ class _ListenerLayoutState extends State<ListenerLayout> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _incomingSub?.cancel();
     SessionController().removeListener(_onSessionChanged);
     super.dispose();
   }
 
-  void _onSessionChanged() {
-    if (!mounted) return;
-    final phase = SessionController().phase;
-    // Just keeping this for any legacy state that still relies on it
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && _isOnline) {
+        FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'listenerData.isOnline': false,
+          'listenerData.status': 'offline',
+        });
+      }
+    }
   }
 
-  void _toggleOnlineStatus(bool value) {
+  void _onSessionChanged() {
+    if (!mounted) return;
+    // Listener for session state changes
+  }
+
+  Future<void> _toggleOnlineStatus(bool value) async {
     setState(() {
       _isOnline = value;
     });
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'listenerData.isOnline': value,
+          'listenerData.status': value ? 'available' : 'offline',
+        });
+      } catch (e) {
+        debugPrint('Error updating listener online status in Firestore: $e');
+      }
+    }
   }
 
   Widget _buildBody() {

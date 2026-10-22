@@ -29,7 +29,6 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   final double _maxSwipeWidth = 260.0;
   int _secondsLeft = 30;
   Timer? _countdownTimer;
-  bool _hasActiveRequest = false;
 
   int _paymentSecondsElapsed = 0;
   Timer? _paymentTimer;
@@ -38,17 +37,10 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   void initState() {
     super.initState();
     SessionController().addListener(_onSessionChanged);
-    _checkForActiveRequest();
     _startTimer();
     if (SessionController().phase == SessionPhase.paymentPending) {
       _startPaymentTimer();
     }
-  }
-
-  void _checkForActiveRequest() {
-    setState(() {
-      _hasActiveRequest = widget.currentRequest != null && widget.currentRequest!.status == 'pending';
-    });
   }
 
   void _startPaymentTimer() {
@@ -78,10 +70,6 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   void _onSessionChanged() {
     if (!mounted) return;
 
-    setState(() {
-      _hasActiveRequest = widget.currentRequest != null && widget.currentRequest!.status == 'pending';
-    });
-
     if (widget.currentRequest?.status == 'payment_pending') {
       if (_paymentTimer == null) {
         _startPaymentTimer();
@@ -108,7 +96,6 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   void _launchCallAsListener() {
     if (!mounted || widget.currentRequest == null) return;
     
-    final sessionTypeString = widget.currentRequest!.sessionType;
     Widget targetScreen;
     final partnerName = widget.currentRequest!.seekerMoniker;
     
@@ -195,14 +182,14 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
     final seekerMoniker = widget.currentRequest?.seekerMoniker ?? 'Unknown Seeker';
     final moodTag = widget.currentRequest?.seekerMoodTag ?? 'Neutral';
-    final sessionTypeString = widget.currentRequest?.sessionType ?? 'SessionType.messages';
+    final sessionTypeString = SessionModel.normalizeSessionType(widget.currentRequest?.sessionType);
     
     String sessionTypeName = 'Secure Chat';
     IconData sessionTypeIcon = Icons.chat_bubble_rounded;
-    if (sessionTypeString == 'SessionType.voiceCall') {
+    if (sessionTypeString == 'voiceCall' || sessionTypeString == 'SessionType.voiceCall') {
       sessionTypeName = 'Secure Voice Call';
       sessionTypeIcon = Icons.phone_rounded;
-    } else if (sessionTypeString == 'SessionType.videoCall') {
+    } else if (sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall') {
       sessionTypeName = 'Secure Video Call';
       sessionTypeIcon = Icons.videocam_rounded;
     }
@@ -501,7 +488,7 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     final isTherapist = SessionController().isTherapist;
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
-    final sessionTypeString = widget.currentRequest?.sessionType ?? 'SessionType.messages';
+    final sessionTypeString = SessionModel.normalizeSessionType(widget.currentRequest?.sessionType);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -659,20 +646,20 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildSessionDetailChip(
-                        sessionTypeString == 'SessionType.messages'
+                        (sessionTypeString == 'messages' || sessionTypeString == 'SessionType.messages')
                             ? Icons.chat_bubble_outline_rounded
-                            : (sessionTypeString == 'SessionType.videoCall'
+                            : ((sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall')
                                 ? Icons.videocam_outlined
                                 : Icons.phone_outlined),
-                        sessionTypeString == 'SessionType.messages'
+                        (sessionTypeString == 'messages' || sessionTypeString == 'SessionType.messages')
                             ? 'Messages'
-                            : (sessionTypeString == 'SessionType.videoCall'
+                            : ((sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall')
                                 ? 'Video Call'
                                 : 'Voice Call'),
                       ),
                       _buildSessionDetailChip(
                         Icons.timer_outlined,
-                        sessionTypeString == 'SessionType.videoCall' ? '7 mins' : '10 mins',
+                        (sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall') ? '7 mins' : '10 mins',
                       ),
                       _buildSessionDetailChip(
                         Icons.currency_rupee_rounded,

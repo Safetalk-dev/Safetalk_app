@@ -12,6 +12,7 @@ import 'services/biometric_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/listener_settings_service.dart';
 import 'services/auth_service.dart';
+import 'services/vault_service.dart';
 
 // Custom ScrollBehavior to enable global click-and-drag mouse scrolling for horizontal lists
 class SafeTalkScrollBehavior extends MaterialScrollBehavior {
@@ -58,6 +59,7 @@ void main() async {
   }
   
   // Asynchronously load the service settings before the UI renders to prevent race conditions
+  await VaultService.initializeDirectory();
   await BiometricService().loadSettings();
   await PushNotificationService().loadSettings();
   await ListenerSettingsService().loadSettings();

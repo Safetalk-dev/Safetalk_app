@@ -82,5 +82,97 @@ describe("SafeTalk Firestore Security Rules", () => {
       const db = charlie.firestore();
       await assertFails(db.collection("sessions").doc("session1").get());
     });
+
+    it("allows seeker to create session with status pending", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      const db = alice.firestore();
+      await assertSucceeds(db.collection("sessions").doc("session1").set({
+        seekerId: "alice",
+        status: "pending",
+        sessionType: "messages"
+      }));
+    });
+
+    it("denies seeker from creating session with status active", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      const db = alice.firestore();
+      await assertFails(db.collection("sessions").doc("session1").set({
+        seekerId: "alice",
+        status: "active",
+        sessionType: "messages"
+      }));
+    });
+
+    it("denies user from creating session for another seeker", async () => {
+      const eve = testEnv.authenticatedContext("eve");
+      const db = eve.firestore();
+      await assertFails(db.collection("sessions").doc("session1").set({
+        seekerId: "alice",
+        status: "pending",
+        sessionType: "messages"
+      }));
+    });
+
+    it("denies client write to status active during update (A2.3)", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().collection("sessions").doc("session1").set({
+          seekerId: "alice",
+          listenerId: "bob",
+          status: "payment_pending"
+        });
+      });
+
+      const db = alice.firestore();
+      await assertFails(db.collection("sessions").doc("session1").update({
+        status: "active"
+      }));
+    });
+
+    it("denies client revival of completed session back to active (A2.2)", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().collection("sessions").doc("session1").set({
+          seekerId: "alice",
+          listenerId: "bob",
+          status: "completed"
+        });
+      });
+
+      const db = alice.firestore();
+      await assertFails(db.collection("sessions").doc("session1").update({
+        status: "active"
+      }));
+    });
+
+    it("allows assigned listener to transition pending to payment_pending", async () => {
+      const bob = testEnv.authenticatedContext("bob");
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().collection("sessions").doc("session1").set({
+          seekerId: "alice",
+          listenerId: "bob",
+          status: "pending"
+        });
+      });
+
+      const db = bob.firestore();
+      await assertSucceeds(db.collection("sessions").doc("session1").update({
+        status: "payment_pending"
+      }));
+    });
+
+    it("denies client session deletion", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context.firestore().collection("sessions").doc("session1").set({
+          seekerId: "alice",
+          listenerId: "bob",
+          status: "pending"
+        });
+      });
+
+      const db = alice.firestore();
+      await assertFails(db.collection("sessions").doc("session1").delete());
+    });
   });
 });

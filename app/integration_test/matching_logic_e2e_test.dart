@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -52,7 +53,7 @@ void main() {
         sessionType: 'SessionType.messages',
       );
 
-      print('Session created: $sessionId');
+      debugPrint('Session created: $sessionId');
 
       // 3. Wait for Cloud Function to assign the listener
       // We will listen to the stream and wait until listenerId is not null
@@ -64,7 +65,7 @@ void main() {
         }
       }
 
-      print('Cloud function assigned listener: ${matchedSession!.listenerId}');
+      debugPrint('Cloud function assigned listener: ${matchedSession!.listenerId}');
       expect(matchedSession.listenerId, listenerId);
       expect(matchedSession.status, 'pending');
 
@@ -86,7 +87,7 @@ void main() {
         }
       }
 
-      print('Session advanced to payment_pending');
+      debugPrint('Session advanced to payment_pending');
       expect(paymentSession!.status, 'payment_pending');
 
       // 7. Cleanup

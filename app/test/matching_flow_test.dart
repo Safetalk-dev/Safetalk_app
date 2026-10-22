@@ -1,29 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:app/models/session_model.dart';
-import 'package:app/services/session_service.dart';
 import 'package:app/controllers/session_controller.dart';
-import 'package:app/screens/user/request_screen.dart';
-import 'package:app/theme/tokens.dart';
 
 void main() {
   group('Matching Flow E2E (Seeker Side)', () {
-    late FakeFirebaseFirestore fakeFirestore;
-    late SessionService sessionService;
-
-    setUp(() {
-      fakeFirestore = FakeFirebaseFirestore();
-      sessionService = SessionService(firestore: fakeFirestore);
-      
-      // Inject the fake session service into the controller? 
-      // SessionController currently hardcodes SessionService() which creates a new instance. 
-      // For this test to work perfectly without DI refactoring, we can just observe the fake firestore 
-      // if we refactor SessionController to accept a SessionService, or we can just test the logic directly.
-      // Wait, let's just test the logic directly using the service and controller if possible.
-      // Actually, since SessionController uses `SessionService()`, it will use the default FirebaseFirestore.instance.
-      // We can't easily mock that without overriding the instance or passing it.
-    });
 
     testWidgets('Seeker creates request -> backend matches -> listener accepts -> payment pending', (WidgetTester tester) async {
       // 1. Set up the environment

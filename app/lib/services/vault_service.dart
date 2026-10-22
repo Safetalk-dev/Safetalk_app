@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:cryptography/cryptography.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CryptographicException implements Exception {
   final String message;
@@ -15,9 +16,34 @@ class VaultService {
   factory VaultService() => _instance;
   VaultService._internal();
 
-  // File paths inside app workspace
-  static const String _metadataPath = 'data/vault_metadata.json';
-  static const String _notesPath = 'data/vault_notes.enc';
+  /// Directory override for testing or custom paths.
+  static Directory? baseDirectoryOverride;
+  static Directory? _cachedDirectory;
+
+  /// Asynchronously resolve application directory on mobile devices (A2.7 - D-09).
+  static Future<void> initializeDirectory() async {
+    if (baseDirectoryOverride != null) {
+      _cachedDirectory = baseDirectoryOverride;
+      return;
+    }
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      _cachedDirectory = Directory('data');
+    } else {
+      _cachedDirectory = await getApplicationDocumentsDirectory();
+    }
+  }
+
+  Directory get _dataDir {
+    if (baseDirectoryOverride != null) return baseDirectoryOverride!;
+    if (_cachedDirectory != null) return _cachedDirectory!;
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      return Directory('data');
+    }
+    return Directory('data');
+  }
+
+  File get _metadataFile => File('${_dataDir.path}/vault_metadata.json');
+  File get _notesFile => File('${_dataDir.path}/vault_notes.enc');
 
   final _pbkdf2 = Pbkdf2(
     macAlgorithm: Hmac.sha256(),
@@ -29,7 +55,7 @@ class VaultService {
 
   // Helper to ensure data directory exists
   void _ensureDataDirExists() {
-    final dir = Directory('data');
+    final dir = _dataDir;
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
@@ -38,8 +64,7 @@ class VaultService {
   /// Checks if the local vault has been initialized with a PIN.
   bool isVaultInitialized() {
     _ensureDataDirExists();
-    final file = File(_metadataPath);
-    return file.existsSync();
+    return _metadataFile.existsSync();
   }
 
   /// Generates a random 256-bit salt (32 bytes)
@@ -56,8 +81,7 @@ class VaultService {
     final salt = _generateRandomBytes(32);
     
     // 2. Save metadata (salt) in cleartext
-    final metadataFile = File(_metadataPath);
-    await metadataFile.writeAsString(jsonEncode({
+    await _metadataFile.writeAsString(jsonEncode({
       'salt_base64': base64Encode(salt),
     }));
 
@@ -86,17 +110,15 @@ class VaultService {
 
     try {
       // 1. Read salt
-      final metadataFile = File(_metadataPath);
-      final metadata = jsonDecode(await metadataFile.readAsString());
+      final metadata = jsonDecode(await _metadataFile.readAsString());
       final salt = base64Decode(metadata['salt_base64'] as String);
 
       // 2. Read encrypted notes payload
-      final notesFile = File(_notesPath);
-      if (!notesFile.existsSync()) {
+      if (!_notesFile.existsSync()) {
         return {};
       }
       
-      final encryptedData = jsonDecode(await notesFile.readAsString());
+      final encryptedData = jsonDecode(await _notesFile.readAsString());
       final ciphertext = base64Decode(encryptedData['ciphertext'] as String);
       final nonce = base64Decode(encryptedData['nonce'] as String);
       final mac = base64Decode(encryptedData['mac'] as String);
@@ -131,12 +153,11 @@ class VaultService {
     _ensureDataDirExists();
     
     // 1. Read salt
-    final metadataFile = File(_metadataPath);
-    if (!metadataFile.existsSync()) {
+    if (!_metadataFile.existsSync()) {
       throw CryptographicException('Vault not initialized. Cannot save.');
     }
     
-    final metadata = jsonDecode(await metadataFile.readAsString());
+    final metadata = jsonDecode(await _metadataFile.readAsString());
     final salt = base64Decode(metadata['salt_base64'] as String);
 
     // 2. Derive key in memory
@@ -154,8 +175,7 @@ class VaultService {
     );
 
     // 4. Write base64 encrypted payload (ciphertext, nonce, mac authentication tag)
-    final notesFile = File(_notesPath);
-    await notesFile.writeAsString(jsonEncode({
+    await _notesFile.writeAsString(jsonEncode({
       'ciphertext': base64Encode(secretBox.cipherText),
       'nonce': base64Encode(secretBox.nonce),
       'mac': base64Encode(secretBox.mac.bytes),
@@ -166,14 +186,12 @@ class VaultService {
   Future<void> wipeAndResetVault() async {
     _ensureDataDirExists();
     
-    final metadataFile = File(_metadataPath);
-    if (metadataFile.existsSync()) {
-      metadataFile.deleteSync();
+    if (_metadataFile.existsSync()) {
+      _metadataFile.deleteSync();
     }
     
-    final notesFile = File(_notesPath);
-    if (notesFile.existsSync()) {
-      notesFile.deleteSync();
+    if (_notesFile.existsSync()) {
+      _notesFile.deleteSync();
     }
   }
 
@@ -188,12 +206,11 @@ class VaultService {
   Future<String> encryptString(String pin, String plaintext) async {
     _ensureDataDirExists();
     
-    final metadataFile = File(_metadataPath);
-    if (!metadataFile.existsSync()) {
+    if (!_metadataFile.existsSync()) {
       throw CryptographicException('Vault not initialized.');
     }
     
-    final metadata = jsonDecode(await metadataFile.readAsString());
+    final metadata = jsonDecode(await _metadataFile.readAsString());
     final salt = base64Decode(metadata['salt_base64'] as String);
     final secretKey = await _deriveKey(pin, salt);
 
@@ -220,8 +237,7 @@ class VaultService {
     }
 
     try {
-      final metadataFile = File(_metadataPath);
-      final metadata = jsonDecode(await metadataFile.readAsString());
+      final metadata = jsonDecode(await _metadataFile.readAsString());
       final salt = base64Decode(metadata['salt_base64'] as String);
 
       final encryptedData = jsonDecode(encryptedJson);

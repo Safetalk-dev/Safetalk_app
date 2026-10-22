@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
@@ -33,9 +34,22 @@ class PushNotificationService {
     }
   }
 
+  Future<File> _getFile() async {
+    Directory directory;
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      directory = Directory('data');
+    } else {
+      directory = await getApplicationDocumentsDirectory();
+    }
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
+    return File('${directory.path}/$_filename');
+  }
+
   Future<void> loadSettings() async {
     try {
-      final file = File('data/$_filename');
+      final file = await _getFile();
       if (file.existsSync()) {
         final data = jsonDecode(await file.readAsString());
         _isEnabled = data['enabled'] ?? true;
@@ -47,11 +61,7 @@ class PushNotificationService {
 
   Future<void> _saveSettings() async {
     try {
-      final dir = Directory('data');
-      if (!dir.existsSync()) {
-        dir.createSync(recursive: true);
-      }
-      final file = File('data/$_filename');
+      final file = await _getFile();
       await file.writeAsString(jsonEncode({'enabled': _isEnabled}));
     } catch (e) {
       debugPrint('Error saving push notification settings: $e');

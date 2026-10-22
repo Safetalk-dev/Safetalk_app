@@ -48,8 +48,11 @@ class AuthWrapper extends StatelessWidget {
 
             final userModel = userSnapshot.data;
 
-            if (userModel == null) {
-              // User exists in Auth but no Firestore document -> Needs Onboarding
+            if (userModel == null ||
+                !userModel.profileComplete ||
+                userModel.role.isEmpty ||
+                userModel.role == 'pending') {
+              // User needs onboarding / role selection
               return OnboardingScreen(firebaseUser: user);
             }
 

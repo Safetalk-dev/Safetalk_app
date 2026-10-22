@@ -72,8 +72,25 @@ void main() {
 
       expect(json['uid'], 'user789');
       expect(json['role'], 'user');
+      expect(json['profileComplete'], true);
       expect(json['seekerData'], isNotNull);
       expect(json['seekerData']['preferredLanguages'], contains('en'));
+    });
+
+    test('parses sentinel user with profileComplete: false correctly', () {
+      final json = {
+        'uid': 'sentinel123',
+        'email': 'newuser@test.com',
+        'displayName': '',
+        'role': 'pending',
+        'profileComplete': false,
+      };
+
+      final user = UserModel.fromJson(json);
+
+      expect(user.uid, 'sentinel123');
+      expect(user.profileComplete, false);
+      expect(user.role, 'pending');
     });
   });
 }

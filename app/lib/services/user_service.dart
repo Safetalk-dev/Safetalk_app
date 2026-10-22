@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app/models/user_model.dart';
 
@@ -16,7 +17,7 @@ class UserService {
       }
       return null;
     } catch (e) {
-      print('Error fetching user document: $e');
+      debugPrint('Error fetching user document: $e');
       return null;
     }
   }
@@ -24,9 +25,12 @@ class UserService {
   /// Creates or updates a user document in the 'users' collection.
   Future<void> createUser(UserModel user) async {
     try {
-      await _firestore.collection('users').doc(user.uid).set(user.toJson());
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(user.toJson(), SetOptions(merge: true));
     } catch (e) {
-      print('Error creating user document: $e');
+      debugPrint('Error creating user document: $e');
       throw Exception('Could not create user profile');
     }
   }

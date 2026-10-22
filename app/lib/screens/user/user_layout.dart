@@ -38,7 +38,6 @@ class _UserLayoutState extends State<UserLayout> {
 
   // Centralized List of All Peer Listeners with their specialties & bio details
   List<Map<String, dynamic>> _allListeners = [];
-  bool _isLoadingListeners = true;
 
   // List of listeners marked as regulars
   final List<String> _regularListenerNames = [];
@@ -101,15 +100,10 @@ class _UserLayoutState extends State<UserLayout> {
             'bio': (l.listenerData?.bio.isNotEmpty ?? false) ? l.listenerData!.bio : 'A compassionate ear ready to listen without judgment.',
             'latestNote': 'No previous sessions',
           }).toList();
-          _isLoadingListeners = false;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingListeners = false;
-        });
-      }
+      // Ignore load errors for listeners
     }
   }
 
@@ -142,7 +136,6 @@ class _UserLayoutState extends State<UserLayout> {
       _requestingListener = false;
     });
     
-    final sessionType = SessionController().sessionType;
     Widget targetScreen;
     
     targetScreen = SessionChatScreen(

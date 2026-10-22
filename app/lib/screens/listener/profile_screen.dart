@@ -8,6 +8,7 @@ import '../../services/listener_settings_service.dart';
 import '../../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/user_service.dart';
+import '../../services/ledger_service.dart';
 
 class ListenerProfileScreen extends StatefulWidget {
   final bool isOnline;
@@ -58,10 +59,14 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       final user = await UserService().getUser(uid);
-      if (user != null && mounted) {
+      final ledger = await LedgerService().getLedger(uid);
+      if (mounted) {
         setState(() {
-          if (user.displayName.isNotEmpty) {
+          if (user != null && user.displayName.isNotEmpty) {
             listenerName = user.displayName;
+          }
+          if (ledger != null) {
+            _pendingPayout = ledger['pendingPayout'] ?? 0.0;
           }
         });
       }
@@ -746,15 +751,17 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
     );
   }
 
-  void _handlePayoutRequest() {
-    final isTherapist = SessionController().isTherapist;
-    final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
+  void _handlePayoutRequest() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || _pendingPayout <= 0) return;
 
     setState(() {
       _isPayoutRequesting = true;
     });
-    // Simulate minor network / authorization delay
-    Future.delayed(const Duration(milliseconds: 1200), () {
+
+    try {
+      final res = await LedgerService().requestPayout(uid);
+      final message = res['message'] ?? 'Payout successfully processed!';
       if (mounted) {
         setState(() {
           _isPayoutRequesting = false;
@@ -763,15 +770,24 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Payout of ₹399 successfully initiated to your linked UPI VPA payout address!',
+              message.toString(),
               style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
             ),
-            backgroundColor: brandColor,
+            backgroundColor: SafeTalkTheme.brandSage,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isPayoutRequesting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payout error: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildEarningsMetric(String label, String value, Color color) {

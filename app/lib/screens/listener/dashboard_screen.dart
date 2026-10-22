@@ -8,6 +8,7 @@ import 'messages_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/user_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/ledger_service.dart';
 
 class ListenerDashboardScreen extends StatefulWidget {
   final bool isOnline;
@@ -31,6 +32,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
   String _displayName = '';
   int _sessionsCount = 0;
   String _rating = '5.00';
+  double _totalEarned = 0.0;
 
   @override
   void initState() {
@@ -42,13 +44,19 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       final user = await UserService().getUser(uid);
-      if (user != null && mounted) {
+      final ledger = await LedgerService().getLedger(uid);
+      if (mounted) {
         setState(() {
-          _displayName = user.displayName;
-          final stats = user.listenerData?.stats;
-          if (stats != null) {
-            _sessionsCount = stats.minutesListened ~/ 10;
-            _rating = stats.rating.toStringAsFixed(2);
+          if (user != null) {
+            _displayName = user.displayName;
+            final stats = user.listenerData?.stats;
+            if (stats != null) {
+              _sessionsCount = stats.minutesListened ~/ 10;
+              _rating = stats.rating.toStringAsFixed(2);
+            }
+          }
+          if (ledger != null) {
+            _totalEarned = ledger['totalEarned'] ?? 0.0;
           }
         });
       }
@@ -157,7 +165,7 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             children: [
               Expanded(
                 child: _buildStatItem(
-                  '₹${_sessionsCount * 150}',
+                  '₹${_totalEarned.toStringAsFixed(0)}',
                   'Total Earnings',
                   Icons.payments_rounded,
                   brandColorLight,

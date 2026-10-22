@@ -18,7 +18,7 @@ async function runTest() {
     role: 'listener',
     listenerData: {
       isOnline: true,
-      languagesSpoken: ['English']
+      languagesSpoken: ['en']
     }
   });
   console.log(`Created listener: ${listenerId}`);

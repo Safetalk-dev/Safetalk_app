@@ -9,7 +9,8 @@ import '../../controllers/chat_controller.dart';
 import '../../services/listener_settings_service.dart';
 
 import '../../services/session_service.dart';
-import '../../services/vault_service.dart';
+import '../../services/chat_crypto_service.dart';
+import '../../models/session_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'voice_call_screen.dart';
 
@@ -40,7 +41,8 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
   Timer? _sessionTimer;
   
   final SessionService _sessionService = SessionService();
-  final VaultService _vaultService = VaultService();
+  String? _sessionKey;
+  StreamSubscription<SessionModel?>? _sessionModelSub;
 
   // Counselor Notes & Dialog Controls
   final TextEditingController _notesController = TextEditingController();
@@ -50,6 +52,15 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
   void initState() {
     super.initState();
     ChatController().addListener(_onChatControllerChanged);
+
+    // Listen to session document to acquire the per-session symmetric key (A2.5 - D-08)
+    _sessionModelSub = _sessionService.streamSession(widget.sessionId).listen((session) {
+      if (session != null && session.sessionKey != null && mounted) {
+        setState(() {
+          _sessionKey = session.sessionKey;
+        });
+      }
+    });
 
     if (widget.isSeeker) {
       ChatController().ensureUserThread(widget.partnerName);
@@ -82,6 +93,7 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
 
   @override
   void dispose() {
+    _sessionModelSub?.cancel();
     ChatController().removeListener(_onChatControllerChanged);
     _sessionTimer?.cancel();
     _messageController.dispose();
@@ -109,16 +121,30 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
   }
 
   void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
     final messageText = _messageController.text.trim();
-    _messageController.clear();
+    if (messageText.isEmpty) return;
 
+    final keyMaterial = _sessionKey ?? widget.sessionId;
     try {
-      final encryptedText = await _vaultService.encryptString(widget.sessionId, messageText);
+      final encryptedText = await ChatCryptoService().encryptMessage(messageText, keyMaterial);
       await _sessionService.sendMessage(widget.sessionId, encryptedText, widget.myUid);
+      _messageController.clear();
       _scrollToBottom();
     } catch (e) {
-      debugPrint('Encryption error: $e');
+      debugPrint('Error sending encrypted message: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message: $e', style: SafeTalkTheme.bodyStyle(color: Colors.white)),
+            backgroundColor: SafeTalkTheme.brandTerracotta,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _sendMessage,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -738,7 +764,7 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
                       return Center(child: CircularProgressIndicator());
                     }
 
-                    final _messages = snapshot.data!;
+                    final messages = snapshot.data!;
                     
                     // Schedule scroll to bottom when new messages arrive
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -751,9 +777,9 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
                       controller: _scrollController,
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      itemCount: _messages.length,
+                      itemCount: messages.length,
                       itemBuilder: (context, index) {
-                        final msg = _messages[index];
+                        final msg = messages[index];
                         final isMe = msg['senderId'] == widget.myUid;
 
                         // Asymmetric borders
@@ -798,9 +824,12 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
                                         : Border.all(color: SafeTalkTheme.borderSage, width: 1.2),
                                   ),
                                   child: FutureBuilder<String>(
-                                    future: _vaultService.decryptString(widget.sessionId, msg['text'] ?? ''),
+                                    future: ChatCryptoService().decryptMessage(
+                                      msg['text'] ?? '',
+                                      _sessionKey ?? widget.sessionId,
+                                    ),
                                     builder: (context, decSnapshot) {
-                                      final decText = decSnapshot.hasData ? decSnapshot.data! : (decSnapshot.hasError ? 'Decrypt Error' : '...');
+                                      final decText = decSnapshot.hasData ? decSnapshot.data! : (decSnapshot.hasError ? '[Unable to decrypt]' : '...');
                                       return Text(
                                         decText,
                                         style: SafeTalkTheme.bodyStyle(
@@ -1177,8 +1206,8 @@ class _SessionChatScreenState extends State<SessionChatScreen> {
               const SizedBox(height: 4),
               Text(
                 widget.isSeeker
-                    ? 'Your private, encrypted reflections and journals for this session.'
-                    : 'Confidential records related to ${activeThread['name']}. These notes are stored locally and encrypted.',
+                    ? 'Your private reflections and journals for this session.'
+                    : 'Confidential records related to ${activeThread['name']}. These notes are stored locally in your personal vault.',
                 style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
               ),
               const SizedBox(height: 12),

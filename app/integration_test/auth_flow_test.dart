@@ -1,9 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:app/main.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:app/firebase_options.dart';
 
 // Note: To run this test properly, a Firebase Emulator Suite should be configured
 // or the Google Services JSON/PLIST must be present on the target device.

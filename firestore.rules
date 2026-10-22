@@ -15,15 +15,50 @@ service cloud.firestore {
 
     // SESSIONS COLLECTION
     match /sessions/{sessionId} {
+      function isParticipant() {
+        return request.auth != null &&
+          (resource.data.seekerId == request.auth.uid || resource.data.listenerId == request.auth.uid);
+      }
+
+      function immutableFieldsPreserved() {
+        return request.resource.data.seekerId == resource.data.seekerId &&
+          (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt) &&
+          (!('listenerId' in resource.data) || resource.data.listenerId == null || !('listenerId' in request.resource.data) || request.resource.data.listenerId == resource.data.listenerId);
+      }
+
+      function validStatusTransition() {
+        let currentStatus = resource.data.status;
+        let nextStatus = request.resource.data.status;
+
+        // Clients can NEVER set active status directly (server-authoritative via webhook)
+        return nextStatus != "active" && (
+          // Status unchanged (updating metadata, notes, ratings)
+          nextStatus == currentStatus ||
+          // Terminal states are irreversible
+          (currentStatus in ["completed", "cancelled", "rejected", "timeout"] ? nextStatus == currentStatus : (
+            // Listener accepts pending session
+            (currentStatus == "pending" && nextStatus == "payment_pending" && (request.auth.uid == resource.data.listenerId || request.auth.uid == request.resource.data.listenerId)) ||
+            // Seeker cancels pending or payment_pending session
+            ((currentStatus == "pending" || currentStatus == "payment_pending") && nextStatus == "cancelled" && request.auth.uid == resource.data.seekerId) ||
+            // Either participant ends active session
+            (currentStatus == "active" && nextStatus == "completed")
+          ))
+        );
+      }
+
       // Only the participants (Seeker or Listener) can read the session data
-      allow read: if request.auth != null && 
-                  (resource.data.seekerId == request.auth.uid || resource.data.listenerId == request.auth.uid);
+      allow read: if isParticipant();
                   
-      // Allow creation if the seeker or listener is creating it, allow updates if they are participants
+      // Only the seeker can initiate a session request with initial status 'pending'
       allow create: if request.auth != null && 
-                    (request.resource.data.seekerId == request.auth.uid || request.resource.data.listenerId == request.auth.uid);
-      allow update, delete: if request.auth != null && 
-                    (resource.data.seekerId == request.auth.uid || resource.data.listenerId == request.auth.uid);
+                    request.resource.data.seekerId == request.auth.uid &&
+                    request.resource.data.status == "pending";
+
+      // Updates are strictly constrained: only participants, immutable fields preserved, valid transitions
+      allow update: if isParticipant() && immutableFieldsPreserved() && validStatusTransition();
+
+      // Clients cannot delete session documents
+      allow delete: if false;
 
       // MESSAGES SUBCOLLECTION
       match /messages/{messageId} {
@@ -39,6 +74,16 @@ service cloud.firestore {
       // Listeners can read their own ledger details, but cannot write directly (handled by Cloud Functions)
       allow read: if request.auth != null && request.auth.uid == listenerId;
       allow write: if false;
+
+      match /payouts/{payoutId} {
+        allow read: if request.auth != null && request.auth.uid == listenerId;
+        allow write: if false;
+      }
+
+      match /transactions/{transactionId} {
+        allow read: if request.auth != null && request.auth.uid == listenerId;
+        allow write: if false;
+      }
     }
   }
 }

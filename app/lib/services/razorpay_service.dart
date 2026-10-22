@@ -7,6 +7,13 @@ class RazorpayService {
   factory RazorpayService() => _instance;
   RazorpayService._internal();
 
+  /// Optional override for testing or runtime configuration.
+  static String? keyOverride;
+  static const String _defaultKeyId = String.fromEnvironment('RAZORPAY_KEY_ID', defaultValue: '');
+
+  /// Returns the configured Razorpay Key ID (via --dart-define=RAZORPAY_KEY_ID=... or keyOverride).
+  static String get activeKeyId => keyOverride ?? _defaultKeyId;
+
   late Razorpay _razorpay;
   bool _isInitialized = false;
 
@@ -58,8 +65,13 @@ class RazorpayService {
       return;
     }
 
+    final key = activeKeyId;
+    if (key.isEmpty) {
+      debugPrint('RazorpayService: RAZORPAY_KEY_ID is not configured. Provide it via --dart-define=RAZORPAY_KEY_ID=... or set RazorpayService.keyOverride.');
+    }
+
     final options = {
-      'key': 'rzp_test_demoKeySafeTalk', // Standard sandbox API key for development/demo
+      'key': key,
       'amount': amountInRupees * 100, // Razorpay takes amount in sub-units (paisa: ₹150 = 15000)
       'name': 'SafeTalk Care Sessions',
       'description': description,

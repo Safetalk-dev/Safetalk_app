@@ -3,6 +3,7 @@ class UserModel {
   final String email;
   final String displayName;
   final String role;
+  final bool profileComplete;
   final SeekerData? seekerData;
   final ListenerData? listenerData;
 
@@ -11,16 +12,20 @@ class UserModel {
     required this.email,
     required this.displayName,
     required this.role,
+    this.profileComplete = true,
     this.seekerData,
     this.listenerData,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final role = json['role'] as String? ?? '';
+    final hasCompletedProfile = json['profileComplete'] as bool? ?? (role.isNotEmpty && role != 'pending');
     return UserModel(
       uid: json['uid'] as String? ?? '',
       email: json['email'] as String? ?? '',
       displayName: json['displayName'] as String? ?? '',
-      role: json['role'] as String? ?? 'user',
+      role: role.isNotEmpty ? role : 'user',
+      profileComplete: hasCompletedProfile,
       seekerData: json['seekerData'] != null
           ? SeekerData.fromJson(json['seekerData'] as Map<String, dynamic>)
           : null,
@@ -36,6 +41,7 @@ class UserModel {
       'email': email,
       'displayName': displayName,
       'role': role,
+      'profileComplete': profileComplete,
       if (seekerData != null) 'seekerData': seekerData!.toJson(),
       if (listenerData != null) 'listenerData': listenerData!.toJson(),
     };
