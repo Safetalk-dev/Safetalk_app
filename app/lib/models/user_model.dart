@@ -19,7 +19,9 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final role = json['role'] as String? ?? '';
-    final hasCompletedProfile = json['profileComplete'] as bool? ?? (role.isNotEmpty && role != 'pending');
+    final hasCompletedProfile =
+        json['profileComplete'] as bool? ??
+        (role.isNotEmpty && role != 'pending');
     return UserModel(
       uid: json['uid'] as String? ?? '',
       email: json['email'] as String? ?? '',
@@ -62,11 +64,13 @@ class SeekerData {
   factory SeekerData.fromJson(Map<String, dynamic> json) {
     return SeekerData(
       walletBalance: (json['walletBalance'] as num?)?.toDouble() ?? 0.0,
-      preferredLanguages: (json['preferredLanguages'] as List<dynamic>?)
+      preferredLanguages:
+          (json['preferredLanguages'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
-      safeCircle: (json['safeCircle'] as List<dynamic>?)
+      safeCircle:
+          (json['safeCircle'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -103,11 +107,13 @@ class ListenerData {
     return ListenerData(
       isOnline: json['isOnline'] as bool? ?? false,
       status: json['status'] as String? ?? 'offline',
-      languagesSpoken: (json['languagesSpoken'] as List<dynamic>?)
+      languagesSpoken:
+          (json['languagesSpoken'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
-      specialties: (json['specialties'] as List<dynamic>?)
+      specialties:
+          (json['specialties'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -134,10 +140,7 @@ class ListenerStats {
   final double rating;
   final int minutesListened;
 
-  ListenerStats({
-    required this.rating,
-    required this.minutesListened,
-  });
+  ListenerStats({required this.rating, required this.minutesListened});
 
   factory ListenerStats.fromJson(Map<String, dynamic> json) {
     return ListenerStats(
@@ -147,9 +150,6 @@ class ListenerStats {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'rating': rating,
-      'minutesListened': minutesListened,
-    };
+    return {'rating': rating, 'minutesListened': minutesListened};
   }
 }

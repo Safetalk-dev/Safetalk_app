@@ -6,13 +6,12 @@ class LedgerService {
   final FirebaseFirestore _firestore;
   final FirebaseFunctions? _functions;
 
-  LedgerService({
-    FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions;
+  LedgerService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _functions = functions;
 
-  FirebaseFunctions get _functionsInstance => _functions ?? FirebaseFunctions.instance;
+  FirebaseFunctions get _functionsInstance =>
+      _functions ?? FirebaseFunctions.instance;
 
   /// Helper to safely convert Firestore Timestamp or ISO string to DateTime
   DateTime? _parseDate(dynamic val) {
@@ -28,8 +27,12 @@ class LedgerService {
       if (!doc.exists || doc.data() == null) return null;
       final data = doc.data()!;
       return {
-        'pendingPayout': (data['pendingPayout'] is num) ? (data['pendingPayout'] as num).toDouble() : 0.0,
-        'totalEarned': (data['totalEarned'] is num) ? (data['totalEarned'] as num).toDouble() : 0.0,
+        'pendingPayout': (data['pendingPayout'] is num)
+            ? (data['pendingPayout'] as num).toDouble()
+            : 0.0,
+        'totalEarned': (data['totalEarned'] is num)
+            ? (data['totalEarned'] as num).toDouble()
+            : 0.0,
         'lastPayoutAt': _parseDate(data['lastPayoutAt']),
         'updatedAt': _parseDate(data['updatedAt']),
       };
@@ -42,8 +45,12 @@ class LedgerService {
     if (!doc.exists || doc.data() == null) return null;
     final data = doc.data()!;
     return {
-      'pendingPayout': (data['pendingPayout'] is num) ? (data['pendingPayout'] as num).toDouble() : 0.0,
-      'totalEarned': (data['totalEarned'] is num) ? (data['totalEarned'] as num).toDouble() : 0.0,
+      'pendingPayout': (data['pendingPayout'] is num)
+          ? (data['pendingPayout'] as num).toDouble()
+          : 0.0,
+      'totalEarned': (data['totalEarned'] is num)
+          ? (data['totalEarned'] as num).toDouble()
+          : 0.0,
       'lastPayoutAt': _parseDate(data['lastPayoutAt']),
       'updatedAt': _parseDate(data['updatedAt']),
     };
@@ -58,20 +65,23 @@ class LedgerService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return {
-          'id': doc.id,
-          'type': data['type'] as String? ?? 'credit',
-          'amount': (data['amount'] is num) ? (data['amount'] as num).toDouble() : 0.0,
-          'description': data['description'] as String? ?? 'Session Settlement',
-          'timestamp': _parseDate(data['timestamp']),
-          'sessionId': data['sessionId'] as String?,
-          'durationMinutes': data['durationMinutes'] as int?,
-          'status': data['status'] as String? ?? 'completed',
-        };
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'id': doc.id,
+              'type': data['type'] as String? ?? 'credit',
+              'amount': (data['amount'] is num)
+                  ? (data['amount'] as num).toDouble()
+                  : 0.0,
+              'description':
+                  data['description'] as String? ?? 'Session Settlement',
+              'timestamp': _parseDate(data['timestamp']),
+              'sessionId': data['sessionId'] as String?,
+              'durationMinutes': data['durationMinutes'] as int?,
+              'status': data['status'] as String? ?? 'completed',
+            };
+          }).toList();
+        });
   }
 
   /// Initiates a verified settlement of the current pending balance via Cloud Functions

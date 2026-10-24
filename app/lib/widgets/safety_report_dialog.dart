@@ -3,7 +3,8 @@ import '../theme/tokens.dart';
 
 class SafetyReportDialog extends StatefulWidget {
   final String targetName;
-  final bool isReportingListener; // true if seeker reporting listener, false if listener reporting seeker
+  final bool
+  isReportingListener; // true if seeker reporting listener, false if listener reporting seeker
   final Function(String reason, String details) onSubmit;
 
   const SafetyReportDialog({
@@ -35,7 +36,8 @@ class SafetyReportDialog extends StatefulWidget {
 
 class _SafetyReportDialogState extends State<SafetyReportDialog> {
   late String _selectedReason;
-  final TextEditingController _reasonDetailsController = TextEditingController();
+  final TextEditingController _reasonDetailsController =
+      TextEditingController();
 
   final List<String> _listenerReasons = [
     'Boundary violation / Personal questions',
@@ -69,8 +71,12 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final reasons = widget.isReportingListener ? _listenerReasons : _seekerReasons;
-    final titleText = widget.isReportingListener ? 'Report Peer Companion' : 'File Confidential Report';
+    final reasons = widget.isReportingListener
+        ? _listenerReasons
+        : _seekerReasons;
+    final titleText = widget.isReportingListener
+        ? 'Report Peer Companion'
+        : 'File Confidential Report';
     final descriptionText = widget.isReportingListener
         ? 'Filing a report against ${widget.targetName} is completely confidential. It triggers an automatic review of recent chat transcripts and calls by our clinical support coordinators.'
         : 'We take peer boundaries and safety seriously. Filing a report against ${widget.targetName} will encrypt the chat history and trigger an immediate review by our clinical oversight team.';
@@ -88,12 +94,18 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.security_rounded, color: SafeTalkTheme.brandGold, size: 24),
+                  const Icon(
+                    Icons.security_rounded,
+                    color: SafeTalkTheme.brandGold,
+                    size: 24,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       titleText,
-                      style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                      style: SafeTalkTheme.headingStyle(
+                        color: SafeTalkTheme.textPrimary,
+                      ).copyWith(fontSize: 18),
                     ),
                   ),
                 ],
@@ -101,12 +113,17 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
               const SizedBox(height: 12),
               Text(
                 descriptionText,
-                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(height: 1.4),
+                style: SafeTalkTheme.captionStyle(
+                  color: SafeTalkTheme.textSecondary,
+                ).copyWith(height: 1.4),
               ),
               const SizedBox(height: 20),
               Text(
                 'Select Reason',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 13),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                  bold: true,
+                ).copyWith(fontSize: 13),
               ),
               const SizedBox(height: 8),
               Container(
@@ -121,7 +138,9 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
                     value: _selectedReason,
                     isExpanded: true,
                     dropdownColor: SafeTalkTheme.cardBg,
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                    ),
                     items: reasons.map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -141,26 +160,39 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
               const SizedBox(height: 16),
               Text(
                 'Supporting Details',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 13),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                  bold: true,
+                ).copyWith(fontSize: 13),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _reasonDetailsController,
                 maxLines: 3,
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Describe what happened in detail...',
-                  hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                  hintStyle: SafeTalkTheme.bodyStyle(
+                    color: SafeTalkTheme.textMuted,
+                  ),
                   filled: true,
                   fillColor: SafeTalkTheme.bgMidnight,
                   contentPadding: const EdgeInsets.all(12),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: SafeTalkTheme.standardRadius,
-                    borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1),
+                    borderSide: const BorderSide(
+                      color: SafeTalkTheme.borderSage,
+                      width: 1,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: SafeTalkTheme.standardRadius,
-                    borderSide: const BorderSide(color: SafeTalkTheme.brandSage, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: SafeTalkTheme.brandSage,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -172,7 +204,10 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       'Cancel',
-                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary, bold: true),
+                      style: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.textSecondary,
+                        bold: true,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -180,17 +215,25 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SafeTalkTheme.brandGold,
                       foregroundColor: SafeTalkTheme.bgMidnight,
-                      shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.pillRadius),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: SafeTalkTheme.pillRadius,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                     onPressed: () {
                       Navigator.pop(context);
-                      
+
                       // 1. Input sanitization (Task 3.1): Strip HTML/JS tags
                       final rawInput = _reasonDetailsController.text;
                       final cleanInput = rawInput
                           .replaceAll(RegExp(r'<[^>]*>'), '')
-                          .replaceAll(RegExp(r'javascript:', caseSensitive: false), '')
+                          .replaceAll(
+                            RegExp(r'javascript:', caseSensitive: false),
+                            '',
+                          )
                           .trim();
 
                       // 2. Anonymization Transient Model (Task 3.3): Strip PII / Monikers
@@ -200,9 +243,9 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
                         reason: _selectedReason,
                         details: cleanInput,
                       );
-                      
+
                       final safeData = reportModel.toSafeJson();
-                      
+
                       widget.onSubmit(
                         safeData['reason'] as String,
                         safeData['details'] as String,
@@ -210,7 +253,10 @@ class _SafetyReportDialogState extends State<SafetyReportDialog> {
                     },
                     child: Text(
                       'Submit Report',
-                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                      style: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.bgMidnight,
+                        bold: true,
+                      ),
                     ),
                   ),
                 ],
@@ -239,20 +285,30 @@ class TransientReportModel {
   /// Strips PII, monikers, and real names before serializing/routing
   Map<String, dynamic> toSafeJson() {
     // Anonymize target name using deterministic hash to protect identities
-    final String safeTarget = isReportingListener 
-        ? 'Companion_ID_${targetName.hashCode}' 
+    final String safeTarget = isReportingListener
+        ? 'Companion_ID_${targetName.hashCode}'
         : 'Seeker_ID_${targetName.hashCode}';
 
     String safeDetails = details;
-    
+
     // List of common PII identifiers and monikers to strip dynamically
     final List<String> piiWords = [
-      'logan', 'amber', 'liam', 'sophia', 'devon',
-      'phone', 'email', 'address', 'identity',
+      'logan',
+      'amber',
+      'liam',
+      'sophia',
+      'devon',
+      'phone',
+      'email',
+      'address',
+      'identity',
     ];
-    
+
     for (final pii in piiWords) {
-      safeDetails = safeDetails.replaceAll(RegExp(pii, caseSensitive: false), '[REDACTED_PII]');
+      safeDetails = safeDetails.replaceAll(
+        RegExp(pii, caseSensitive: false),
+        '[REDACTED_PII]',
+      );
     }
 
     return {

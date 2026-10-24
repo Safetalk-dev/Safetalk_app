@@ -175,4 +175,43 @@ describe("SafeTalk Firestore Security Rules", () => {
       await assertFails(db.collection("sessions").doc("session1").delete());
     });
   });
+
+  describe("Notifications & Mood Subcollections (A4.1, A4.5)", () => {
+    it("allows a user to read and write their own notifications", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      const db = alice.firestore();
+      const notifRef = db.collection("users").doc("alice").collection("notifications").doc("notif1");
+
+      await assertSucceeds(notifRef.set({ title: "Alert", body: "Hello", read: false }));
+      await assertSucceeds(notifRef.get());
+      await assertSucceeds(notifRef.update({ read: true }));
+      await assertSucceeds(notifRef.delete());
+    });
+
+    it("denies another user from reading or writing a user's notifications", async () => {
+      const bob = testEnv.authenticatedContext("bob");
+      const db = bob.firestore();
+      const notifRef = db.collection("users").doc("alice").collection("notifications").doc("notif1");
+
+      await assertFails(notifRef.get());
+      await assertFails(notifRef.set({ title: "Sneaky" }));
+    });
+
+    it("allows a user to read and write their own mood check-ins", async () => {
+      const alice = testEnv.authenticatedContext("alice");
+      const db = alice.firestore();
+      const moodRef = db.collection("users").doc("alice").collection("mood_checkins").doc("mood1");
+
+      await assertSucceeds(moodRef.set({ score: 7.0, graphScore: 0.7 }));
+      await assertSucceeds(moodRef.get());
+    });
+
+    it("denies another user from reading a user's mood check-ins", async () => {
+      const bob = testEnv.authenticatedContext("bob");
+      const db = bob.firestore();
+      const moodRef = db.collection("users").doc("alice").collection("mood_checkins").doc("mood1");
+
+      await assertFails(moodRef.get());
+    });
+  });
 });

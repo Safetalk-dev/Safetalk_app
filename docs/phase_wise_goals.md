@@ -1,48 +1,47 @@
 # Phase-Wise Goals: SafeTalk Development Roadmap
 
-This document outlines the phase-wise development milestones to build, test, and ship SafeTalk over multiple sessions. Each phase contains distinct, actionable items.
+This document outlines the phase-wise development milestones and current verification baseline for SafeTalk. Items are marked completed only when verified by automated tests or live deployment.
 
 ---
 
-## Phase 1: Local Backend & Emulator Setup (Days 1–4)
-*   **Goal**: Establish a fully verified, sandbox development environment where the Flutter client communicates seamlessly with local Firebase Emulators.
-*   **Tasks**:
-    *   [x] Initialize Local Firebase Emulators (Auth, Firestore, Cloud Functions).
-    *   [x] Configure Firestore Security Rules inside [firestore.rules](file:///e:/Coding/safe_talk/firestore.rules) to cover the `messages` and `ledgers` collections.
-    *   [x] Add index declarations inside [firestore.indexes.json](file:///e:/Coding/safe_talk/firestore.indexes.json) to support listener language queries.
-    *   [x] Inject conditional emulator initialization code inside [main.dart](file:///e:/Coding/safe_talk/app/lib/main.dart).
-    *   [x] Configure local function keys inside `firebase/functions/.env.local` using dummy tokens.
-    *   [x] Execute rules and triggers unit tests using Jest:
-        ```bash
-        cd firebase/functions && npm test
-        ```
+## Phase 1: Local Backend & Emulator Setup (Verified)
+*   **Goal**: Establish a fully verified development environment where the Flutter client communicates seamlessly with Firebase Emulators and local test suites.
+*   **Tasks & Verification**:
+    *   [x] **Firebase Emulators Configuration**: Auth, Firestore, and Cloud Functions emulators configured in `firebase.json`.
+    *   [x] **Firestore Security Rules**: Rules in [firestore.rules](file:///d:/Coding/safe_talk/firestore.rules) covering `users`, `sessions`, `messages`, `ledgers`, `transactions`, `notifications`, and `mood_checkins`. Verified via automated rules tests.
+    *   [x] **Index Declarations**: Composite indexes declared in [firestore.indexes.json](file:///d:/Coding/safe_talk/firestore.indexes.json) for listener queries, session histories, and ledger audits.
+    *   [x] **Conditional Emulator Wiring**: Emulator connection logic wired into [main.dart](file:///d:/Coding/safe_talk/app/lib/main.dart).
+    *   [x] **Local Secrets & Env**: Functions secrets defined with fallback support.
 
 ---
 
-## Phase 2: Live Feature Integrations (Days 5–7)
-*   **Goal**: Move the application from simulated mocks to live API integrations.
-*   **Tasks**:
-    *   [x] **Agora RTC Integration**: Connect [VoiceCallScreen](file:///e:/Coding/safe_talk/app/lib/screens/shared/voice_call_screen.dart) to the token generation backend.
-    *   [x] **Razorpay Standard Checkout**: Wire [RazorpayService](file:///e:/Coding/safe_talk/app/lib/services/razorpay_service.dart) to client checkout screens.
-    *   [x] **Webhook Handling**: Setup a Firestore listener/webhook receiver function to handle successful checkouts robustly.
-    *   [x] **Firebase Cloud Messaging (FCM)**: Configure push notifications for new message notifications and incoming voice call invitations.
+## Phase 2: Core Loop & Live API Integrations (Verified)
+*   **Goal**: Transition from simulated mocks to live, server-authoritative API integrations and cryptographically sound mechanisms.
+*   **Tasks & Verification**:
+    *   [x] **Autonomous Matching & Role Router**: Implemented server-side language filtering in `autoMatchSession` with dynamic ISO language matching. Verified via [matching_flow_test.dart](file:///d:/Coding/safe_talk/app/test/matching_flow_test.dart).
+    *   [x] **Server-Authoritative Payment**: Razorpay HMAC signature verification via `razorpayWebhook`; status activation restricted to webhook; client revival and client activation denied by security rules. Verified via [regression_test.dart](file:///d:/Coding/safe_talk/app/test/regression_test.dart).
+    *   [x] **Agora RTC Voice Integration**: [VoiceCallScreen](file:///d:/Coding/safe_talk/app/lib/screens/shared/voice_call_screen.dart) connected to `generateAgoraToken` Cloud Function.
+    *   [x] **Messaging & Diary Cryptography**: Zero-knowledge PBKDF2/AES-GCM for Diary Vault; per-session AES-256-GCM with authenticated MACs for chat messages. Verified via [chat_crypto_service_test.dart](file:///d:/Coding/safe_talk/app/test/services/chat_crypto_service_test.dart) and [vault_service_test.dart](file:///d:/Coding/safe_talk/app/test/services/vault_service_test.dart).
+    *   [x] **Full Ledger Financial Model**: Real duration calculation (`completedAt - startedAt`), ₹5/min rate, atomic balance increments, transaction audit trail, and client ledger streaming in [TransactionsScreen](file:///d:/Coding/safe_talk/app/lib/screens/listener/transactions_screen.dart). Verified via [ledger_service_test.dart](file:///d:/Coding/safe_talk/app/test/services/ledger_service_test.dart).
+    *   [x] **FCM Push Notification Handling**: Background handler entry-point, Android high-importance channel, initial message click, and session deep-linking.
+    *   [x] **Google SSO Error Handling**: Silent cancellation, Code 10 diagnostic scripts, and server client ID override. Verified via [auth_service_test.dart](file:///d:/Coding/safe_talk/app/test/services/auth_service_test.dart).
 
 ---
 
-## Phase 3: CI/CD & Play Store Deployment Pipeline (Days 8–10)
-*   **Goal**: Setup automated workflows to build, sign, test, and upload the application continuously.
-*   **Tasks**:
-    *   [x] **Flutter GitHub Actions Workflow**: Configure builds for linting, testing, and compile outputs (`.aab` and `.apk`).
-    *   [x] **Firebase GitHub Actions Workflow**: Setup automatic security rules and functions deployment on pushes to `main`.
-    *   [x] **Fastlane Setup**: Link Fastlane with the Google Play Developer API using Service Account JSON credentials.
-    *   [x] **Closed Testing Run**: Distribute the signed app bundle to a selected internal tester group.
+## Phase 3: CI/CD & Play Store Deployment Pipeline (Repaired & Staged)
+*   **Goal**: Automated GitHub Actions workflows to build, sign, test, and package the application continuously.
+*   **Tasks & Verification**:
+    *   [x] **Flutter CI/CD Workflow**: [flutter_ci.yml](file:///d:/Coding/safe_talk/.github/workflows/flutter_ci.yml) repaired (aligned Dart SDK ^3.11.5, `dart format`, `flutter analyze` with 0 issues, 44 unit tests passing, base64 secret decoding, clean heredocs, and release `.aab` compilation).
+    *   [x] **Firebase CI/CD Workflow**: [firebase_ci.yml](file:///d:/Coding/safe_talk/.github/workflows/firebase_ci.yml) updated to Node 22, Java 21, and locked npm dependencies.
+    *   [x] **Fastlane Android Setup**: Metadata and lanes scaffolded under `app/android/fastlane/`.
+    *   [ ] **Closed Testing Run**: Distribute signed bundle to closed internal testing track on Google Play Console (awaiting repository secret population).
 
 ---
 
-## Phase 4: Listing Compliance & Launch Submission (Days 11–14)
-*   **Goal**: Satisfy store verification policies, deploy the backend to production, and submit for Google review.
-*   **Tasks**:
-    *   [x] **Secret Configuration**: Bind production secret keys to live Firebase Cloud Functions (Agora ID, Agora Certificate, Razorpay Keys) using GCP Secret Manager. See [secret_binding_guide.md](file:///e:/Coding/safe_talk/docs/secret_binding_guide.md).
-    *   [x] **Google Play Listing Assets**: Upload final app icons, promotional banners, policy documents, and screenshots. Fastlane metadata scaffolded under `app/android/fastlane/metadata/`.
-    *   [x] **Store Submission**: Fastlane `production` lane configured for staged rollout. Privacy Policy and Terms of Service created under `docs/`.
-
+## Phase 4: Listing Compliance & Launch Submission (Pending Secrets & Review)
+*   **Goal**: Satisfy store verification policies, bind production secrets in GCP Secret Manager, and submit for Google review.
+*   **Tasks & Status**:
+    *   [x] **Secret Configuration Guide**: Comprehensive binding guide in [secret_binding_guide.md](file:///d:/Coding/safe_talk/docs/secret_binding_guide.md) for Agora credentials, Razorpay keys, and SHA-1 keystore fingerprints.
+    *   [x] **Gating of Simulation Paths**: Biometric bypass, demo payment bypass, and simulate buttons safely gated behind `kDebugMode` for release builds.
+    *   [ ] **Production Secret Deployment**: Run `firebase functions:secrets:set` on live project with production API keys.
+    *   [ ] **Google Play Console Release**: Upload release bundle `app-release.aab` and complete store review submission.

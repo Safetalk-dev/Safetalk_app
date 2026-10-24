@@ -76,14 +76,14 @@ class VaultService {
   /// Initializes the vault by creating a salt and deriving the initial key.
   Future<void> initializeVault(String pin) async {
     _ensureDataDirExists();
-    
+
     // 1. Generate unique random 256-bit salt
     final salt = _generateRandomBytes(32);
-    
+
     // 2. Save metadata (salt) in cleartext
-    await _metadataFile.writeAsString(jsonEncode({
-      'salt_base64': base64Encode(salt),
-    }));
+    await _metadataFile.writeAsString(
+      jsonEncode({'salt_base64': base64Encode(salt)}),
+    );
 
     // 3. Encrypt an empty notes map initially
     await saveNotes(pin, {});
@@ -93,12 +93,12 @@ class VaultService {
   Future<SecretKey> _deriveKey(String pin, List<int> salt) async {
     final pinBytes = utf8.encode(pin);
     final secretKey = SecretKey(pinBytes);
-    
+
     final derivedKeyBytes = await _pbkdf2.deriveKey(
       secretKey: secretKey,
       nonce: salt,
     );
-    
+
     return derivedKeyBytes;
   }
 
@@ -117,7 +117,7 @@ class VaultService {
       if (!_notesFile.existsSync()) {
         return {};
       }
-      
+
       final encryptedData = jsonDecode(await _notesFile.readAsString());
       final ciphertext = base64Decode(encryptedData['ciphertext'] as String);
       final nonce = base64Decode(encryptedData['nonce'] as String);
@@ -127,11 +127,7 @@ class VaultService {
       final secretKey = await _deriveKey(pin, salt);
 
       // 4. Decrypt via AES-GCM (verifying MAC tag dynamically)
-      final secretBox = SecretBox(
-        ciphertext,
-        nonce: nonce,
-        mac: Mac(mac),
-      );
+      final secretBox = SecretBox(ciphertext, nonce: nonce, mac: Mac(mac));
 
       final cleartextBytes = await _aesGcm.decrypt(
         secretBox,
@@ -140,7 +136,7 @@ class VaultService {
 
       final cleartext = utf8.decode(cleartextBytes);
       final Map<String, dynamic> decoded = jsonDecode(cleartext);
-      
+
       return decoded.map((key, value) => MapEntry(key, value.toString()));
     } catch (e) {
       // wrong PIN naturally fails GCM auth tag check
@@ -151,12 +147,12 @@ class VaultService {
   /// Encrypts and saves notes under the user PIN
   Future<void> saveNotes(String pin, Map<String, String> notes) async {
     _ensureDataDirExists();
-    
+
     // 1. Read salt
     if (!_metadataFile.existsSync()) {
       throw CryptographicException('Vault not initialized. Cannot save.');
     }
-    
+
     final metadata = jsonDecode(await _metadataFile.readAsString());
     final salt = base64Decode(metadata['salt_base64'] as String);
 
@@ -175,21 +171,23 @@ class VaultService {
     );
 
     // 4. Write base64 encrypted payload (ciphertext, nonce, mac authentication tag)
-    await _notesFile.writeAsString(jsonEncode({
-      'ciphertext': base64Encode(secretBox.cipherText),
-      'nonce': base64Encode(secretBox.nonce),
-      'mac': base64Encode(secretBox.mac.bytes),
-    }));
+    await _notesFile.writeAsString(
+      jsonEncode({
+        'ciphertext': base64Encode(secretBox.cipherText),
+        'nonce': base64Encode(secretBox.nonce),
+        'mac': base64Encode(secretBox.mac.bytes),
+      }),
+    );
   }
 
   /// Wipes notes and metadata securely
   Future<void> wipeAndResetVault() async {
     _ensureDataDirExists();
-    
+
     if (_metadataFile.existsSync()) {
       _metadataFile.deleteSync();
     }
-    
+
     if (_notesFile.existsSync()) {
       _notesFile.deleteSync();
     }
@@ -205,11 +203,11 @@ class VaultService {
   /// Encrypts a generic string using the user's PIN
   Future<String> encryptString(String pin, String plaintext) async {
     _ensureDataDirExists();
-    
+
     if (!_metadataFile.existsSync()) {
       throw CryptographicException('Vault not initialized.');
     }
-    
+
     final metadata = jsonDecode(await _metadataFile.readAsString());
     final salt = base64Decode(metadata['salt_base64'] as String);
     final secretKey = await _deriveKey(pin, salt);
@@ -247,11 +245,7 @@ class VaultService {
 
       final secretKey = await _deriveKey(pin, salt);
 
-      final secretBox = SecretBox(
-        ciphertext,
-        nonce: nonce,
-        mac: Mac(mac),
-      );
+      final secretBox = SecretBox(ciphertext, nonce: nonce, mac: Mac(mac));
 
       final cleartextBytes = await _aesGcm.decrypt(
         secretBox,

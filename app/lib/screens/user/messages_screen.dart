@@ -18,7 +18,7 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
   void initState() {
     super.initState();
     ChatController().addListener(_onChatControllerChanged);
-    
+
     // Pre-open a specific thread if provided
     if (widget.initialChatPartner != null) {
       ChatController().markUserThreadRead(widget.initialChatPartner!);
@@ -30,7 +30,9 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
           orElse: () => threads.isNotEmpty ? threads[0] : <String, dynamic>{},
         );
         if (thread.isNotEmpty) {
-          final isActive = thread['status'].toString().toLowerCase().contains('active');
+          final isActive = thread['status'].toString().toLowerCase().contains(
+            'active',
+          );
           if (isActive) {
             Navigator.push(
               context,
@@ -79,16 +81,17 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: SafeTalkTheme.textPrimary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: SafeTalkTheme.textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Container(
         decoration: SafeTalkTheme.ambientBackground,
-        child: SafeArea(
-          bottom: false,
-          child: _buildThreadListView(),
-        ),
+        child: SafeArea(bottom: false, child: _buildThreadListView()),
       ),
     );
   }
@@ -102,14 +105,16 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
         children: [
           Text(
             'Safe Channels',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 6),
           Text(
             'All conversations are double-encrypted and deleted after 30 days.',
             style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
           ),
-          
+
           const SizedBox(height: 24),
 
           // Search thread mockup
@@ -122,14 +127,22 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search, color: SafeTalkTheme.textSecondary, size: 20),
+                const Icon(
+                  Icons.search,
+                  color: SafeTalkTheme.textSecondary,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Search encrypted channels...',
-                      hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                      hintStyle: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.textMuted,
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -155,7 +168,10 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
                             decoration: BoxDecoration(
                               color: SafeTalkTheme.cardBg,
                               shape: BoxShape.circle,
-                              border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                              border: Border.all(
+                                color: SafeTalkTheme.borderSage,
+                                width: 1.5,
+                              ),
                             ),
                             child: const Icon(
                               Icons.chat_bubble_outline_rounded,
@@ -166,13 +182,17 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
                           const SizedBox(height: 20),
                           Text(
                             'No Active Channels',
-                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                            style: SafeTalkTheme.headingStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ).copyWith(fontSize: 18),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Connect with a companion from Explore to begin private, encrypted conversations.',
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textSecondary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -187,129 +207,148 @@ class _UserMessagesScreenState extends State<UserMessagesScreen> {
                       return Padding(
                         key: ValueKey(thread['name']),
                         padding: const EdgeInsets.only(bottom: 16.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      ChatController().markUserThreadRead(thread['name']);
-                      final isActive = thread['status'].toString().toLowerCase().contains('active');
-                      if (isActive) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SessionChatScreen(
-                              sessionId: thread['id'] ?? '',
-                              myUid: SessionController().firebaseUid ?? '',
-                              partnerName: thread['name']!,
-                              isSeeker: true,
-                            ),
-                          ),
-                        );
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatHistoryTranscriptScreen(
-                              session: thread,
-                              isSeeker: true,
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-                        border: Border.all(
-                          color: thread['unread']
-                              ? SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3)
-                              : SafeTalkTheme.borderSage,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Custom Avatar with status dot
-                          Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: thread['avatarColor'].withValues(alpha: 0.2),
-                                child: Text(
-                                  thread['name'][0],
-                                  style: SafeTalkTheme.headingStyle(color: thread['avatarColor']),
-                                ),
-                              ),
-                              if (thread['online'])
-                                Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    height: 12,
-                                    width: 12,
-                                    decoration: BoxDecoration(
-                                      color: SafeTalkTheme.brandSage,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: SafeTalkTheme.bgMidnight, width: 2),
-                                    ),
+                        child: GestureDetector(
+                          onTap: () {
+                            ChatController().markUserThreadRead(thread['name']);
+                            final isActive = thread['status']
+                                .toString()
+                                .toLowerCase()
+                                .contains('active');
+                            if (isActive) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SessionChatScreen(
+                                    sessionId: thread['id'] ?? '',
+                                    myUid:
+                                        SessionController().firebaseUid ?? '',
+                                    partnerName: thread['name']!,
+                                    isSeeker: true,
                                   ),
                                 ),
-                            ],
-                          ),
-                          
-                          const SizedBox(width: 16),
-                          
-                          // Thread text
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              );
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ChatHistoryTranscriptScreen(
+                                        session: thread,
+                                        isSeeker: true,
+                                      ),
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: SafeTalkTheme.glassCardDecoration
+                                .copyWith(
+                                  border: Border.all(
+                                    color: thread['unread']
+                                        ? SafeTalkTheme.brandTerracotta
+                                              .withValues(alpha: 0.3)
+                                        : SafeTalkTheme.borderSage,
+                                    width: 1.5,
+                                  ),
+                                ),
+                            child: Row(
                               children: [
-                                Row(
+                                // Custom Avatar with status dot
+                                Stack(
                                   children: [
-                                    Text(
-                                      thread['name'],
-                                      style: SafeTalkTheme.bodyStyle(
-                                        color: SafeTalkTheme.textPrimary,
-                                        bold: true,
-                                      ).copyWith(fontSize: 16),
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: thread['avatarColor']
+                                          .withValues(alpha: 0.2),
+                                      child: Text(
+                                        thread['name'][0],
+                                        style: SafeTalkTheme.headingStyle(
+                                          color: thread['avatarColor'],
+                                        ),
+                                      ),
                                     ),
-                                    const Spacer(),
-                                    Text(
-                                      thread['time'],
-                                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
-                                    ),
+                                    if (thread['online'])
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          height: 12,
+                                          width: 12,
+                                          decoration: BoxDecoration(
+                                            color: SafeTalkTheme.brandSage,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: SafeTalkTheme.bgMidnight,
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  thread['lastMessage'],
-                                  style: SafeTalkTheme.bodyStyle(
-                                    color: thread['unread'] ? SafeTalkTheme.textPrimary : SafeTalkTheme.textSecondary,
-                                    bold: thread['unread'],
-                                  ).copyWith(fontSize: 13),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+
+                                const SizedBox(width: 16),
+
+                                // Thread text
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            thread['name'],
+                                            style: SafeTalkTheme.bodyStyle(
+                                              color: SafeTalkTheme.textPrimary,
+                                              bold: true,
+                                            ).copyWith(fontSize: 16),
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            thread['time'],
+                                            style: SafeTalkTheme.captionStyle(
+                                              color:
+                                                  SafeTalkTheme.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        thread['lastMessage'],
+                                        style: SafeTalkTheme.bodyStyle(
+                                          color: thread['unread']
+                                              ? SafeTalkTheme.textPrimary
+                                              : SafeTalkTheme.textSecondary,
+                                          bold: thread['unread'],
+                                        ).copyWith(fontSize: 13),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
                                 ),
+
+                                if (thread['unread']) ...[
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    height: 10,
+                                    width: 10,
+                                    decoration: const BoxDecoration(
+                                      color: SafeTalkTheme.brandTerracotta,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
-                          
-                          if (thread['unread']) ...[
-                            const SizedBox(width: 12),
-                            Container(
-                              height: 10,
-                              width: 10,
-                              decoration: const BoxDecoration(
-                                color: SafeTalkTheme.brandTerracotta,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

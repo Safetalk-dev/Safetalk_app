@@ -33,7 +33,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // For Counselor/Listener or Seeker/User notes safety
     if (widget.isSeekerCaller) {
       ChatController().ensureUserThread(widget.partnerName);
@@ -43,7 +43,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       );
       _notesController.text = activeThread['notes'] ?? '';
     } else {
-      final threadExists = ChatController().listenerThreads.any((t) => t['name'] == widget.partnerName);
+      final threadExists = ChatController().listenerThreads.any(
+        (t) => t['name'] == widget.partnerName,
+      );
       if (!threadExists) {
         ChatController().listenerThreads.add({
           'name': widget.partnerName,
@@ -54,12 +56,14 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           'lastMessage': 'Video Call connected',
           'time': 'Now',
           'notes': '',
-          'messages': []
+          'messages': [],
         });
       }
-      
+
       // Load current notes initially
-      final activeThread = ChatController().listenerThreads.firstWhere((t) => t['name'] == widget.partnerName);
+      final activeThread = ChatController().listenerThreads.firstWhere(
+        (t) => t['name'] == widget.partnerName,
+      );
       _notesController.text = activeThread['notes'] ?? '';
     }
 
@@ -109,7 +113,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(
               'Cancel',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textSecondary,
+              ),
             ),
           ),
           ElevatedButton(
@@ -119,11 +125,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: SafeTalkTheme.brandTerracotta,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: Text(
               'End Call',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.bgMidnight,
+                bold: true,
+              ),
             ),
           ),
         ],
@@ -142,9 +153,14 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         SnackBar(
           content: Text(
             'Your 7-minute support session has safely concluded. Take a deep breath.',
-            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+            style: SafeTalkTheme.bodyStyle(
+              color: SafeTalkTheme.bgMidnight,
+              bold: true,
+            ),
           ),
-          backgroundColor: SafeTalkTheme.getListenerColor(SessionController().isTherapist),
+          backgroundColor: SafeTalkTheme.getListenerColor(
+            SessionController().isTherapist,
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -166,7 +182,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             child: Container(
               decoration: SafeTalkTheme.glassCardDecoration.copyWith(
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3), width: 2),
+                border: Border.all(
+                  color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3),
+                  width: 2,
+                ),
               ),
               padding: const EdgeInsets.all(24),
               child: SingleChildScrollView(
@@ -177,7 +196,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     Center(
                       child: CircleAvatar(
                         radius: 26,
-                        backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.12),
+                        backgroundColor: SafeTalkTheme.brandTerracotta
+                            .withValues(alpha: 0.12),
                         child: const Icon(
                           Icons.favorite_rounded,
                           color: SafeTalkTheme.brandTerracotta,
@@ -189,7 +209,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     Center(
                       child: Text(
                         'Share Your Experience',
-                        style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                        style: SafeTalkTheme.headingStyle(
+                          color: SafeTalkTheme.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -197,7 +219,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                       child: Text(
                         'Your feedback is anonymized and keeps space safe.',
                         textAlign: TextAlign.center,
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -206,8 +230,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
                     Text(
                       'RATE YOUR COMPANION (${widget.partnerName})',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-                          .copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                      style:
+                          SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.textSecondary,
+                          ).copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -222,9 +251,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             });
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
                             child: Icon(
-                              isSelected ? Icons.star_rounded : Icons.star_border_rounded,
+                              isSelected
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
                               color: SafeTalkTheme.brandGold,
                               size: 32,
                             ),
@@ -236,8 +269,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
                     Text(
                       'RATE THERAPEUTIC SESSION BALANCE',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-                          .copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                      style:
+                          SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.textSecondary,
+                          ).copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -252,9 +290,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             });
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
                             child: Icon(
-                              isSelected ? Icons.star_rounded : Icons.star_border_rounded,
+                              isSelected
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
                               color: SafeTalkTheme.brandTerracotta,
                               size: 32,
                             ),
@@ -266,8 +308,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
                     Text(
                       'ADD OPTIONAL REFLECTIONS',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-                          .copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                      style:
+                          SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.textSecondary,
+                          ).copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -280,10 +327,14 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                       child: TextField(
                         controller: feedbackController,
                         maxLines: 2,
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'How did this session affect your mood?...',
-                          hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                          hintStyle: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.textMuted,
+                          ),
                           border: InputBorder.none,
                         ),
                       ),
@@ -301,13 +352,21 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: SafeTalkTheme.brandTerracotta,
-                              side: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              side: const BorderSide(
+                                color: SafeTalkTheme.borderSage,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: Text(
                               'Skip',
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandTerracotta, bold: true),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.brandTerracotta,
+                                bold: true,
+                              ),
                             ),
                           ),
                         ),
@@ -318,12 +377,15 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                               feedbackController.dispose();
                               Navigator.pop(context);
                               Navigator.pop(context);
-                              
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     'Thank you. Your feedback has been saved securely to balance future matching filters!',
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.bgMidnight,
+                                      bold: true,
+                                    ),
                                   ),
                                   backgroundColor: SafeTalkTheme.brandSage,
                                   behavior: SnackBarBehavior.floating,
@@ -333,13 +395,18 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: SafeTalkTheme.brandTerracotta,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               elevation: 0,
                             ),
                             child: Text(
                               'Submit',
-                              style: SafeTalkTheme.bodyStyle(color: Colors.white, bold: true),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: Colors.white,
+                                bold: true,
+                              ),
                             ),
                           ),
                         ),
@@ -374,53 +441,218 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         }
       },
       child: Scaffold(
-      body: Stack(
-        children: [
-          // 1. Fullscreen Main Camera Feed (Mocking the Peer's incoming video)
-          _buildMainVideoFeed(),
+        body: Stack(
+          children: [
+            // 1. Fullscreen Main Camera Feed (Mocking the Peer's incoming video)
+            _buildMainVideoFeed(),
 
-          // Ambient top gradient overlay for text readability
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            child: Container(
-              height: 140,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            // Ambient top gradient overlay for text readability
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: Container(
+                height: 140,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withValues(alpha: 0.6),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // 2. Picture-in-Picture Local Camera Feed (PiP in Top-Right)
-          Positioned(
-            right: 20,
-            top: 60,
-            child: ClipRRect(
-              borderRadius: SafeTalkTheme.organicCardRadius,
-              child: Container(
-                height: 140,
-                width: 100,
-                color: SafeTalkTheme.cardBg,
-                child: Stack(
-                  children: [
-                    _buildLocalPiPFeed(),
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(4),
+            // 2. Picture-in-Picture Local Camera Feed (PiP in Top-Right)
+            Positioned(
+              right: 20,
+              top: 60,
+              child: ClipRRect(
+                borderRadius: SafeTalkTheme.organicCardRadius,
+                child: Container(
+                  height: 140,
+                  width: 100,
+                  color: SafeTalkTheme.cardBg,
+                  child: Stack(
+                    children: [
+                      _buildLocalPiPFeed(),
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'You',
+                            style: SafeTalkTheme.captionStyle(
+                              color: Colors.white,
+                            ).copyWith(fontSize: 10),
+                          ),
                         ),
-                        child: Text(
-                          'You',
-                          style: SafeTalkTheme.captionStyle(color: Colors.white).copyWith(fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Top Call Details Overlay
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 10.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.partnerName,
+                              style: SafeTalkTheme.headingStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  height: 6,
+                                  width: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _formatDuration(_sessionTimeRemaining),
+                                  style: SafeTalkTheme.captionStyle(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        borderRadius: SafeTalkTheme.pillRadius,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.lock, color: Colors.green, size: 12),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Encrypted Video Link',
+                            style: SafeTalkTheme.captionStyle(
+                              color: Colors.white,
+                            ).copyWith(fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 4. Bottom Floating Controls
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 40,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 20,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(
+                    alpha: 0.65,
+                  ), // Dark transparent overlay
+                  borderRadius: SafeTalkTheme.pillRadius,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    // Camera On/Off
+                    _buildFloatingControlItem(
+                      icon: _isCamOff
+                          ? Icons.videocam_off_rounded
+                          : Icons.videocam_rounded,
+                      active: _isCamOff,
+                      onTap: () => setState(() => _isCamOff = !_isCamOff),
+                    ),
+
+                    // Mute Mic
+                    _buildFloatingControlItem(
+                      icon: _isMuted
+                          ? Icons.mic_off_rounded
+                          : Icons.mic_rounded,
+                      active: _isMuted,
+                      onTap: () => setState(() => _isMuted = !_isMuted),
+                    ),
+
+                    // Flip Camera
+                    _buildFloatingControlItem(
+                      icon: Icons.flip_camera_ios_rounded,
+                      active: false,
+                      onTap: () {},
+                    ),
+
+                    // Secure Notes/Journal Toggle Button (visible to all roles)
+                    _buildFloatingControlItem(
+                      icon: widget.isSeekerCaller
+                          ? Icons.history_edu_outlined
+                          : Icons.note_alt_outlined,
+                      active: _showingNotesDrawer,
+                      onTap: _openNotesDrawer,
+                    ),
+
+                    // End Call Button
+                    GestureDetector(
+                      onTap: _promptEndSession,
+                      child: Container(
+                        height: 52,
+                        width: 52,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: SafeTalkTheme.brandTerracotta,
+                          boxShadow: [
+                            BoxShadow(color: Color(0x33C85B3F), blurRadius: 12),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.call_end_rounded,
+                          color: Colors.white,
+                          size: 26,
                         ),
                       ),
                     ),
@@ -428,181 +660,47 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 ),
               ),
             ),
-          ),
 
-          // 3. Top Call Details Overlay
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.partnerName,
-                            style: SafeTalkTheme.headingStyle(color: Colors.white),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                height: 6,
-                                width: 6,
-                                decoration: const BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _formatDuration(_sessionTimeRemaining),
-                                style: SafeTalkTheme.captionStyle(color: Colors.white.withValues(alpha: 0.85)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      borderRadius: SafeTalkTheme.pillRadius,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.lock, color: Colors.green, size: 12),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Encrypted Video Link',
-                          style: SafeTalkTheme.captionStyle(color: Colors.white).copyWith(fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+            // 5. Notes drawer overlays (visible when drawer toggled open)
+            if (_showingNotesDrawer) ...[
+              Builder(
+                builder: (context) {
+                  final activeThread = widget.isSeekerCaller
+                      ? ChatController().userThreads.firstWhere(
+                          (t) => t['name'] == widget.partnerName,
+                          orElse: () => {
+                            'name': widget.partnerName,
+                            'status': 'Video Call Session',
+                            'avatarColor': SafeTalkTheme.brandTerracotta,
+                            'online': false,
+                            'unread': false,
+                            'lastMessage': 'Video Call connected',
+                            'time': 'Now',
+                            'notes': '',
+                            'messages': [],
+                          },
+                        )
+                      : ChatController().listenerThreads.firstWhere(
+                          (t) => t['name'] == widget.partnerName,
+                          orElse: () => {
+                            'name': widget.partnerName,
+                            'status': 'Video Call Session',
+                            'avatarColor': SafeTalkTheme.brandTerracotta,
+                            'online': false,
+                            'unread': false,
+                            'lastMessage': 'Video Call connected',
+                            'time': 'Now',
+                            'notes': '',
+                            'messages': [],
+                          },
+                        );
+                  return _buildNotesDrawer(activeThread);
+                },
               ),
-            ),
-          ),
-
-          // 4. Bottom Floating Controls
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 40,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.65), // Dark transparent overlay
-                borderRadius: SafeTalkTheme.pillRadius,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  // Camera On/Off
-                  _buildFloatingControlItem(
-                    icon: _isCamOff ? Icons.videocam_off_rounded : Icons.videocam_rounded,
-                    active: _isCamOff,
-                    onTap: () => setState(() => _isCamOff = !_isCamOff),
-                  ),
-
-                  // Mute Mic
-                  _buildFloatingControlItem(
-                    icon: _isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                    active: _isMuted,
-                    onTap: () => setState(() => _isMuted = !_isMuted),
-                  ),
-
-                  // Flip Camera
-                  _buildFloatingControlItem(
-                    icon: Icons.flip_camera_ios_rounded,
-                    active: false,
-                    onTap: () {},
-                  ),
-
-                  // Secure Notes/Journal Toggle Button (visible to all roles)
-                  _buildFloatingControlItem(
-                    icon: widget.isSeekerCaller ? Icons.history_edu_outlined : Icons.note_alt_outlined,
-                    active: _showingNotesDrawer,
-                    onTap: _openNotesDrawer,
-                  ),
-
-                  // End Call Button
-                  GestureDetector(
-                    onTap: _promptEndSession,
-                    child: Container(
-                      height: 52,
-                      width: 52,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: SafeTalkTheme.brandTerracotta,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x33C85B3F),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.call_end_rounded,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 5. Notes drawer overlays (visible when drawer toggled open)
-          if (_showingNotesDrawer) ...[
-            Builder(
-              builder: (context) {
-                final activeThread = widget.isSeekerCaller
-                    ? ChatController().userThreads.firstWhere(
-                        (t) => t['name'] == widget.partnerName,
-                        orElse: () => {
-                          'name': widget.partnerName,
-                          'status': 'Video Call Session',
-                          'avatarColor': SafeTalkTheme.brandTerracotta,
-                          'online': false,
-                          'unread': false,
-                          'lastMessage': 'Video Call connected',
-                          'time': 'Now',
-                          'notes': '',
-                          'messages': []
-                        },
-                      )
-                    : ChatController().listenerThreads.firstWhere(
-                        (t) => t['name'] == widget.partnerName,
-                        orElse: () => {
-                          'name': widget.partnerName,
-                          'status': 'Video Call Session',
-                          'avatarColor': SafeTalkTheme.brandTerracotta,
-                          'online': false,
-                          'unread': false,
-                          'lastMessage': 'Video Call connected',
-                          'time': 'Now',
-                          'notes': '',
-                          'messages': []
-                        },
-                      );
-                return _buildNotesDrawer(activeThread);
-              }
-            ),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
     );
   }
 
@@ -623,11 +721,18 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Mock warm therapy scene with simple vectors
-              Icon(Icons.spa, color: SafeTalkTheme.brandSage.withValues(alpha: 0.3), size: 100),
+              Icon(
+                Icons.spa,
+                color: SafeTalkTheme.brandSage.withValues(alpha: 0.3),
+                size: 100,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Quiet Sanctuary Session',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandSage.withValues(alpha: 0.8), bold: true),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.brandSage.withValues(alpha: 0.8),
+                  bold: true,
+                ),
               ),
             ],
           ),
@@ -647,19 +752,31 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.12),
-                  border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3), width: 2),
+                  border: Border.all(
+                    color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3),
+                    width: 2,
+                  ),
                 ),
-                child: const Icon(Icons.psychology, color: SafeTalkTheme.brandTerracotta, size: 54),
+                child: const Icon(
+                  Icons.psychology,
+                  color: SafeTalkTheme.brandTerracotta,
+                  size: 54,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
                 'Seeker Anonymity Shield Active',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary, bold: true),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textSecondary,
+                  bold: true,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Their camera is securely hidden to protect identity.',
-                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
+                style: SafeTalkTheme.captionStyle(
+                  color: SafeTalkTheme.textMuted,
+                ),
               ),
             ],
           ),
@@ -725,13 +842,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         width: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: active ? SafeTalkTheme.brandTerracotta : Colors.white.withValues(alpha: 0.12),
+          color: active
+              ? SafeTalkTheme.brandTerracotta
+              : Colors.white.withValues(alpha: 0.12),
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 20,
-        ),
+        child: Icon(icon, color: Colors.white, size: 20),
       ),
     );
   }
@@ -759,7 +874,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     if (widget.isSeekerCaller) {
       ChatController().saveUserNotes(widget.partnerName, _notesController.text);
     } else {
-      ChatController().saveListenerNotes(widget.partnerName, _notesController.text);
+      ChatController().saveListenerNotes(
+        widget.partnerName,
+        _notesController.text,
+      );
       if (ChatController().isVaultEnabled) {
         ChatController().lockVault();
       }
@@ -770,7 +888,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          widget.isSeekerCaller ? 'Journal securely saved.' : 'Notes securely saved & encrypted.',
+          widget.isSeekerCaller
+              ? 'Journal securely saved.'
+              : 'Notes securely saved & encrypted.',
           style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight),
         ),
         backgroundColor: widget.isSeekerCaller
@@ -788,8 +908,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     final brandColor = widget.isSeekerCaller
         ? SafeTalkTheme.brandTerracotta
         : SafeTalkTheme.getListenerColor(isTherapist);
-    
-    final double drawerHeight = isKeyboardOpen 
+
+    final double drawerHeight = isKeyboardOpen
         ? (screenHeight - MediaQuery.of(context).viewInsets.bottom - 40)
         : (screenHeight * 0.8);
 
@@ -797,7 +917,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         ? screenHeight * 0.18
         : screenHeight * 0.40;
 
-    final bool isLocked = !widget.isSeekerCaller && ChatController().isVaultEnabled && ChatController().userPin == null;
+    final bool isLocked =
+        !widget.isSeekerCaller &&
+        ChatController().isVaultEnabled &&
+        ChatController().userPin == null;
 
     return Positioned.fill(
       child: Container(
@@ -828,12 +951,19 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.isSeekerCaller ? 'Secure Session Journal' : 'Encrypted Journal Notes',
-                      style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                      widget.isSeekerCaller
+                          ? 'Secure Session Journal'
+                          : 'Encrypted Journal Notes',
+                      style: SafeTalkTheme.headingStyle(
+                        color: SafeTalkTheme.textPrimary,
+                      ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: SafeTalkTheme.textSecondary),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                     onPressed: _closeNotesDrawer,
                   ),
                 ],
@@ -843,10 +973,12 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 widget.isSeekerCaller
                     ? 'Your private, encrypted reflections and journals for this session.'
                     : 'Confidential records related to ${activeThread['name']}. These notes are stored locally and encrypted.',
-                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                style: SafeTalkTheme.captionStyle(
+                  color: SafeTalkTheme.textSecondary,
+                ),
               ),
               const SizedBox(height: 12),
-              
+
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -875,16 +1007,22 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 'Encrypted Journal is Locked',
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                                    .copyWith(fontSize: 15),
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: SafeTalkTheme.textPrimary,
+                                  bold: true,
+                                ).copyWith(fontSize: 15),
                               ),
                               const SizedBox(height: 6),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: Text(
                                   'To protect seeker confidentiality, this journal is sealed with a PIN-derived encryption key. Decryption keys are held in volatile memory only.',
                                   textAlign: TextAlign.center,
-                                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                                  style: SafeTalkTheme.captionStyle(
+                                    color: SafeTalkTheme.textSecondary,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -898,13 +1036,19 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                                       mode: PinSheetMode.unlock,
                                       onSuccess: (pin) {
                                         setState(() {
-                                          _notesController.text = activeThread['notes'] ?? '';
+                                          _notesController.text =
+                                              activeThread['notes'] ?? '';
                                         });
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
                                             content: Text(
                                               'Journal notes unlocked successfully.',
-                                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                              style: SafeTalkTheme.bodyStyle(
+                                                color: SafeTalkTheme.bgMidnight,
+                                                bold: true,
+                                              ),
                                             ),
                                             backgroundColor: brandColor,
                                             behavior: SnackBarBehavior.floating,
@@ -917,11 +1061,15 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       color: brandColor,
-                                      borderRadius: SafeTalkTheme.organicCardRadius,
+                                      borderRadius:
+                                          SafeTalkTheme.organicCardRadius,
                                     ),
                                     child: Text(
                                       'Unlock Journal Notes',
-                                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                      style: SafeTalkTheme.bodyStyle(
+                                        color: SafeTalkTheme.bgMidnight,
+                                        bold: true,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -937,22 +1085,32 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             maxLines: null,
                             expands: true,
                             textAlignVertical: TextAlignVertical.top,
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
-                             decoration: InputDecoration(
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ),
+                            decoration: InputDecoration(
                               hintText: widget.isSeekerCaller
                                   ? 'Write down your thoughts, breakthroughs, and reflections...'
                                   : 'Add counseling notes or reminders...',
-                              hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                              hintStyle: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textMuted,
+                              ),
                               filled: true,
                               fillColor: SafeTalkTheme.bgMidnight,
                               contentPadding: const EdgeInsets.all(16),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1),
+                                borderSide: const BorderSide(
+                                  color: SafeTalkTheme.borderSage,
+                                  width: 1,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: BorderSide(color: brandColor, width: 1.5),
+                                borderSide: BorderSide(
+                                  color: brandColor,
+                                  width: 1.5,
+                                ),
                               ),
                             ),
                           ),
@@ -972,21 +1130,26 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandColor,
                       foregroundColor: SafeTalkTheme.bgMidnight,
-                      shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: SafeTalkTheme.organicCardRadius,
+                      ),
                     ),
                     child: Text(
-                      widget.isSeekerCaller ? 'Save Private Journal' : 'Save Encrypted Journal',
-                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                      widget.isSeekerCaller
+                          ? 'Save Private Journal'
+                          : 'Save Encrypted Journal',
+                      style: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.bgMidnight,
+                        bold: true,
+                      ),
                     ),
                   ),
                 ),
               ],
             ],
           ),
-
         ),
       ),
     );
   }
 }
-

@@ -12,19 +12,15 @@ import 'package:app/models/session_model.dart';
 ///
 /// In this demo, both the seeker UI and the listener UI run in the same app, so we use
 /// a singleton ChangeNotifier to bridge the two sides seamlessly.
-enum SessionType {
-  messages,
-  voiceCall,
-  videoCall,
-}
+enum SessionType { messages, voiceCall, videoCall }
 
 enum SessionPhase {
-  idle,           // No active session
+  idle, // No active session
   seekerRequesting, // Seeker sent a request, waiting for listener
   listenerIncoming, // Listener is seeing the incoming request
   paymentPending, // Listener accepted, seeker must pay
-  callActive,     // Payment confirmed, call in progress
-  callEnded,      // Call concluded, show rating/summary
+  callActive, // Payment confirmed, call in progress
+  callEnded, // Call concluded, show rating/summary
 }
 
 class SessionController extends ChangeNotifier {
@@ -62,11 +58,26 @@ class SessionController extends ChangeNotifier {
     }
   }
 
-  /// Clear Firebase identity on sign-out.
+  /// Clear Firebase identity and reset active session streams on sign-out (HIGH-BUG-01, MED-DEBT-02)
   void clearFirebaseUser() {
     _firebaseUid = null;
     _firebaseEmail = null;
     _firebaseDisplayName = null;
+    _currentRole = 'user';
+    _isTherapist = false;
+
+    // Teardown active streams and session identifiers
+    _sessionSub?.cancel();
+    _sessionSub = null;
+    _currentSessionId = null;
+    _phase = SessionPhase.idle;
+    isSimulated = false;
+
+    _seekerMoniker = 'Anonymous Seeker';
+    _seekerMoodTag = '';
+    _seekerConcern = '';
+    _listenerName = '';
+
     notifyListeners();
   }
 
@@ -98,7 +109,8 @@ class SessionController extends ChangeNotifier {
   String _seekerMoodTag = 'Anxious / Overwhelmed';
   String get seekerMoodTag => _seekerMoodTag;
 
-  String _seekerConcern = 'Having deep anxiety regarding upcoming exams. Need a calm, non-judgmental space to talk.';
+  String _seekerConcern =
+      'Having deep anxiety regarding upcoming exams. Need a calm, non-judgmental space to talk.';
   String get seekerConcern => _seekerConcern;
 
   // Payment amount in rupees (₹150 for Razorpay)
@@ -133,11 +145,13 @@ class SessionController extends ChangeNotifier {
         seekerConcern: concern,
         sessionType: sessionType.name,
       );
-      
+
       _sessionSub?.cancel();
-      _sessionSub = SessionService().streamSession(_currentSessionId!).listen((session) {
+      _sessionSub = SessionService().streamSession(_currentSessionId!).listen((
+        session,
+      ) {
         if (session == null) return;
-        
+
         if (session.status == 'payment_pending') {
           _phase = SessionPhase.paymentPending;
           _listenerName = session.listenerId ?? 'Matched Listener';
@@ -148,7 +162,8 @@ class SessionController extends ChangeNotifier {
         } else if (session.status == 'completed') {
           _phase = SessionPhase.callEnded;
           notifyListeners();
-        } else if (session.status == 'rejected' || session.status == 'cancelled') {
+        } else if (session.status == 'rejected' ||
+            session.status == 'cancelled') {
           _phase = SessionPhase.idle;
           notifyListeners();
         }
@@ -170,7 +185,10 @@ class SessionController extends ChangeNotifier {
 
   // ── Listener Responds ───────────────────────────────────────────────────────
 
-  void listenerAcceptsRequest(String acceptingListenerName, {String? sessionId}) {
+  void listenerAcceptsRequest(
+    String acceptingListenerName, {
+    String? sessionId,
+  }) {
     final targetId = sessionId ?? _currentSessionId;
     if (targetId != null) {
       SessionService().acceptSession(targetId);

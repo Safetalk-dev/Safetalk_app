@@ -45,7 +45,10 @@ class BiometricService {
   }
 
   /// Launch biometric prompt to authenticate the user
-  Future<bool> authenticate(BuildContext context, {required String reason}) async {
+  Future<bool> authenticate(
+    BuildContext context, {
+    required String reason,
+  }) async {
     if (!_isEnabled) return true; // Auto-pass if disabled
 
     final result = await showDialog<bool>(
@@ -102,10 +105,7 @@ class _BiometricAuthDialog extends StatelessWidget {
             Text(
               reason,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF5B6980),
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF5B6980)),
             ),
             const SizedBox(height: 24),
             Row(
@@ -115,7 +115,9 @@ class _BiometricAuthDialog extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF5B6980),
                       side: const BorderSide(color: Color(0xFFE4E8F2)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () => Navigator.pop(context, false),
                     child: const Text('Cancel'),
@@ -127,7 +129,9 @@ class _BiometricAuthDialog extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6C82C5),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
                     onPressed: () => Navigator.pop(context, true),
@@ -135,7 +139,7 @@ class _BiometricAuthDialog extends StatelessWidget {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

@@ -13,57 +13,62 @@ void main() {
       fakeFirestore = FakeFirebaseFirestore();
     });
 
-    test('D-01 / D-12: MatcherService strictly filters online listeners with matching ISO language codes', () async {
-      // Seed an online English listener
-      await fakeFirestore.collection('users').doc('listener_en_online').set({
-        'uid': 'listener_en_online',
-        'displayName': 'Online Listener EN',
-        'role': 'listener',
-        'listenerData': {
-          'isOnline': true,
-          'languagesSpoken': ['en'],
-          'status': 'available',
-        },
-      });
+    test(
+      'D-01 / D-12: MatcherService strictly filters online listeners with matching ISO language codes',
+      () async {
+        // Seed an online English listener
+        await fakeFirestore.collection('users').doc('listener_en_online').set({
+          'uid': 'listener_en_online',
+          'displayName': 'Online Listener EN',
+          'role': 'listener',
+          'listenerData': {
+            'isOnline': true,
+            'languagesSpoken': ['en'],
+            'status': 'available',
+          },
+        });
 
-      // Seed an offline English listener
-      await fakeFirestore.collection('users').doc('listener_en_offline').set({
-        'uid': 'listener_en_offline',
-        'displayName': 'Offline Listener EN',
-        'role': 'listener',
-        'listenerData': {
-          'isOnline': false,
-          'languagesSpoken': ['en'],
-          'status': 'offline',
-        },
-      });
+        // Seed an offline English listener
+        await fakeFirestore.collection('users').doc('listener_en_offline').set({
+          'uid': 'listener_en_offline',
+          'displayName': 'Offline Listener EN',
+          'role': 'listener',
+          'listenerData': {
+            'isOnline': false,
+            'languagesSpoken': ['en'],
+            'status': 'offline',
+          },
+        });
 
-      // Seed an online listener who speaks English with legacy non-ISO name ('English')
-      await fakeFirestore.collection('users').doc('listener_legacy_lang').set({
-        'uid': 'listener_legacy_lang',
-        'displayName': 'Legacy Listener',
-        'role': 'listener',
-        'listenerData': {
-          'isOnline': true,
-          'languagesSpoken': ['English'],
-          'status': 'available',
-        },
-      });
+        // Seed an online listener who speaks English with legacy non-ISO name ('English')
+        await fakeFirestore.collection('users').doc('listener_legacy_lang').set(
+          {
+            'uid': 'listener_legacy_lang',
+            'displayName': 'Legacy Listener',
+            'role': 'listener',
+            'listenerData': {
+              'isOnline': true,
+              'languagesSpoken': ['English'],
+              'status': 'available',
+            },
+          },
+        );
 
-      final matcher = MatcherService(firestore: fakeFirestore);
+        final matcher = MatcherService(firestore: fakeFirestore);
 
-      // Query with ISO code ['en']
-      final results = await matcher.getOnlineListeners(['en']);
+        // Query with ISO code ['en']
+        final results = await matcher.getOnlineListeners(['en']);
 
-      // Must find the online ISO listener
-      expect(results.any((l) => l.uid == 'listener_en_online'), isTrue);
+        // Must find the online ISO listener
+        expect(results.any((l) => l.uid == 'listener_en_online'), isTrue);
 
-      // Must NOT find the offline listener
-      expect(results.any((l) => l.uid == 'listener_en_offline'), isFalse);
+        // Must NOT find the offline listener
+        expect(results.any((l) => l.uid == 'listener_en_offline'), isFalse);
 
-      // Illustrates D-12 discrepancy: non-ISO 'English' is excluded when querying with 'en'
-      expect(results.any((l) => l.uid == 'listener_legacy_lang'), isFalse);
-    });
+        // Illustrates D-12 discrepancy: non-ISO 'English' is excluded when querying with 'en'
+        expect(results.any((l) => l.uid == 'listener_legacy_lang'), isFalse);
+      },
+    );
 
     test('D-04 / D-05: SessionModel serialization and duration validation', () {
       final now = DateTime.now();
@@ -119,56 +124,109 @@ void main() {
       expect(isValidTransition('rejected', 'completed'), isFalse);
     });
 
-    test('D-03: SessionModel.normalizeSessionType handles legacy enum strings cleanly', () {
-      expect(SessionModel.normalizeSessionType('SessionType.voiceCall'), 'voiceCall');
-      expect(SessionModel.normalizeSessionType('SessionType.videoCall'), 'videoCall');
-      expect(SessionModel.normalizeSessionType('SessionType.messages'), 'messages');
-      expect(SessionModel.normalizeSessionType('voiceCall'), 'voiceCall');
-      expect(SessionModel.normalizeSessionType(null), 'messages');
-    });
+    test(
+      'D-03: SessionModel.normalizeSessionType handles legacy enum strings cleanly',
+      () {
+        expect(
+          SessionModel.normalizeSessionType('SessionType.voiceCall'),
+          'voiceCall',
+        );
+        expect(
+          SessionModel.normalizeSessionType('SessionType.videoCall'),
+          'videoCall',
+        );
+        expect(
+          SessionModel.normalizeSessionType('SessionType.messages'),
+          'messages',
+        );
+        expect(SessionModel.normalizeSessionType('voiceCall'), 'voiceCall');
+        expect(SessionModel.normalizeSessionType(null), 'messages');
+      },
+    );
 
-    test('D-08: SessionModel serializes and deserializes sessionKey cleanly', () {
-      final session = SessionModel(
-        id: 'sess_crypto',
-        seekerId: 'seeker_1',
-        seekerMoniker: 'Moniker',
-        seekerMoodTag: 'Calm',
-        seekerConcern: 'None',
-        status: 'pending',
-        sessionType: 'messages',
-        requestedAt: DateTime.now(),
-        sessionKey: 'test_base64_session_key_32bytes==',
-      );
+    test(
+      'D-08: SessionModel serializes and deserializes sessionKey cleanly',
+      () {
+        final session = SessionModel(
+          id: 'sess_crypto',
+          seekerId: 'seeker_1',
+          seekerMoniker: 'Moniker',
+          seekerMoodTag: 'Calm',
+          seekerConcern: 'None',
+          status: 'pending',
+          sessionType: 'messages',
+          requestedAt: DateTime.now(),
+          sessionKey: 'test_base64_session_key_32bytes==',
+        );
 
-      final json = session.toJson();
-      expect(json['sessionKey'], 'test_base64_session_key_32bytes==');
+        final json = session.toJson();
+        expect(json['sessionKey'], 'test_base64_session_key_32bytes==');
 
-      final parsed = SessionModel.fromJson(json, 'sess_crypto');
-      expect(parsed.sessionKey, 'test_base64_session_key_32bytes==');
-    });
+        final parsed = SessionModel.fromJson(json, 'sess_crypto');
+        expect(parsed.sessionKey, 'test_base64_session_key_32bytes==');
+      },
+    );
 
-    test('D-08: SessionService.createSessionRequest generates and persists sessionKey', () async {
-      final service = SessionService(firestore: fakeFirestore);
-      final sessionId = await service.createSessionRequest(
-        seekerId: 'seeker_auto_key',
-        seekerMoniker: 'Moniker',
-        seekerMoodTag: 'Anxious',
-        seekerConcern: 'Need support',
-        sessionType: 'messages',
-      );
+    test(
+      'D-08: SessionService.createSessionRequest generates and persists sessionKey',
+      () async {
+        final service = SessionService(firestore: fakeFirestore);
+        final sessionId = await service.createSessionRequest(
+          seekerId: 'seeker_auto_key',
+          seekerMoniker: 'Moniker',
+          seekerMoodTag: 'Anxious',
+          seekerConcern: 'Need support',
+          sessionType: 'messages',
+        );
 
-      final doc = await fakeFirestore.collection('sessions').doc(sessionId).get();
-      expect(doc.exists, isTrue);
-      final data = doc.data()!;
-      expect(data['sessionKey'], isNotNull);
-      expect((data['sessionKey'] as String).isNotEmpty, isTrue);
-      expect(data['status'], 'pending');
-    });
+        final doc = await fakeFirestore
+            .collection('sessions')
+            .doc(sessionId)
+            .get();
+        expect(doc.exists, isTrue);
+        final data = doc.data()!;
+        expect(data['sessionKey'], isNotNull);
+        expect((data['sessionKey'] as String).isNotEmpty, isTrue);
+        expect(data['status'], 'pending');
+      },
+    );
 
-    test('D-07: RazorpayService activeKeyId supports runtime injection and define resolution', () {
-      RazorpayService.keyOverride = 'rzp_test_wave2_key';
-      expect(RazorpayService.activeKeyId, 'rzp_test_wave2_key');
-      RazorpayService.keyOverride = null;
-    });
+    test(
+      'D-07: RazorpayService activeKeyId supports runtime injection and define resolution',
+      () {
+        RazorpayService.keyOverride = 'rzp_test_wave2_key';
+        expect(RazorpayService.activeKeyId, 'rzp_test_wave2_key');
+        RazorpayService.keyOverride = null;
+      },
+    );
+
+    test(
+      'D-14: SeekerData stores and deserializes Safe Circle listener UIDs',
+      () async {
+        const seekerUid = 'seeker_safe_circle_test';
+        final circleUids = ['listener_alpha', 'listener_beta'];
+
+        await fakeFirestore.collection('users').doc(seekerUid).set({
+          'uid': seekerUid,
+          'displayName': 'Care Seeker',
+          'role': 'user',
+          'seekerData': {
+            'preferredLanguages': ['en'],
+            'safeCircle': circleUids,
+          },
+        });
+
+        final doc = await fakeFirestore
+            .collection('users')
+            .doc(seekerUid)
+            .get();
+        expect(doc.exists, isTrue);
+        final rawSeekerData = doc.data()!['seekerData'] as Map<String, dynamic>;
+        final storedCircle = (rawSeekerData['safeCircle'] as List<dynamic>)
+            .cast<String>();
+        expect(storedCircle, contains('listener_alpha'));
+        expect(storedCircle, contains('listener_beta'));
+      },
+    );
   });
 }

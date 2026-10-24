@@ -23,8 +23,8 @@ void main() {
         'seekerData': {
           'walletBalance': 50.0,
           'preferredLanguages': ['en'],
-          'safeCircle': []
-        }
+          'safeCircle': [],
+        },
       });
 
       // Act

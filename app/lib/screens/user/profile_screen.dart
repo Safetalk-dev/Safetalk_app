@@ -26,7 +26,7 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   late bool _notificationToggle;
   late bool _pinLockToggle;
-  
+
   // Username Edit States
   bool _isEditingUsername = false;
   late TextEditingController _usernameController;
@@ -66,7 +66,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           // Screen Title
           Text(
             'My Safe Haven',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 6),
           Text(
@@ -81,7 +83,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             padding: const EdgeInsets.all(20),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
               border: Border.all(
-                color: _isEditingUsername ? SafeTalkTheme.brandTerracotta.withValues(alpha: 0.4) : SafeTalkTheme.borderSage,
+                color: _isEditingUsername
+                    ? SafeTalkTheme.brandTerracotta.withValues(alpha: 0.4)
+                    : SafeTalkTheme.borderSage,
                 width: 1.5,
               ),
             ),
@@ -89,8 +93,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.15),
-                  child: const Icon(Icons.psychology, color: SafeTalkTheme.brandTerracotta, size: 30),
+                  backgroundColor: SafeTalkTheme.brandTerracotta.withValues(
+                    alpha: 0.15,
+                  ),
+                  child: const Icon(
+                    Icons.psychology,
+                    color: SafeTalkTheme.brandTerracotta,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -99,21 +109,32 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     children: [
                       Text(
                         'ANONYMOUS ID',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandTerracotta)
-                            .copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                        style:
+                            SafeTalkTheme.captionStyle(
+                              color: SafeTalkTheme.brandTerracotta,
+                            ).copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
                       ),
                       const SizedBox(height: 4),
                       if (_isEditingUsername)
                         TextField(
                           controller: _usernameController,
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                              .copyWith(fontSize: 18),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.textPrimary,
+                            bold: true,
+                          ).copyWith(fontSize: 18),
                           autofocus: true,
                           decoration: InputDecoration(
                             hintText: 'Enter anonymous alias...',
-                            hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                            hintStyle: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textMuted,
+                            ),
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 4,
+                            ),
                             border: InputBorder.none,
                           ),
                           onSubmitted: (_) => _saveUsername(),
@@ -121,18 +142,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       else
                         Text(
                           widget.username,
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                              .copyWith(fontSize: 18),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.textPrimary,
+                            bold: true,
+                          ).copyWith(fontSize: 18),
                         ),
                     ],
                   ),
                 ),
                 IconButton(
                   icon: Icon(
-                    _isEditingUsername ? Icons.check_circle : Icons.edit_note_rounded,
+                    _isEditingUsername
+                        ? Icons.check_circle
+                        : Icons.edit_note_rounded,
                     color: SafeTalkTheme.brandTerracotta,
                   ),
-                  tooltip: _isEditingUsername ? 'Save Moniker' : 'Edit Username',
+                  tooltip: _isEditingUsername
+                      ? 'Save Moniker'
+                      : 'Edit Username',
                   onPressed: () {
                     if (_isEditingUsername) {
                       _saveUsername();
@@ -160,7 +187,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-              border: Border.all(color: SafeTalkTheme.brandSage.withValues(alpha: 0.2), width: 1.5),
+              border: Border.all(
+                color: SafeTalkTheme.brandSage.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,24 +200,31 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   children: [
                     Text(
                       'Check-in Balance Trends',
-                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                      style: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.textPrimary,
+                        bold: true,
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: SafeTalkTheme.brandSage.withValues(alpha: 0.12),
                         borderRadius: SafeTalkTheme.pillRadius,
                       ),
                       child: Text(
                         'STABLE SAGE',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandSageLight)
-                            .copyWith(fontWeight: FontWeight.bold),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.brandSageLight,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Dynamic painted graph using layout's scores list
                 if (widget.moodScores.isEmpty)
                   Container(
@@ -201,16 +238,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.show_chart_rounded, color: SafeTalkTheme.textSecondary, size: 28),
+                        Icon(
+                          Icons.show_chart_rounded,
+                          color: SafeTalkTheme.textSecondary,
+                          size: 28,
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           'No daily check-ins recorded yet',
-                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                          style: SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.textSecondary,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Complete check-ins on Explore to track your trends',
-                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
+                          style: SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.textMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -230,9 +275,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildLegendItem(SafeTalkTheme.brandTerracotta, '1 - 4 (Heavy/Anxious)'),
+                        _buildLegendItem(
+                          SafeTalkTheme.brandTerracotta,
+                          '1 - 4 (Heavy/Anxious)',
+                        ),
                         const SizedBox(width: 24),
-                        _buildLegendItem(SafeTalkTheme.brandSage, '5 - 10 (Calm/Centered)'),
+                        _buildLegendItem(
+                          SafeTalkTheme.brandSage,
+                          '5 - 10 (Calm/Centered)',
+                        ),
                       ],
                     ),
                   ),
@@ -249,7 +300,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
           ),
           const SizedBox(height: 12),
-          
+
           Container(
             decoration: SafeTalkTheme.glassCardDecoration,
             child: Column(
@@ -258,15 +309,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 SwitchListTile(
                   title: Text(
                     'Push notifications',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   subtitle: Text(
                     'Receive discreet matching confirmations',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                   value: _notificationToggle,
                   activeThumbColor: SafeTalkTheme.brandTerracotta,
-                  activeTrackColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3),
+                  activeTrackColor: SafeTalkTheme.brandTerracotta.withValues(
+                    alpha: 0.3,
+                  ),
                   inactiveThumbColor: SafeTalkTheme.textMuted,
                   inactiveTrackColor: SafeTalkTheme.bgMidnight,
                   onChanged: (val) async {
@@ -277,9 +335,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     });
                     if (val) {
                       PushNotificationService().showMockNotification(
-                        context, 
-                        'SafeTalk Shield Active', 
-                        'Discreet matching confirmations are now operational.'
+                        context,
+                        'SafeTalk Shield Active',
+                        'Discreet matching confirmations are now operational.',
                       );
                     }
                   },
@@ -289,24 +347,33 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 SwitchListTile(
                   title: Text(
                     'App biometric shield',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   subtitle: Text(
                     'Requires passcode or fingerprint to open',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                   value: _pinLockToggle,
                   activeThumbColor: SafeTalkTheme.brandTerracotta,
-                  activeTrackColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3),
+                  activeTrackColor: SafeTalkTheme.brandTerracotta.withValues(
+                    alpha: 0.3,
+                  ),
                   inactiveThumbColor: SafeTalkTheme.textMuted,
                   inactiveTrackColor: SafeTalkTheme.bgMidnight,
                   onChanged: (val) async {
                     if (val) {
                       // Request mock registration scan
-                      final authenticated = await BiometricService().authenticate(
-                        context, 
-                        reason: 'Verify fingerprint to lock your Safe Haven.'
-                      );
+                      final authenticated = await BiometricService()
+                          .authenticate(
+                            context,
+                            reason:
+                                'Verify fingerprint to lock your Safe Haven.',
+                          );
                       if (authenticated) {
                         await BiometricService().setEnabled(true);
                         if (!mounted) return;
@@ -317,7 +384,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           SnackBar(
                             content: Text(
                               'Biometric authentication registered successfully.',
-                              style: SafeTalkTheme.bodyStyle(color: Colors.white, bold: true),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: Colors.white,
+                                bold: true,
+                              ),
                             ),
                             backgroundColor: SafeTalkTheme.brandTerracotta,
                             behavior: SnackBarBehavior.floating,
@@ -345,21 +415,29 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               Expanded(
                 child: Text(
                   'Session Billing Ledger',
-                  style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                  style: SafeTalkTheme.headingStyle(
+                    color: SafeTalkTheme.textPrimary,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.12),
+                    color: SafeTalkTheme.brandTerracotta.withValues(
+                      alpha: 0.12,
+                    ),
                     borderRadius: SafeTalkTheme.pillRadius,
                   ),
                   child: Text(
                     '₹499/SESSION',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandTerracotta)
-                        .copyWith(fontWeight: FontWeight.bold),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.brandTerracotta,
+                    ).copyWith(fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
@@ -373,22 +451,37 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           _billingHistory.isEmpty
               ? Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 28,
+                    horizontal: 20,
+                  ),
                   decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-                    border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                    border: Border.all(
+                      color: SafeTalkTheme.borderSage,
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.receipt_long_outlined, color: SafeTalkTheme.textSecondary, size: 36),
+                      const Icon(
+                        Icons.receipt_long_outlined,
+                        color: SafeTalkTheme.textSecondary,
+                        size: 36,
+                      ),
                       const SizedBox(height: 10),
                       Text(
                         'No billing history yet',
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.textPrimary,
+                          bold: true,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Your completed session receipts will appear here.',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -396,15 +489,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 )
               : Container(
                   decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-                    border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.2), width: 1.5),
+                    border: Border.all(
+                      color: SafeTalkTheme.brandTerracotta.withValues(
+                        alpha: 0.2,
+                      ),
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
                       for (int i = 0; i < _billingHistory.length; i++) ...[
-                        if (i > 0) const Divider(color: SafeTalkTheme.borderSage, height: 1),
+                        if (i > 0)
+                          const Divider(
+                            color: SafeTalkTheme.borderSage,
+                            height: 1,
+                          ),
                         _buildBillingItem(
                           context,
-                          listenerName: _billingHistory[i]['listenerName'] ?? '',
+                          listenerName:
+                              _billingHistory[i]['listenerName'] ?? '',
                           date: _billingHistory[i]['date'] ?? '',
                           status: _billingHistory[i]['status'] ?? 'Settled',
                           amount: _billingHistory[i]['amount'] ?? '',
@@ -429,13 +532,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: SafeTalkTheme.brandTerracotta,
-                side: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                side: const BorderSide(
+                  color: SafeTalkTheme.borderSage,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: SafeTalkTheme.organicCardRadius,
+                ),
               ),
               icon: const Icon(Icons.logout_rounded, size: 18),
               label: Text(
                 'Leave Safe Haven (Sign Out)',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandTerracotta, bold: true),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.brandTerracotta,
+                  bold: true,
+                ),
               ),
             ),
           ),
@@ -460,7 +571,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         child: Container(
           decoration: SafeTalkTheme.glassCardDecoration.copyWith(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3), width: 2),
+            border: Border.all(
+              color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3),
+              width: 2,
+            ),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -471,7 +585,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               Center(
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.12),
+                  backgroundColor: SafeTalkTheme.brandTerracotta.withValues(
+                    alpha: 0.12,
+                  ),
                   child: const Icon(
                     Icons.receipt_long_rounded,
                     color: SafeTalkTheme.brandTerracotta,
@@ -483,24 +599,30 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               Center(
                 child: Text(
                   'Session Receipt',
-                  style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                  style: SafeTalkTheme.headingStyle(
+                    color: SafeTalkTheme.textPrimary,
+                  ),
                 ),
               ),
               Center(
                 child: Text(
                   'SafeTalk Session Settlement',
-                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                  style: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // Dashed line
               Row(
                 children: List.generate(
                   20,
                   (index) => Expanded(
                     child: Container(
-                      color: index % 2 == 0 ? Colors.transparent : SafeTalkTheme.borderSage,
+                      color: index % 2 == 0
+                          ? Colors.transparent
+                          : SafeTalkTheme.borderSage,
                       height: 2,
                     ),
                   ),
@@ -520,14 +642,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               _buildReceiptRow('Payment Method', method),
               const SizedBox(height: 8),
               _buildReceiptRow('Status', 'Success (Settled)', isStatus: true),
-              
+
               const SizedBox(height: 20),
               Row(
                 children: List.generate(
                   20,
                   (index) => Expanded(
                     child: Container(
-                      color: index % 2 == 0 ? Colors.transparent : SafeTalkTheme.borderSage,
+                      color: index % 2 == 0
+                          ? Colors.transparent
+                          : SafeTalkTheme.borderSage,
                       height: 2,
                     ),
                   ),
@@ -541,12 +665,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 children: [
                   Text(
                     'TOTAL PAID',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   Text(
                     amount,
-                    style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.brandTerracotta)
-                        .copyWith(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: SafeTalkTheme.headingStyle(
+                      color: SafeTalkTheme.brandTerracotta,
+                    ).copyWith(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -566,7 +694,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   child: Text(
                     'Done',
-                    style: SafeTalkTheme.bodyStyle(color: Colors.white, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: Colors.white,
+                      bold: true,
+                    ),
                   ),
                 ),
               ),
@@ -592,7 +723,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             value,
             textAlign: TextAlign.right,
             style: SafeTalkTheme.bodyStyle(
-              color: isStatus ? SafeTalkTheme.brandSage : SafeTalkTheme.textPrimary,
+              color: isStatus
+                  ? SafeTalkTheme.brandSage
+                  : SafeTalkTheme.textPrimary,
               bold: isStatus,
             ).copyWith(fontSize: 13),
           ),
@@ -626,7 +759,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.1),
+              backgroundColor: SafeTalkTheme.brandTerracotta.withValues(
+                alpha: 0.1,
+              ),
               child: const Icon(
                 Icons.check_circle_rounded,
                 color: SafeTalkTheme.brandTerracotta,
@@ -640,12 +775,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 children: [
                   Text(
                     listenerName,
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$date • $status',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -653,8 +793,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             const SizedBox(width: 12),
             Text(
               amount,
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                  .copyWith(fontSize: 16),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textPrimary,
+                bold: true,
+              ).copyWith(fontSize: 16),
             ),
             const SizedBox(width: 4),
             const Icon(
@@ -697,7 +839,7 @@ class MoodChartPainter extends CustomPainter {
     final bgPaint = Paint()
       ..color = SafeTalkTheme.bgMidnight
       ..style = PaintingStyle.fill;
-    
+
     // Draw internal background box
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -712,23 +854,41 @@ class MoodChartPainter extends CustomPainter {
       ..color = SafeTalkTheme.borderSage.withValues(alpha: 0.5)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
-    
-    canvas.drawLine(Offset(0, size.height * 0.25), Offset(size.width, size.height * 0.25), gridPaint);
-    canvas.drawLine(Offset(0, size.height * 0.5), Offset(size.width, size.height * 0.5), gridPaint);
-    canvas.drawLine(Offset(0, size.height * 0.75), Offset(size.width, size.height * 0.75), gridPaint);
+
+    canvas.drawLine(
+      Offset(0, size.height * 0.25),
+      Offset(size.width, size.height * 0.25),
+      gridPaint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height * 0.5),
+      Offset(size.width, size.height * 0.5),
+      gridPaint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height * 0.75),
+      Offset(size.width, size.height * 0.75),
+      gridPaint,
+    );
 
     if (points.isEmpty) return;
 
     if (points.length == 1) {
       final dotPaint = Paint()
         ..style = PaintingStyle.fill
-        ..color = points[0] >= 0.5 ? SafeTalkTheme.brandSage : SafeTalkTheme.brandTerracotta;
-      canvas.drawCircle(Offset(size.width / 2, size.height * (1 - points[0])), 6, dotPaint);
+        ..color = points[0] >= 0.5
+            ? SafeTalkTheme.brandSage
+            : SafeTalkTheme.brandTerracotta;
+      canvas.drawCircle(
+        Offset(size.width / 2, size.height * (1 - points[0])),
+        6,
+        dotPaint,
+      );
       return;
     }
 
     final double stepX = size.width / (points.length - 1);
-    
+
     final linePaint = Paint()
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
@@ -747,11 +907,11 @@ class MoodChartPainter extends CustomPainter {
     for (int i = 1; i < points.length; i++) {
       final double x = i * stepX;
       final double y = size.height * (1 - points[i]);
-      
+
       final double prevX = (i - 1) * stepX;
       final double prevY = size.height * (1 - points[i - 1]);
       final double controlX = prevX + (stepX / 2);
-      
+
       path.cubicTo(controlX, prevY, controlX, y, x, y);
     }
 
@@ -762,8 +922,10 @@ class MoodChartPainter extends CustomPainter {
     for (int i = 0; i < points.length; i++) {
       final double x = i * stepX;
       final double y = size.height * (1 - points[i]);
-      
-      dotPaint.color = points[i] >= 0.5 ? SafeTalkTheme.brandSage : SafeTalkTheme.brandTerracotta;
+
+      dotPaint.color = points[i] >= 0.5
+          ? SafeTalkTheme.brandSage
+          : SafeTalkTheme.brandTerracotta;
       canvas.drawCircle(Offset(x, y), 5, dotPaint);
     }
   }

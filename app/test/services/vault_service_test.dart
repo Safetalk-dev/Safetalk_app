@@ -10,7 +10,7 @@ void main() {
       vaultService = VaultService();
       // Ensure clean state
       await vaultService.wipeAndResetVault();
-      
+
       // Initialize with a PIN
       await vaultService.initializeVault('1234');
     });
@@ -18,7 +18,7 @@ void main() {
     tearDown(() async {
       // Clean up local files created during test
       await vaultService.wipeAndResetVault();
-      
+
       // Delete data directory if it's empty
       final dir = Directory('data');
       if (dir.existsSync()) {
@@ -33,11 +33,11 @@ void main() {
       const pin = '1234';
 
       final ciphertext = await vaultService.encryptString(pin, plaintext);
-      
+
       expect(ciphertext, isNot(contains(plaintext)));
-      
+
       final decrypted = await vaultService.decryptString(pin, ciphertext);
-      
+
       expect(decrypted, equals(plaintext));
     });
 
@@ -47,7 +47,7 @@ void main() {
       const wrongPin = '4321';
 
       final ciphertext = await vaultService.encryptString(pin, plaintext);
-      
+
       expect(
         () => vaultService.decryptString(wrongPin, ciphertext),
         throwsA(isA<CryptographicException>()),
@@ -56,9 +56,9 @@ void main() {
 
     test('Vault correctly detects initialization state', () async {
       expect(vaultService.isVaultInitialized(), isTrue);
-      
+
       await vaultService.wipeAndResetVault();
-      
+
       expect(vaultService.isVaultInitialized(), isFalse);
     });
   });

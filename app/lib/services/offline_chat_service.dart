@@ -21,7 +21,7 @@ class OfflineChatService {
       // Standard mobile/sandbox application directory
       directory = await getApplicationDocumentsDirectory();
     }
-    
+
     if (!directory.existsSync()) {
       directory.createSync(recursive: true);
     }
@@ -30,14 +30,16 @@ class OfflineChatService {
 
   /// Serialize a List of threads, transforming Color objects to ints for JSON safety
   String _serializeThreads(List<Map<String, dynamic>> threads) {
-    final List<Map<String, dynamic>> jsonCompatibleThreads = threads.map((thread) {
+    final List<Map<String, dynamic>> jsonCompatibleThreads = threads.map((
+      thread,
+    ) {
       final copy = Map<String, dynamic>.from(thread);
-      
+
       // Convert Color to int
       if (copy['avatarColor'] is Color) {
         copy['avatarColor'] = (copy['avatarColor'] as Color).toARGB32();
       }
-      
+
       return copy;
     }).toList();
 
@@ -47,11 +49,11 @@ class OfflineChatService {
   /// Deserialize a list of threads, converting int values back to Color objects
   List<Map<String, dynamic>> _deserializeThreads(String jsonString) {
     if (jsonString.isEmpty) return [];
-    
+
     final List<dynamic> decoded = jsonDecode(jsonString);
     return decoded.map((item) {
       final thread = Map<String, dynamic>.from(item as Map);
-      
+
       // Convert int back to Color
       if (thread['avatarColor'] is int) {
         thread['avatarColor'] = Color(thread['avatarColor'] as int);
@@ -59,14 +61,14 @@ class OfflineChatService {
         // Fallback default color if missing
         thread['avatarColor'] = const Color(0xFF8FA89B);
       }
-      
+
       // Ensure messages sublist is mutable Map list
       if (thread['messages'] != null) {
         thread['messages'] = (thread['messages'] as List)
             .map((msg) => Map<String, dynamic>.from(msg as Map))
             .toList();
       }
-      
+
       return thread;
     }).toList();
   }
@@ -87,7 +89,7 @@ class OfflineChatService {
     try {
       final file = await _getFile(_userChatsFilename);
       if (!file.existsSync()) return [];
-      
+
       final contents = await file.readAsString();
       return _deserializeThreads(contents);
     } catch (e) {
@@ -112,7 +114,7 @@ class OfflineChatService {
     try {
       final file = await _getFile(_listenerChatsFilename);
       if (!file.existsSync()) return [];
-      
+
       final contents = await file.readAsString();
       return _deserializeThreads(contents);
     } catch (e) {

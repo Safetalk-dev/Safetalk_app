@@ -44,7 +44,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _selectedLanguages.remove(code);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select at least one language')),
+            const SnackBar(
+              content: Text('Please select at least one language'),
+            ),
           );
         }
       } else {
@@ -142,21 +144,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             Text(
               'Welcome to SafeTalk',
-              style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+              style: SafeTalkTheme.headingStyle(
+                color: SafeTalkTheme.textPrimary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               'Choose how you want to participate in the sanctuary.',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
-            
+
             // Role Selection
             Text(
               'I want to...',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textPrimary,
+                bold: true,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -181,11 +190,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             // Display Name
             Text(
-              isSeeker ? 'Your Anonymous Moniker' : 'Your Listener Display Name',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+              isSeeker
+                  ? 'Your Anonymous Moniker'
+                  : 'Your Listener Display Name',
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textPrimary,
+                bold: true,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -199,15 +213,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   borderSide: BorderSide.none,
                 ),
                 hintText: isSeeker ? 'e.g. Calm Ocean' : 'e.g. Amber R.',
-                hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                hintStyle: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textSecondary,
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
             // Languages Spoken / Preferred
             Text(
-              isSeeker ? 'Preferred Languages' : 'Languages You Speak (ISO 639-1)',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+              isSeeker
+                  ? 'Preferred Languages'
+                  : 'Languages You Speak (ISO 639-1)',
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textPrimary,
+                bold: true,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -218,14 +239,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 return FilterChip(
                   label: Text('${lang.name} (${lang.code})'),
                   selected: isSelected,
-                  selectedColor: SafeTalkTheme.brandSage.withValues(alpha: 0.25),
+                  selectedColor: SafeTalkTheme.brandSage.withValues(
+                    alpha: 0.25,
+                  ),
                   backgroundColor: SafeTalkTheme.cardBg,
                   labelStyle: TextStyle(
-                    color: isSelected ? SafeTalkTheme.brandSage : SafeTalkTheme.textSecondary,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? SafeTalkTheme.brandSage
+                        : SafeTalkTheme.textSecondary,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                   side: BorderSide(
-                    color: isSelected ? SafeTalkTheme.brandSage : Colors.transparent,
+                    color: isSelected
+                        ? SafeTalkTheme.brandSage
+                        : Colors.transparent,
                   ),
                   onSelected: (_) => _toggleLanguage(lang.code),
                 );
@@ -237,13 +266,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             if (!isSeeker) ...[
               Text(
                 'Listener Bio',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                  bold: true,
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _bioController,
                 maxLines: 3,
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: SafeTalkTheme.cardBg,
@@ -251,19 +285,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  hintText: 'Share a gentle note about your listening approach...',
-                  hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                  hintText:
+                      'Share a gentle note about your listening approach...',
+                  hintStyle: SafeTalkTheme.bodyStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
               Text(
                 'Specialties (comma-separated)',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                  bold: true,
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _specialtiesController,
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: SafeTalkTheme.cardBg,
@@ -272,7 +314,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderSide: BorderSide.none,
                   ),
                   hintText: 'e.g. Anxiety, Loneliness, Grief, Work Stress',
-                  hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                  hintStyle: SafeTalkTheme.bodyStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -282,17 +326,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             // Submit Button
             _isLoading
-                ? const Center(child: CircularProgressIndicator(color: SafeTalkTheme.brandSage))
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: SafeTalkTheme.brandSage,
+                    ),
+                  )
                 : ElevatedButton(
                     onPressed: _completeOnboarding,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SafeTalkTheme.brandSage,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text(
                       'Complete Profile',
-                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                      style: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.bgMidnight,
+                        bold: true,
+                      ),
                     ),
                   ),
             const SizedBox(height: 24),
@@ -323,7 +376,9 @@ class _RoleCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? SafeTalkTheme.brandSage.withValues(alpha: 0.1) : SafeTalkTheme.cardBg,
+          color: isSelected
+              ? SafeTalkTheme.brandSage.withValues(alpha: 0.1)
+              : SafeTalkTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? SafeTalkTheme.brandSage : Colors.transparent,
@@ -336,7 +391,9 @@ class _RoleCard extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: SafeTalkTheme.bodyStyle(
-                color: isSelected ? SafeTalkTheme.brandSage : SafeTalkTheme.textPrimary,
+                color: isSelected
+                    ? SafeTalkTheme.brandSage
+                    : SafeTalkTheme.textPrimary,
                 bold: isSelected,
               ),
             ),
@@ -346,7 +403,9 @@ class _RoleCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
-                color: isSelected ? SafeTalkTheme.brandSage.withValues(alpha: 0.8) : SafeTalkTheme.textSecondary,
+                color: isSelected
+                    ? SafeTalkTheme.brandSage.withValues(alpha: 0.8)
+                    : SafeTalkTheme.textSecondary,
               ),
             ),
           ],

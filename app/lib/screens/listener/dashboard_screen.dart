@@ -23,7 +23,8 @@ class ListenerDashboardScreen extends StatefulWidget {
   });
 
   @override
-  State<ListenerDashboardScreen> createState() => _ListenerDashboardScreenState();
+  State<ListenerDashboardScreen> createState() =>
+      _ListenerDashboardScreenState();
 }
 
 class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
@@ -69,11 +70,16 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
 
-    String greetingName = _displayName.isNotEmpty ? _displayName : AuthService().displayName;
+    String greetingName = _displayName.isNotEmpty
+        ? _displayName
+        : AuthService().displayName;
     if (greetingName.isEmpty || greetingName == 'Anonymous') {
       greetingName = isTherapist ? 'Dr. Specialist' : 'Peer Listener';
-    } else if (!greetingName.toLowerCase().startsWith('dr.') && !greetingName.toLowerCase().startsWith('listener')) {
-      greetingName = isTherapist ? 'Dr. $greetingName' : 'Listener $greetingName';
+    } else if (!greetingName.toLowerCase().startsWith('dr.') &&
+        !greetingName.toLowerCase().startsWith('listener')) {
+      greetingName = isTherapist
+          ? 'Dr. $greetingName'
+          : 'Listener $greetingName';
     }
 
     return SingleChildScrollView(
@@ -89,7 +95,9 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                 radius: 28,
                 backgroundColor: brandColor.withValues(alpha: 0.15),
                 child: Icon(
-                  isTherapist ? Icons.psychology_rounded : Icons.face_retouching_natural_rounded,
+                  isTherapist
+                      ? Icons.psychology_rounded
+                      : Icons.face_retouching_natural_rounded,
                   color: brandColorLight,
                   size: 32,
                 ),
@@ -101,12 +109,16 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                   children: [
                     Text(
                       'Welcome back,',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                      style: SafeTalkTheme.captionStyle(
+                        color: SafeTalkTheme.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       greetingName,
-                      style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 20),
+                      style: SafeTalkTheme.headingStyle(
+                        color: SafeTalkTheme.textPrimary,
+                      ).copyWith(fontSize: 20),
                     ),
                   ],
                 ),
@@ -120,10 +132,14 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             padding: const EdgeInsets.all(20),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
               border: Border.all(
-                color: widget.isOnline ? brandColor.withValues(alpha: 0.4) : SafeTalkTheme.borderSage,
+                color: widget.isOnline
+                    ? brandColor.withValues(alpha: 0.4)
+                    : SafeTalkTheme.borderSage,
                 width: 1.5,
               ),
-              color: widget.isOnline ? brandColor.withValues(alpha: 0.04) : null,
+              color: widget.isOnline
+                  ? brandColor.withValues(alpha: 0.04)
+                  : null,
             ),
             child: Row(
               children: [
@@ -132,17 +148,27 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.isOnline ? 'ONLINE & ACTIVE' : 'DESK GOING OFFLINE',
-                        style: SafeTalkTheme.captionStyle(
-                          color: widget.isOnline ? brandColorLight : SafeTalkTheme.textSecondary,
-                        ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                        widget.isOnline
+                            ? 'ONLINE & ACTIVE'
+                            : 'DESK GOING OFFLINE',
+                        style:
+                            SafeTalkTheme.captionStyle(
+                              color: widget.isOnline
+                                  ? brandColorLight
+                                  : SafeTalkTheme.textSecondary,
+                            ).copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         widget.isOnline
                             ? 'Ready to accept incoming matching support requests.'
                             : 'Set status to online to start receiving connections.',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -231,10 +257,9 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
           // 4. Weekly Session Activity Chart
           Text(
             'WEEKLY SESSION TRACKER',
-            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
-            ),
+            style: SafeTalkTheme.captionStyle(
+              color: SafeTalkTheme.textSecondary,
+            ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
           ),
           const SizedBox(height: 12),
           Container(
@@ -248,11 +273,16 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                   children: [
                     Text(
                       'Mon, May 22 - Sun, May 28',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                      style: SafeTalkTheme.captionStyle(
+                        color: SafeTalkTheme.textSecondary,
+                      ),
                     ),
                     Text(
                       '12.4 Hours Total',
-                      style: SafeTalkTheme.bodyStyle(color: brandColorLight, bold: true).copyWith(fontSize: 13),
+                      style: SafeTalkTheme.bodyStyle(
+                        color: brandColorLight,
+                        bold: true,
+                      ).copyWith(fontSize: 13),
                     ),
                   ],
                 ),
@@ -287,12 +317,18 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [brandColor.withValues(alpha: 0.4), SafeTalkTheme.bgMidnight.withValues(alpha: 0.8)],
+                    colors: [
+                      brandColor.withValues(alpha: 0.4),
+                      SafeTalkTheme.bgMidnight.withValues(alpha: 0.8),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: SafeTalkTheme.organicCardRadius,
-                  border: Border.all(color: brandColor.withValues(alpha: 0.3), width: 1.5),
+                  border: Border.all(
+                    color: brandColor.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -302,7 +338,11 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                         color: SafeTalkTheme.brandTerracotta,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.flash_on_rounded, color: Colors.white, size: 16),
+                      child: const Icon(
+                        Icons.flash_on_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -311,17 +351,26 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                         children: [
                           Text(
                             'Incoming Request Radar Active',
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textPrimary,
+                              bold: true,
+                            ).copyWith(fontSize: 14),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Tap to open incoming match cards.',
-                            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandSageLight),
+                            style: SafeTalkTheme.captionStyle(
+                              color: SafeTalkTheme.brandSageLight,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: SafeTalkTheme.textSecondary, size: 14),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: SafeTalkTheme.textSecondary,
+                      size: 14,
+                    ),
                   ],
                 ),
               ),
@@ -335,21 +384,24 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
             children: [
               Text(
                 'RECENT SEEKERS & CHATS',
-                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                ),
+                style: SafeTalkTheme.captionStyle(
+                  color: SafeTalkTheme.textSecondary,
+                ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
               ),
               HapticTouchable(
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ListenerMessagesScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const ListenerMessagesScreen(),
+                    ),
                   );
                 },
                 child: Text(
                   'View All Chats',
-                  style: SafeTalkTheme.captionStyle(color: brandColorLight).copyWith(fontWeight: FontWeight.bold),
+                  style: SafeTalkTheme.captionStyle(
+                    color: brandColorLight,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -366,12 +418,17 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                   const SizedBox(height: 10),
                   Text(
                     'No Recent Seekers',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Stay online to receive incoming matching support requests from seekers.',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -401,9 +458,15 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                           'time': seeker['lastActive'],
                           'notes': '',
                           'messages': [
-                            {'sender': 'user', 'text': 'Hello, is anyone there?'},
-                            {'sender': 'listener', 'text': 'Hello. Yes, I am right here with you.'},
-                          ]
+                            {
+                              'sender': 'user',
+                              'text': 'Hello, is anyone there?',
+                            },
+                            {
+                              'sender': 'listener',
+                              'text': 'Hello. Yes, I am right here with you.',
+                            },
+                          ],
                         },
                       );
                       Navigator.push(
@@ -417,71 +480,98 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: SafeTalkTheme.glassCardDecoration,
                       child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: seeker['avatarColor'].withValues(alpha: 0.15),
-                          child: Text(
-                            seeker['name'][0],
-                            style: SafeTalkTheme.bodyStyle(color: seeker['avatarColor'], bold: true).copyWith(fontSize: 12),
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: seeker['avatarColor'].withValues(
+                              alpha: 0.15,
+                            ),
+                            child: Text(
+                              seeker['name'][0],
+                              style: SafeTalkTheme.bodyStyle(
+                                color: seeker['avatarColor'],
+                                bold: true,
+                              ).copyWith(fontSize: 12),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      seeker['name'],
-                                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (seeker['isRegular']) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: brandColor.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
                                       child: Text(
-                                        'REGULAR',
-                                        style: SafeTalkTheme.captionStyle(color: brandColorLight)
-                                            .copyWith(fontSize: 8, fontWeight: FontWeight.bold),
+                                        seeker['name'],
+                                        style: SafeTalkTheme.bodyStyle(
+                                          color: SafeTalkTheme.textPrimary,
+                                          bold: true,
+                                        ).copyWith(fontSize: 14),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
+                                    if (seeker['isRegular']) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: brandColor.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'REGULAR',
+                                          style:
+                                              SafeTalkTheme.captionStyle(
+                                                color: brandColorLight,
+                                              ).copyWith(
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Focus: ${seeker['mood']}',
-                                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Focus: ${seeker['mood']}',
+                                  style: SafeTalkTheme.captionStyle(
+                                    color: SafeTalkTheme.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          seeker['lastActive'],
-                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted),
-                        ),
-                      ],
+                          Text(
+                            seeker['lastActive'],
+                            style: SafeTalkTheme.captionStyle(
+                              color: SafeTalkTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
           const SizedBox(height: 20),
         ],
       ),
@@ -504,12 +594,16 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
           const SizedBox(height: 14),
           Text(
             val,
-            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+            style: SafeTalkTheme.headingStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 18),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+            style: SafeTalkTheme.captionStyle(
+              color: SafeTalkTheme.textSecondary,
+            ),
           ),
         ],
       ),
@@ -543,10 +637,9 @@ class _ListenerDashboardScreenState extends State<ListenerDashboardScreen> {
         const SizedBox(height: 8),
         Text(
           day,
-          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted).copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-          ),
+          style: SafeTalkTheme.captionStyle(
+            color: SafeTalkTheme.textMuted,
+          ).copyWith(fontWeight: FontWeight.bold, fontSize: 10),
         ),
       ],
     );

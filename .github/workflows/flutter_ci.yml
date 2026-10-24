@@ -41,17 +41,60 @@ jobs:
         FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
       run: |
         if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-          echo "Decoding google-services.json..."
+          echo "Decoding google-services.json from repository secret..."
+          mkdir -p app/android/app
           echo "$GOOGLE_SERVICES_JSON" | base64 --decode > app/android/app/google-services.json
-        else
-          echo "No GOOGLE_SERVICES_JSON secret detected. Build will likely fail without it."
+        elif [ ! -f app/android/app/google-services.json ]; then
+          echo "Generating stub google-services.json for CI..."
+          mkdir -p app/android/app
+          cat > app/android/app/google-services.json <<'EOF'
+{
+  "project_info": {
+    "project_number": "124622276181",
+    "project_id": "safetalk-demo",
+    "storage_bucket": "safetalk-demo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124622276181:android:mock",
+        "android_client_info": {
+          "package_name": "com.safetalk.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [{ "current_key": "mock_api_key" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+    }
+  ],
+  "configuration_version": "1"
+}
+EOF
         fi
 
         if [ -n "$FIREBASE_OPTIONS_DART" ]; then
-          echo "Decoding firebase_options.dart..."
+          echo "Decoding firebase_options.dart from repository secret..."
+          mkdir -p app/lib
           echo "$FIREBASE_OPTIONS_DART" | base64 --decode > app/lib/firebase_options.dart
-        else
-          echo "No FIREBASE_OPTIONS_DART secret detected. Build will likely fail without it."
+        elif [ ! -f app/lib/firebase_options.dart ]; then
+          echo "Generating stub firebase_options.dart for CI..."
+          mkdir -p app/lib
+          cat > app/lib/firebase_options.dart <<'EOF'
+// Generated mock for CI build verification
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform => android;
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'mock-api-key',
+    appId: '1:124622276181:android:mock',
+    messagingSenderId: '124622276181',
+    projectId: 'safetalk-demo',
+    storageBucket: 'safetalk-demo.appspot.com',
+  );
+}
+EOF
         fi
 
     - name: Install dependencies
@@ -62,7 +105,7 @@ jobs:
     - name: Verify formatting
       run: |
         cd app
-        dart format --set-exit-if-changed lib/
+        dart format --output=none --set-exit-if-changed lib/ test/
 
     - name: Run analyzer
       run: |
@@ -85,13 +128,13 @@ jobs:
           echo "Decoding Android signing keystore..."
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > app/android/app/upload-keystore.jks
           
-          # Write key credentials properties file for gradle lookup
-          cat <<EOF > app/android/key.properties
-        storePassword=$ANDROID_STORE_PASSWORD
-        keyPassword=$ANDROID_KEY_PASSWORD
-        keyAlias=$ANDROID_KEY_ALIAS
-        storeFile=upload-keystore.jks
-        EOF
+          # Write key credentials properties file for gradle lookup (no leading whitespace)
+          cat > app/android/key.properties <<EOF
+storePassword=$ANDROID_STORE_PASSWORD
+keyPassword=$ANDROID_KEY_PASSWORD
+keyAlias=$ANDROID_KEY_ALIAS
+storeFile=upload-keystore.jks
+EOF
         else
           echo "No keystore secrets detected. Building unsigned binary only."
         fi

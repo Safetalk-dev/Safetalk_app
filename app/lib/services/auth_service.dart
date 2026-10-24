@@ -14,31 +14,52 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '124622276181-2n4dn9nln4c3p90qof67dsij13bv7vtv.apps.googleusercontent.com',
+  /// Default server OAuth Web Client ID for Google Sign-In
+  static const String _defaultServerClientId =
+      '124622276181-2n4dn9nln4c3p90qof67dsij13bv7vtv.apps.googleusercontent.com';
+
+  static const String _envServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
   );
+
+  /// Runtime override for testing or staging credential injection (Wave 5)
+  static String? serverClientIdOverride;
+
+  /// Effective Google Server Client ID resolving runtime override, dart-define, or fallback
+  static String get activeServerClientId =>
+      serverClientIdOverride ??
+      (_envServerClientId.isNotEmpty
+          ? _envServerClientId
+          : _defaultServerClientId);
+
+  FirebaseAuth? _auth;
+  static FirebaseAuth? authOverride;
+  FirebaseAuth get _authInstance =>
+      authOverride ?? (_auth ??= FirebaseAuth.instance);
+  GoogleSignIn get _googleSignIn =>
+      GoogleSignIn(serverClientId: activeServerClientId);
 
   // ── Getters ─────────────────────────────────────────────────────────────────
 
   /// The currently authenticated Firebase user, or null if signed out.
-  User? get currentUser => _auth.currentUser;
+  User? get currentUser => _authInstance.currentUser;
 
   /// Whether a user is currently authenticated.
-  bool get isAuthenticated => _auth.currentUser != null;
+  bool get isAuthenticated => _authInstance.currentUser != null;
 
   /// Reactive stream of auth state changes. Use with StreamBuilder for
   /// automatic UI updates when the user signs in or out.
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  Stream<User?> get authStateChanges => _authInstance.authStateChanges();
 
   /// The display name of the current user (moniker).
-  String get displayName => _auth.currentUser?.displayName ?? 'Anonymous';
+  String get displayName =>
+      _authInstance.currentUser?.displayName ?? 'Anonymous';
 
   /// The email of the current user.
-  String get email => _auth.currentUser?.email ?? '';
+  String get email => _authInstance.currentUser?.email ?? '';
 
   /// The Firebase UID of the current user.
-  String get uid => _auth.currentUser?.uid ?? '';
+  String get uid => _authInstance.currentUser?.uid ?? '';
 
   // ── Email/Password Authentication ───────────────────────────────────────────
 
@@ -49,7 +70,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
+      await _authInstance.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
@@ -71,7 +92,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      await _authInstance.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
@@ -114,11 +135,18 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      await _auth.signInWithCredential(credential);
+      await _authInstance.signInWithCredential(credential);
       return null; // Success
     } on FirebaseAuthException catch (e) {
       return _mapFirebaseError(e.code, e.message);
     } on PlatformException catch (e) {
+      // User cancelled the sign-in flow on Android platform level (A5.5)
+      if (e.code == 'sign_in_canceled') {
+        return null;
+      }
+      if (e.code == 'network_error') {
+        return 'Network connection error during Google sign-in. Please verify your internet connection.';
+      }
       if (e.code == 'sign_in_failed' || (e.message?.contains('10') ?? false)) {
         return 'Google sign-in configuration error (Code 10). Please ensure SHA-1 fingerprint is registered in Firebase Console.';
       }
@@ -138,7 +166,7 @@ class AuthService {
   /// Returns null on success, or an error message string on failure.
   Future<String?> resetPassword(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
+      await _authInstance.sendPasswordResetEmail(email: email.trim());
       return null; // Success
     } on FirebaseAuthException catch (e) {
       return _mapFirebaseError(e.code, e.message);
@@ -158,15 +186,15 @@ class AuthService {
     } catch (_) {
       // Platform doesn't support Google Sign-In — skip silently
     }
-    await _auth.signOut();
+    await _authInstance.signOut();
   }
 
   // ── Update Profile ──────────────────────────────────────────────────────────
 
   /// Updates the display name (moniker) of the current user.
   Future<void> updateDisplayName(String newName) async {
-    await _auth.currentUser?.updateDisplayName(newName.trim());
-    await _auth.currentUser?.reload();
+    await _authInstance.currentUser?.updateDisplayName(newName.trim());
+    await _authInstance.currentUser?.reload();
   }
 
   // ── Error Mapping ───────────────────────────────────────────────────────────
@@ -202,7 +230,7 @@ class AuthService {
 
   /// Parses generic exception strings to extract Firebase error codes if present.
   String _mapFromErrorString(String errorString) {
-    if (errorString.contains('INVALID_LOGIN_CREDENTIALS') || 
+    if (errorString.contains('INVALID_LOGIN_CREDENTIALS') ||
         errorString.contains('invalid-credential') ||
         errorString.contains('wrong-password')) {
       return 'Incorrect email or password. Please try again.';

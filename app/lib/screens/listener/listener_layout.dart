@@ -24,7 +24,8 @@ class ListenerLayout extends StatefulWidget {
   State<ListenerLayout> createState() => _ListenerLayoutState();
 }
 
-class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObserver {
+class _ListenerLayoutState extends State<ListenerLayout>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   bool _showingNotifications = false;
   bool _isOnline = false;
@@ -37,7 +38,6 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    SessionController().addListener(_onSessionChanged);
     _loadInitialOnlineStatus();
     _listenToIncomingRequests();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,7 +60,9 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
   void _listenToIncomingRequests() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
-      _incomingSub = SessionService().streamIncomingRequests(uid).listen((requests) {
+      _incomingSub = SessionService().streamIncomingRequests(uid).listen((
+        requests,
+      ) {
         if (!mounted) return;
         setState(() {
           _incomingRequests = requests;
@@ -74,7 +76,6 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _incomingSub?.cancel();
-    SessionController().removeListener(_onSessionChanged);
     super.dispose();
   }
 
@@ -89,11 +90,6 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
         });
       }
     }
-  }
-
-  void _onSessionChanged() {
-    if (!mounted) return;
-    // Listener for session state changes
   }
 
   Future<void> _toggleOnlineStatus(bool value) async {
@@ -116,9 +112,11 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
 
   Widget _buildBody() {
     if (_showingNotifications) {
-      return ListenerNotificationScreen(onBack: () {
-        setState(() => _showingNotifications = false);
-      });
+      return ListenerNotificationScreen(
+        onBack: () {
+          setState(() => _showingNotifications = false);
+        },
+      );
     }
 
     switch (_currentIndex) {
@@ -135,7 +133,9 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
       case 1:
         return AcceptUserScreen(
           isOnline: _isOnline,
-          currentRequest: _incomingRequests.isNotEmpty ? _incomingRequests.first : null,
+          currentRequest: _incomingRequests.isNotEmpty
+              ? _incomingRequests.first
+              : null,
           onAcceptConnection: () {
             // Seeker is paying, call will launch automatically when payment completes
           },
@@ -176,15 +176,22 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: _isOnline
-                      ? SafeTalkTheme.getListenerColor(SessionController().isTherapist).withValues(alpha: 0.12)
+                      ? SafeTalkTheme.getListenerColor(
+                          SessionController().isTherapist,
+                        ).withValues(alpha: 0.12)
                       : SafeTalkTheme.textMuted.withValues(alpha: 0.12),
                   borderRadius: SafeTalkTheme.pillRadius,
                   border: Border.all(
                     color: _isOnline
-                        ? SafeTalkTheme.getListenerColor(SessionController().isTherapist).withValues(alpha: 0.3)
+                        ? SafeTalkTheme.getListenerColor(
+                            SessionController().isTherapist,
+                          ).withValues(alpha: 0.3)
                         : SafeTalkTheme.borderSage,
                     width: 1,
                   ),
@@ -193,14 +200,22 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
                   children: [
                     Icon(
                       Icons.lens,
-                      color: _isOnline ? SafeTalkTheme.getListenerColor(SessionController().isTherapist) : SafeTalkTheme.textMuted,
+                      color: _isOnline
+                          ? SafeTalkTheme.getListenerColor(
+                              SessionController().isTherapist,
+                            )
+                          : SafeTalkTheme.textMuted,
                       size: 8,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       _isOnline ? 'Online & Available' : 'Offline',
                       style: SafeTalkTheme.captionStyle(
-                        color: _isOnline ? SafeTalkTheme.getListenerColorLight(SessionController().isTherapist) : SafeTalkTheme.textSecondary,
+                        color: _isOnline
+                            ? SafeTalkTheme.getListenerColorLight(
+                                SessionController().isTherapist,
+                              )
+                            : SafeTalkTheme.textSecondary,
                       ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -215,8 +230,14 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
             icon: Stack(
               children: [
                 Icon(
-                  _showingNotifications ? Icons.notifications : Icons.notifications_none,
-                  color: _showingNotifications ? SafeTalkTheme.getListenerColor(SessionController().isTherapist) : SafeTalkTheme.textPrimary,
+                  _showingNotifications
+                      ? Icons.notifications
+                      : Icons.notifications_none,
+                  color: _showingNotifications
+                      ? SafeTalkTheme.getListenerColor(
+                          SessionController().isTherapist,
+                        )
+                      : SafeTalkTheme.textPrimary,
                 ),
                 Positioned(
                   right: 2,
@@ -225,7 +246,9 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
                     height: 8,
                     width: 8,
                     decoration: BoxDecoration(
-                      color: SafeTalkTheme.getListenerColor(SessionController().isTherapist),
+                      color: SafeTalkTheme.getListenerColor(
+                        SessionController().isTherapist,
+                      ),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -248,7 +271,7 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
           child: _buildBody(),
         ),
       ),
-      
+
       // Floating Custom Glassmorphic Navigation Bar
       bottomNavigationBar: _showingNotifications
           ? null
@@ -259,18 +282,45 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
                 decoration: BoxDecoration(
                   color: SafeTalkTheme.cardBg.withValues(alpha: 0.92),
                   borderRadius: SafeTalkTheme.pillRadius,
-                  border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
-                  boxShadow: SafeTalkTheme.glowShadow(Colors.black, opacity: 0.4),
+                  border: Border.all(
+                    color: SafeTalkTheme.borderSage,
+                    width: 1.5,
+                  ),
+                  boxShadow: SafeTalkTheme.glowShadow(
+                    Colors.black,
+                    opacity: 0.4,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard_rounded, 'Dashboard'),
-                      _buildNavItem(1, Icons.assignment_outlined, Icons.assignment_rounded, 'Requests', showBadge: _hasIncomingRequest),
-                      _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'History'),
-                      _buildNavItem(3, Icons.account_circle_outlined, Icons.account_circle_rounded, 'Profile'),
+                      _buildNavItem(
+                        0,
+                        Icons.dashboard_outlined,
+                        Icons.dashboard_rounded,
+                        'Dashboard',
+                      ),
+                      _buildNavItem(
+                        1,
+                        Icons.assignment_outlined,
+                        Icons.assignment_rounded,
+                        'Requests',
+                        showBadge: _hasIncomingRequest,
+                      ),
+                      _buildNavItem(
+                        2,
+                        Icons.history_rounded,
+                        Icons.history_rounded,
+                        'History',
+                      ),
+                      _buildNavItem(
+                        3,
+                        Icons.account_circle_outlined,
+                        Icons.account_circle_rounded,
+                        'Profile',
+                      ),
                     ],
                   ),
                 ),
@@ -279,9 +329,17 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
     );
   }
 
-  Widget _buildNavItem(int index, IconData outlineIcon, IconData filledIcon, String label, {bool showBadge = false}) {
+  Widget _buildNavItem(
+    int index,
+    IconData outlineIcon,
+    IconData filledIcon,
+    String label, {
+    bool showBadge = false,
+  }) {
     final isSelected = _currentIndex == index;
-    final activeColor = SafeTalkTheme.getListenerColor(SessionController().isTherapist);
+    final activeColor = SafeTalkTheme.getListenerColor(
+      SessionController().isTherapist,
+    );
 
     return HapticTouchable(
       onTap: () => setState(() {
@@ -297,9 +355,14 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? activeColor.withValues(alpha: 0.12) : Colors.transparent,
+                  color: isSelected
+                      ? activeColor.withValues(alpha: 0.12)
+                      : Colors.transparent,
                   borderRadius: SafeTalkTheme.pillRadius,
                 ),
                 child: Icon(
@@ -318,7 +381,10 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
                     decoration: BoxDecoration(
                       color: SafeTalkTheme.brandTerracotta,
                       shape: BoxShape.circle,
-                      border: Border.all(color: SafeTalkTheme.bgMidnight, width: 1.5),
+                      border: Border.all(
+                        color: SafeTalkTheme.bgMidnight,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -327,12 +393,13 @@ class _ListenerLayoutState extends State<ListenerLayout> with WidgetsBindingObse
           const SizedBox(height: 4),
           Text(
             label,
-            style: SafeTalkTheme.captionStyle(
-              color: isSelected ? activeColor : SafeTalkTheme.textSecondary,
-            ).copyWith(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 10,
-            ),
+            style:
+                SafeTalkTheme.captionStyle(
+                  color: isSelected ? activeColor : SafeTalkTheme.textSecondary,
+                ).copyWith(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 10,
+                ),
           ),
         ],
       ),

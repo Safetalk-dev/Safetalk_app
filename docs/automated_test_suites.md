@@ -56,7 +56,7 @@ firebase emulators:exec "npm --prefix firebase/functions test"
 ```
 This single command:
 1.  Starts the local Authentication and Firestore emulators.
-2.  Loads local firestore security rules ([firestore.rules](file:///e:/Coding/safe_talk/firestore.rules)).
+2.  Loads local firestore security rules ([firestore.rules](file:///d:/Coding/safe_talk/firestore.rules)).
 3.  Injects local variables from `firebase/functions/.env.local`.
 4.  Launches the Jest test runner to execute the test files.
 5.  Terminates all running emulators cleanly once completed.
@@ -65,18 +65,18 @@ This single command:
 
 ## 4. Test Suite Assertions (What is Validated)
 
-### 1. Cryptography Validation ([vault_service_test.dart](file:///e:/Coding/safe_talk/app/test/services/vault_service_test.dart))
+### 1. Cryptography Validation ([vault_service_test.dart](file:///d:/Coding/safe_talk/app/test/services/vault_service_test.dart))
 *   Verifies that plain-text records are successfully encrypted using PBKDF2-derived keys and AES-GCM.
 *   Asserts that decryption fails instantly with a `CryptographicException` if an incorrect PIN is supplied.
 
-### 2. Matching Integrity ([matching_flow_test.dart](file:///e:/Coding/safe_talk/app/test/matching_flow_test.dart))
+### 2. Matching Integrity ([matching_flow_test.dart](file:///d:/Coding/safe_talk/app/test/matching_flow_test.dart))
 *   Simulates the complete cycle: Seeker sends a call request -> Firestore moves to pending -> matches an online listener -> status goes to payment pending on listener accept.
 
-### 3. Firestore Security Rules ([firestore.rules.test.js](file:///e:/Coding/safe_talk/firebase/functions/__tests__/firestore.rules.test.js))
+### 3. Firestore Security Rules ([firestore.rules.test.js](file:///d:/Coding/safe_talk/firebase/functions/__tests__/firestore.rules.test.js))
 *   Asserts that users can read and write only their own user documents.
 *   Asserts that any authenticated user can read a `"listener"` profile.
 *   Asserts that read/write operations on `/sessions` are rejected for anyone who is not a participant in that session.
 
-### 4. Payout Webhooks ([webhook.test.js](file:///e:/Coding/safe_talk/firebase/functions/__tests__/webhook.test.js))
+### 4. Payout Webhooks ([webhook.test.js](file:///d:/Coding/safe_talk/firebase/functions/__tests__/webhook.test.js))
 *   Asserts that a webhook request without the `x-razorpay-signature` header is rejected with a `400 Bad Request`.
 *   Asserts that signatures are validated correctly using HMAC-SHA256, and valid checkout notifications dynamically update matching session documents to `active` status in Firestore.

@@ -34,10 +34,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     await [Permission.microphone].request();
 
     _engine = createAgoraRtcEngine();
-    await _engine.initialize(RtcEngineContext(
-      appId: widget.appId,
-      channelProfile: ChannelProfileType.channelProfileCommunication,
-    ));
+    await _engine.initialize(
+      RtcEngineContext(
+        appId: widget.appId,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+      ),
+    );
 
     _engine.registerEventHandler(
       RtcEngineEventHandler(
@@ -50,11 +52,18 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
           debugPrint("remote user \$remoteUid joined");
         },
-        onUserOffline: (RtcConnection connection, int remoteUid, UserOfflineReasonType reason) {
-          debugPrint("remote user \$remoteUid left channel");
-        },
+        onUserOffline:
+            (
+              RtcConnection connection,
+              int remoteUid,
+              UserOfflineReasonType reason,
+            ) {
+              debugPrint("remote user \$remoteUid left channel");
+            },
         onTokenPrivilegeWillExpire: (RtcConnection connection, String token) {
-          debugPrint('[onTokenPrivilegeWillExpire] connection: \${connection.toJson()}, token: \$token');
+          debugPrint(
+            '[onTokenPrivilegeWillExpire] connection: \${connection.toJson()}, token: \$token',
+          );
         },
       ),
     );
@@ -99,17 +108,27 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
             CircleAvatar(
               radius: 60,
               backgroundColor: SafeTalkTheme.brandSage.withValues(alpha: 0.2),
-              child: const Icon(Icons.person_rounded, size: 60, color: SafeTalkTheme.brandSage),
+              child: const Icon(
+                Icons.person_rounded,
+                size: 60,
+                color: SafeTalkTheme.brandSage,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
               'Secure Voice Session',
-              style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 24),
+              style: SafeTalkTheme.headingStyle(
+                color: SafeTalkTheme.textPrimary,
+              ).copyWith(fontSize: 24),
             ),
             const SizedBox(height: 8),
             Text(
               _isJoined ? 'Connected • Encrypted' : 'Connecting...',
-              style: SafeTalkTheme.bodyStyle(color: _isJoined ? SafeTalkTheme.brandSage : SafeTalkTheme.textSecondary),
+              style: SafeTalkTheme.bodyStyle(
+                color: _isJoined
+                    ? SafeTalkTheme.brandSage
+                    : SafeTalkTheme.textSecondary,
+              ),
             ),
             const Spacer(),
             Row(
@@ -117,7 +136,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
               children: [
                 _buildCallAction(
                   icon: _isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                  color: _isMuted ? SafeTalkTheme.textSecondary : SafeTalkTheme.brandSage,
+                  color: _isMuted
+                      ? SafeTalkTheme.textSecondary
+                      : SafeTalkTheme.brandSage,
                   onPressed: _onToggleMute,
                 ),
                 const SizedBox(width: 32),
@@ -136,7 +157,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     );
   }
 
-  Widget _buildCallAction({required IconData icon, required Color color, required VoidCallback onPressed, double size = 56}) {
+  Widget _buildCallAction({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+    double size = 56,
+  }) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(size / 2),

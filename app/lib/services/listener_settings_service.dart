@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ListenerSettingsService {
-  static final ListenerSettingsService _instance = ListenerSettingsService._internal();
+  static final ListenerSettingsService _instance =
+      ListenerSettingsService._internal();
   factory ListenerSettingsService() => _instance;
   ListenerSettingsService._internal() {
     loadSettings();
@@ -47,10 +48,12 @@ class ListenerSettingsService {
         dir.createSync(recursive: true);
       }
       final file = File('data/$_filename');
-      await file.writeAsString(jsonEncode({
-        'panicCallEnabled': _panicCallEnabled,
-        'supervisionEnabled': _supervisionEnabled,
-      }));
+      await file.writeAsString(
+        jsonEncode({
+          'panicCallEnabled': _panicCallEnabled,
+          'supervisionEnabled': _supervisionEnabled,
+        }),
+      );
     } catch (e) {
       debugPrint('Error saving listener settings: $e');
     }

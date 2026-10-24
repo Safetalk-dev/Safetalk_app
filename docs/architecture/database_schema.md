@@ -76,7 +76,7 @@ Financial transaction tracking.
 
 ## 2. Required Firestore Indexes
 
-To query companions based on language and online status efficiently, the following composite index is configured inside [firestore.indexes.json](file:///e:/Coding/safe_talk/firestore.indexes.json):
+To query companions based on language and online status efficiently, the following composite index is configured inside [firestore.indexes.json](file:///d:/Coding/safe_talk/firestore.indexes.json):
 *   **Collection Group**: `users`
 *   **Query Scope**: `COLLECTION`
 *   **Indexed Fields**:
@@ -87,4 +87,4 @@ To query companions based on language and online status efficiently, the followi
 ---
 
 ### Navigation
-**◄ [Previous: Matching Lifecycle](file:///e:/Coding/safe_talk/docs/architecture/matching_lifecycle.md)** | **[Table of Contents](file:///e:/Coding/safe_talk/docs/system_architecture_specification.md)** | **[Next: Security & Cryptography](file:///e:/Coding/safe_talk/docs/architecture/security_cryptography.md) ──►**
+**◄ [Previous: Matching Lifecycle](file:///d:/Coding/safe_talk/docs/architecture/matching_lifecycle.md)** | **[Table of Contents](file:///d:/Coding/safe_talk/docs/system_architecture_specification.md)** | **[Next: Security & Cryptography](file:///d:/Coding/safe_talk/docs/architecture/security_cryptography.md) ──►**

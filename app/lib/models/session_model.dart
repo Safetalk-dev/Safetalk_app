@@ -38,8 +38,12 @@ class SessionModel {
   static String normalizeSessionType(dynamic raw) {
     if (raw == null) return 'messages';
     final str = raw.toString();
-    if (str == 'SessionType.voiceCall' || str == 'voiceCall') return 'voiceCall';
-    if (str == 'SessionType.videoCall' || str == 'videoCall') return 'videoCall';
+    if (str == 'SessionType.voiceCall' || str == 'voiceCall') {
+      return 'voiceCall';
+    }
+    if (str == 'SessionType.videoCall' || str == 'videoCall') {
+      return 'videoCall';
+    }
     if (str == 'SessionType.messages' || str == 'messages') return 'messages';
     return str;
   }
@@ -60,12 +64,16 @@ class SessionModel {
       seekerConcern: json['seekerConcern'] as String? ?? '',
       listenerId: json['listenerId'] as String?,
       status: json['status'] as String? ?? 'pending',
-      rejectedBy: (json['rejectedBy'] as List<dynamic>?)
+      rejectedBy:
+          (json['rejectedBy'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
       sessionType: normalizeSessionType(json['sessionType']),
-      requestedAt: _parseDate(json['requestedAt']) ?? _parseDate(json['createdAt']) ?? DateTime.now(),
+      requestedAt:
+          _parseDate(json['requestedAt']) ??
+          _parseDate(json['createdAt']) ??
+          DateTime.now(),
       startedAt: _parseDate(json['startedAt']),
       completedAt: _parseDate(json['completedAt']),
       createdAt: _parseDate(json['createdAt']),

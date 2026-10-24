@@ -32,8 +32,15 @@ class UserExploreScreen extends StatefulWidget {
 
 class _UserExploreScreenState extends State<UserExploreScreen> {
   String selectedMood = 'All';
-  final List<String> moodChips = ['All', 'Anxious', 'Lonely', 'Overwhelmed', 'Venting', 'Grief'];
-  
+  final List<String> moodChips = [
+    'All',
+    'Anxious',
+    'Lonely',
+    'Overwhelmed',
+    'Venting',
+    'Grief',
+  ];
+
   // Daily questionnaire rating scale state
   int _selectedCheckInScore = 7;
 
@@ -93,13 +100,17 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
               const SizedBox(height: 20),
               Text(
                 'Start Support Session',
-                style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 20),
+                style: SafeTalkTheme.headingStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ).copyWith(fontSize: 20),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
               Text(
                 'Select your preferred connection medium. All sessions are secure, private, and encrypted.',
-                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                style: SafeTalkTheme.captionStyle(
+                  color: SafeTalkTheme.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -131,6 +142,7 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                 price: '₹150 / session',
                 icon: Icons.videocam_outlined,
                 color: SafeTalkTheme.brandGold,
+                isComingSoon: true,
               ),
               const SizedBox(height: 20),
             ],
@@ -148,9 +160,24 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
     required String price,
     required IconData icon,
     required Color color,
+    bool isComingSoon = false,
   }) {
     return HapticTouchable(
       onTap: () {
+        if (isComingSoon) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Video sessions are currently being upgraded with end-to-end encryption. Please select Secure Chat or Voice Call.',
+                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight),
+              ),
+              backgroundColor: SafeTalkTheme.textPrimary,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
         Navigator.pop(context);
         widget.onRequestListener(type);
       },
@@ -176,20 +203,50 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                 children: [
                   Text(
                     title,
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 16),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ).copyWith(fontSize: 16),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     duration,
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-            Text(
-              price,
-              style: SafeTalkTheme.bodyStyle(color: color, bold: true).copyWith(fontSize: 15),
-            ),
+            if (isComingSoon)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: SafeTalkTheme.brandGold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: SafeTalkTheme.brandGold.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'Coming Soon',
+                  style: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.brandGold,
+                  ).copyWith(fontWeight: FontWeight.bold, fontSize: 11),
+                ),
+              )
+            else
+              Text(
+                price,
+                style: SafeTalkTheme.bodyStyle(
+                  color: color,
+                  bold: true,
+                ).copyWith(fontSize: 15),
+              ),
             const SizedBox(width: 8),
             Icon(Icons.chevron_right_rounded, color: SafeTalkTheme.textMuted),
           ],
@@ -202,11 +259,15 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
   Widget build(BuildContext context) {
     final searchLower = _searchQuery.toLowerCase();
     final filteredListeners = widget.allListeners.where((l) {
-      final matchesMood = selectedMood == 'All' || 
+      final matchesMood =
+          selectedMood == 'All' ||
           (l['specialties'] as List<String>).contains(selectedMood);
-      final matchesSearch = searchLower.isEmpty ||
+      final matchesSearch =
+          searchLower.isEmpty ||
           l['name'].toString().toLowerCase().contains(searchLower) ||
-          (l['specialties'] as List<String>).any((s) => s.toLowerCase().contains(searchLower)) ||
+          (l['specialties'] as List<String>).any(
+            (s) => s.toLowerCase().contains(searchLower),
+          ) ||
           l['bio'].toString().toLowerCase().contains(searchLower);
       return matchesMood && matchesSearch;
     }).toList();
@@ -220,11 +281,15 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
           // Greeting Header with editable Moniker!
           Text(
             'How is your heart today,',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 24),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 24),
           ),
           Text(
             '${widget.username}?',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.brandTerracotta).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.brandTerracotta,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 8),
           Text(
@@ -238,8 +303,8 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
               border: Border.all(
-                color: _searchQuery.isNotEmpty 
-                    ? SafeTalkTheme.brandTerracotta.withValues(alpha: 0.5) 
+                color: _searchQuery.isNotEmpty
+                    ? SafeTalkTheme.brandTerracotta.withValues(alpha: 0.5)
                     : SafeTalkTheme.borderSage,
                 width: 1.2,
               ),
@@ -249,12 +314,22 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
               style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search companions by name, bio, or focus...',
-                hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                hintStyle: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textMuted,
+                ),
                 border: InputBorder.none,
-                icon: const Icon(Icons.search_rounded, color: SafeTalkTheme.textSecondary, size: 20),
+                icon: const Icon(
+                  Icons.search_rounded,
+                  color: SafeTalkTheme.textSecondary,
+                  size: 20,
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close_rounded, color: SafeTalkTheme.textSecondary, size: 18),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: SafeTalkTheme.textSecondary,
+                          size: 18,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                         },
@@ -263,7 +338,7 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
 
           // --- NEW: DAILY EMOTIONAL QUESTIONNAIRE ---
@@ -294,7 +369,9 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                       label: Text(
                         mood,
                         style: SafeTalkTheme.bodyStyle(
-                          color: isSelected ? SafeTalkTheme.bgMidnight : SafeTalkTheme.textPrimary,
+                          color: isSelected
+                              ? SafeTalkTheme.bgMidnight
+                              : SafeTalkTheme.textPrimary,
                           bold: isSelected,
                         ).copyWith(fontSize: 13),
                       ),
@@ -310,7 +387,9 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: SafeTalkTheme.pillRadius,
                         side: BorderSide(
-                          color: isSelected ? SafeTalkTheme.brandTerracotta : SafeTalkTheme.borderSage,
+                          color: isSelected
+                              ? SafeTalkTheme.brandTerracotta
+                              : SafeTalkTheme.borderSage,
                           width: 1,
                         ),
                       ),
@@ -329,12 +408,18 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [SafeTalkTheme.brandTerracotta, SafeTalkTheme.brandGold],
+                colors: [
+                  SafeTalkTheme.brandTerracotta,
+                  SafeTalkTheme.brandGold,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: SafeTalkTheme.organicCardRadius,
-              boxShadow: SafeTalkTheme.glowShadow(SafeTalkTheme.brandTerracotta, opacity: 0.25),
+              boxShadow: SafeTalkTheme.glowShadow(
+                SafeTalkTheme.brandTerracotta,
+                opacity: 0.25,
+              ),
             ),
             child: Row(
               children: [
@@ -344,13 +429,18 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                     children: [
                       Text(
                         'Direct Matching',
-                        style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.bgMidnight),
+                        style: SafeTalkTheme.headingStyle(
+                          color: SafeTalkTheme.bgMidnight,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Connect instantly with the next available companion specialized in handling acute anxiety.',
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight.withValues(alpha: 0.8))
-                            .copyWith(fontSize: 13),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.bgMidnight.withValues(
+                            alpha: 0.8,
+                          ),
+                        ).copyWith(fontSize: 13),
                       ),
                     ],
                   ),
@@ -386,12 +476,16 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
               children: [
                 Text(
                   'Compassionate Neighbors',
-                  style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                  style: SafeTalkTheme.headingStyle(
+                    color: SafeTalkTheme.textPrimary,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Text(
                   '${filteredListeners.length} active',
-                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                  style: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -406,7 +500,9 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
               child: Center(
                 child: Text(
                   'No listeners active in this mood category right now.',
-                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                  style: SafeTalkTheme.bodyStyle(
+                    color: SafeTalkTheme.textMuted,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -428,7 +524,9 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                         MaterialPageRoute(
                           builder: (context) => ListenerDetailScreen(
                             listener: peer,
-                            isRegular: widget.regularListenerNames.contains(peer['name']),
+                            isRegular: widget.regularListenerNames.contains(
+                              peer['name'],
+                            ),
                             onToggleRegular: widget.onToggleRegular,
                             onMessage: () {
                               Navigator.pop(context);
@@ -463,52 +561,78 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                                 width: 10,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: peer['active'] ? SafeTalkTheme.brandSage : SafeTalkTheme.textMuted,
+                                  color: peer['active']
+                                      ? SafeTalkTheme.brandSage
+                                      : SafeTalkTheme.textMuted,
                                   boxShadow: peer['active']
-                                      ? SafeTalkTheme.glowShadow(SafeTalkTheme.brandSage, opacity: 0.6)
+                                      ? SafeTalkTheme.glowShadow(
+                                          SafeTalkTheme.brandSage,
+                                          opacity: 0.6,
+                                        )
                                       : null,
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Text(
                                 peer['name'],
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                                    .copyWith(fontSize: 16),
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: SafeTalkTheme.textPrimary,
+                                  bold: true,
+                                ).copyWith(fontSize: 16),
                               ),
                               const Spacer(),
-                              const Icon(Icons.star, color: SafeTalkTheme.brandGold, size: 16),
+                              const Icon(
+                                Icons.star,
+                                color: SafeTalkTheme.brandGold,
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 peer['rating'],
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandGold, bold: true)
-                                    .copyWith(fontSize: 14),
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: SafeTalkTheme.brandGold,
+                                  bold: true,
+                                ).copyWith(fontSize: 14),
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 8),
 
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
                             child: Row(
-                              children: (peer['specialties'] as List<String>).map((spec) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: SafeTalkTheme.bgMidnight,
-                                      borderRadius: SafeTalkTheme.pillRadius,
-                                      border: Border.all(color: SafeTalkTheme.borderSage, width: 1),
-                                    ),
-                                    child: Text(
-                                      spec,
-                                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandSageLight),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                              children: (peer['specialties'] as List<String>)
+                                  .map((spec) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 8.0,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: SafeTalkTheme.bgMidnight,
+                                          borderRadius:
+                                              SafeTalkTheme.pillRadius,
+                                          border: Border.all(
+                                            color: SafeTalkTheme.borderSage,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          spec,
+                                          style: SafeTalkTheme.captionStyle(
+                                            color: SafeTalkTheme.brandSageLight,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  })
+                                  .toList(),
                             ),
                           ),
 
@@ -516,8 +640,9 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
 
                           Text(
                             peer['bio'],
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary)
-                                .copyWith(fontSize: 13.5, height: 1.4),
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textSecondary,
+                            ).copyWith(fontSize: 13.5, height: 1.4),
                           ),
 
                           const SizedBox(height: 20),
@@ -530,54 +655,80 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ListenerDetailScreen(
-                                          listener: peer,
-                                          isRegular: widget.regularListenerNames.contains(peer['name']),
-                                          onToggleRegular: widget.onToggleRegular,
-                                          onMessage: () {
-                                            Navigator.pop(context);
-                                            widget.onOpenListenerChat(peer['name']);
-                                          },
-                                          onConnectNow: () {
-                                            Navigator.pop(context);
-                                            _showSessionSelectionSheet(context);
-                                          },
-                                          onBack: () => Navigator.pop(context),
-                                        ),
+                                        builder: (context) =>
+                                            ListenerDetailScreen(
+                                              listener: peer,
+                                              isRegular: widget
+                                                  .regularListenerNames
+                                                  .contains(peer['name']),
+                                              onToggleRegular:
+                                                  widget.onToggleRegular,
+                                              onMessage: () {
+                                                Navigator.pop(context);
+                                                widget.onOpenListenerChat(
+                                                  peer['name'],
+                                                );
+                                              },
+                                              onConnectNow: () {
+                                                Navigator.pop(context);
+                                                _showSessionSelectionSheet(
+                                                  context,
+                                                );
+                                              },
+                                              onBack: () =>
+                                                  Navigator.pop(context),
+                                            ),
                                       ),
                                     );
                                   },
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: SafeTalkTheme.textPrimary,
-                                    side: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: SafeTalkTheme.standardRadius,
+                                    side: const BorderSide(
+                                      color: SafeTalkTheme.borderSage,
+                                      width: 1.5,
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          SafeTalkTheme.standardRadius,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                   ),
                                   child: Text(
                                     'View Profile',
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textPrimary,
+                                      bold: true,
+                                    ),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: () => _showSessionSelectionSheet(context),
+                                  onPressed: () =>
+                                      _showSessionSelectionSheet(context),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: SafeTalkTheme.brandSage,
                                     foregroundColor: SafeTalkTheme.bgMidnight,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: SafeTalkTheme.organicCardRadius,
+                                      borderRadius:
+                                          SafeTalkTheme.organicCardRadius,
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                     elevation: 4,
-                                    shadowColor: SafeTalkTheme.brandSage.withValues(alpha: 0.2),
+                                    shadowColor: SafeTalkTheme.brandSage
+                                        .withValues(alpha: 0.2),
                                   ),
                                   child: Text(
                                     'Connect Now',
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.bgMidnight,
+                                      bold: true,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -602,14 +753,21 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-          border: Border.all(color: SafeTalkTheme.brandSage.withValues(alpha: 0.3), width: 1.5),
+          border: Border.all(
+            color: SafeTalkTheme.brandSage.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
             CircleAvatar(
               radius: 18,
               backgroundColor: SafeTalkTheme.brandSage.withValues(alpha: 0.12),
-              child: const Icon(Icons.check, color: SafeTalkTheme.brandSage, size: 18),
+              child: const Icon(
+                Icons.check,
+                color: SafeTalkTheme.brandSage,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -618,12 +776,17 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                 children: [
                   Text(
                     'Emotional Balance Logged',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Your weekly rolling tracker in your Profile has been successfully updated. Take a slow deep breath.',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -637,7 +800,10 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-        border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.25), width: 1.5),
+        border: Border.all(
+          color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,20 +811,29 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
           // Header titles
           Row(
             children: [
-              const Icon(Icons.health_and_safety_outlined, color: SafeTalkTheme.brandTerracotta, size: 20),
+              const Icon(
+                Icons.health_and_safety_outlined,
+                color: SafeTalkTheme.brandTerracotta,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Daily Emotional Check-in',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 16),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                  bold: true,
+                ).copyWith(fontSize: 16),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             'Rate your inner balance today (1 to 10) to update your rolling tracker curve:',
-            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+            style: SafeTalkTheme.captionStyle(
+              color: SafeTalkTheme.textSecondary,
+            ),
           ),
-          
+
           const SizedBox(height: 18),
 
           // 1 to 10 therapeutic horizontal grid selector
@@ -670,13 +845,15 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
               children: List.generate(10, (index) {
                 final score = index + 1;
                 final isSelected = _selectedCheckInScore == score;
-                
+
                 // Color spectrum (Terracotta coral for low, Sage green for high)
-                final Color scoreColor = Color.lerp(
-                  SafeTalkTheme.brandTerracotta, 
-                  SafeTalkTheme.brandSage, 
-                  index / 9.0
-                ) ?? SafeTalkTheme.brandSage;
+                final Color scoreColor =
+                    Color.lerp(
+                      SafeTalkTheme.brandTerracotta,
+                      SafeTalkTheme.brandSage,
+                      index / 9.0,
+                    ) ??
+                    SafeTalkTheme.brandSage;
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -693,9 +870,13 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                       width: 38,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected ? scoreColor : SafeTalkTheme.bgMidnight,
+                        color: isSelected
+                            ? scoreColor
+                            : SafeTalkTheme.bgMidnight,
                         border: Border.all(
-                          color: isSelected ? Colors.transparent : SafeTalkTheme.borderSage,
+                          color: isSelected
+                              ? Colors.transparent
+                              : SafeTalkTheme.borderSage,
                           width: 1.5,
                         ),
                       ),
@@ -703,7 +884,9 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
                         child: Text(
                           '$score',
                           style: SafeTalkTheme.bodyStyle(
-                            color: isSelected ? SafeTalkTheme.bgMidnight : SafeTalkTheme.textPrimary,
+                            color: isSelected
+                                ? SafeTalkTheme.bgMidnight
+                                : SafeTalkTheme.textPrimary,
                             bold: true,
                           ).copyWith(fontSize: 13),
                         ),
@@ -722,16 +905,22 @@ class _UserExploreScreenState extends State<UserExploreScreen> {
             width: double.infinity,
             height: 40,
             child: ElevatedButton(
-              onPressed: () => widget.onMoodCheckedIn(_selectedCheckInScore.toDouble()),
+              onPressed: () =>
+                  widget.onMoodCheckedIn(_selectedCheckInScore.toDouble()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SafeTalkTheme.brandTerracotta,
                 foregroundColor: SafeTalkTheme.bgMidnight,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                shape: RoundedRectangleBorder(
+                  borderRadius: SafeTalkTheme.organicCardRadius,
+                ),
               ),
               child: Text(
                 'Log Emotional Balance',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true).copyWith(fontSize: 13.5),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.bgMidnight,
+                  bold: true,
+                ).copyWith(fontSize: 13.5),
               ),
             ),
           ),

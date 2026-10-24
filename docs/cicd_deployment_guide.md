@@ -59,7 +59,7 @@ To execute builds and deployments, you must configure the following Secrets unde
 ## 3. Workflows Configuration
 
 ### A. Flutter CI/CD Pipeline
-File Path: [.github/workflows/flutter_ci.yml](file:///e:/Coding/safe_talk/.github/workflows/flutter_ci.yml)
+File Path: [.github/workflows/flutter_ci.yml](file:///d:/Coding/safe_talk/.github/workflows/flutter_ci.yml)
 *   **Trigger**: Fires on any push or pull request to the `main` branch.
 *   **Key Operations**:
     1.  Validates formatting via `flutter format`.
@@ -70,7 +70,7 @@ File Path: [.github/workflows/flutter_ci.yml](file:///e:/Coding/safe_talk/.githu
     6.  Uploads the `.aab` binary output as a downloadable build artifact.
 
 ### B. Firebase CI/CD Pipeline
-File Path: [.github/workflows/firebase_ci.yml](file:///e:/Coding/safe_talk/.github/workflows/firebase_ci.yml)
+File Path: [.github/workflows/firebase_ci.yml](file:///d:/Coding/safe_talk/.github/workflows/firebase_ci.yml)
 *   **Trigger**: Fires on any push or pull request touching the `firebase/`, `firestore.rules`, or `firestore.indexes.json` directories.
 *   **Key Operations**:
     1.  Installs NodeJS dependencies.

@@ -9,7 +9,10 @@ class RazorpayService {
 
   /// Optional override for testing or runtime configuration.
   static String? keyOverride;
-  static const String _defaultKeyId = String.fromEnvironment('RAZORPAY_KEY_ID', defaultValue: '');
+  static const String _defaultKeyId = String.fromEnvironment(
+    'RAZORPAY_KEY_ID',
+    defaultValue: '',
+  );
 
   /// Returns the configured Razorpay Key ID (via --dart-define=RAZORPAY_KEY_ID=... or keyOverride).
   static String get activeKeyId => keyOverride ?? _defaultKeyId;
@@ -31,7 +34,9 @@ class RazorpayService {
     // Razorpay only supports Android & iOS natively in Flutter.
     // If run on Web or Desktop (Windows/macOS/Linux), bypass the SDK initialization to avoid crashes.
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
-      debugPrint('RazorpayService: Native SDK is not supported on this platform. Seamless desktop fallback enabled.');
+      debugPrint(
+        'RazorpayService: Native SDK is not supported on this platform. Seamless desktop fallback enabled.',
+      );
       return;
     }
 
@@ -50,7 +55,8 @@ class RazorpayService {
   }
 
   /// Whether the current running platform supports the native Razorpay checkout sheet
-  bool get isNativeSupported => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  bool get isNativeSupported =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   /// Trigger payment checkout interface
   void openCheckout({
@@ -61,31 +67,32 @@ class RazorpayService {
     required String sessionId,
   }) {
     if (!isNativeSupported) {
-      debugPrint('RazorpayService: Platform is not native mobile. Bypassing native SDK and triggering simulated overlay.');
+      debugPrint(
+        'RazorpayService: Platform is not native mobile. Bypassing native SDK and triggering simulated overlay.',
+      );
       return;
     }
 
     final key = activeKeyId;
     if (key.isEmpty) {
-      debugPrint('RazorpayService: RAZORPAY_KEY_ID is not configured. Provide it via --dart-define=RAZORPAY_KEY_ID=... or set RazorpayService.keyOverride.');
+      debugPrint(
+        'RazorpayService: RAZORPAY_KEY_ID is not configured. Provide it via --dart-define=RAZORPAY_KEY_ID=... or set RazorpayService.keyOverride.',
+      );
     }
 
     final options = {
       'key': key,
-      'amount': amountInRupees * 100, // Razorpay takes amount in sub-units (paisa: ₹150 = 15000)
+      'amount':
+          amountInRupees *
+          100, // Razorpay takes amount in sub-units (paisa: ₹150 = 15000)
       'name': 'SafeTalk Care Sessions',
       'description': description,
       'timeout': 300, // Timeout in seconds (5 minutes)
-      'prefill': {
-        'contact': userPhone,
-        'email': userEmail,
-      },
-      'notes': {
-        'sessionId': sessionId,
-      },
+      'prefill': {'contact': userPhone, 'email': userEmail},
+      'notes': {'sessionId': sessionId},
       'external': {
-        'wallets': ['paytm']
-      }
+        'wallets': ['paytm'],
+      },
     };
 
     try {
@@ -103,7 +110,10 @@ class RazorpayService {
 
   void _handlePaymentError(PaymentFailureResponse response) {
     debugPrint('Payment Failure: ${response.code} - ${response.message}');
-    _errorCallback?.call(response.code.toString(), response.message ?? 'Unknown checkout error');
+    _errorCallback?.call(
+      response.code.toString(),
+      response.message ?? 'Unknown checkout error',
+    );
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {

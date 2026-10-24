@@ -37,12 +37,7 @@ class _HapticTouchableState extends State<HapticTouchable>
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: widget.pressedScale,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override
@@ -75,8 +70,9 @@ class _HapticTouchableState extends State<HapticTouchable>
 
   @override
   Widget build(BuildContext context) {
-    final bool isActionable = widget.onTap != null || widget.onLongPress != null;
-    
+    final bool isActionable =
+        widget.onTap != null || widget.onLongPress != null;
+
     if (!isActionable) {
       return widget.child;
     }
@@ -94,10 +90,7 @@ class _HapticTouchableState extends State<HapticTouchable>
             }
           : null,
       behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }

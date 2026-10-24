@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  
+
   // Toggle between Sign In (false) and Sign Up (true)
   bool _isSigningUp = false;
 
@@ -106,24 +106,30 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 16.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 40),
-                      
+
                       // Small custom S Logo and Title
                       const SafeTalkLogo(size: 64, animate: true),
                       const SizedBox(height: 12),
                       Text(
                         'safe talk',
-                        style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(
-                          fontSize: 26,
-                          letterSpacing: -1.0,
-                          fontWeight: FontWeight.w300,
-                        ),
+                        style:
+                            SafeTalkTheme.displayStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ).copyWith(
+                              fontSize: 26,
+                              letterSpacing: -1.0,
+                              fontWeight: FontWeight.w300,
+                            ),
                       ),
-                      
+
                       const SizedBox(height: 40),
 
                       // Full Screen Panel Form Layout
@@ -132,91 +138,139 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             _isSigningUp ? 'Create an Account' : 'Welcome Back',
-                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 24),
+                            style: SafeTalkTheme.headingStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ).copyWith(fontSize: 24),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _isSigningUp
                                 ? 'Register your secure email to create a confidential access key.'
                                 : 'Sign in to access your secure haven.',
-                            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                            style: SafeTalkTheme.captionStyle(
+                              color: SafeTalkTheme.textSecondary,
+                            ),
                           ),
                           const SizedBox(height: 32),
-                          
+
                           // Email Field
                           Text(
                             'CONFIDENTIAL EMAIL ADDRESS',
-                            style: SafeTalkTheme.captionStyle(color: themeColor).copyWith(fontWeight: FontWeight.bold),
+                            style: SafeTalkTheme.captionStyle(
+                              color: themeColor,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
                           TextField(
                             controller: _emailController,
                             enabled: !_isLoading,
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ),
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               hintText: 'name@safetalk.space',
-                              hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                              hintStyle: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textMuted,
+                              ),
                               filled: true,
                               fillColor: SafeTalkTheme.bgMidnight,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: SafeTalkTheme.borderSage,
+                                  width: 1.5,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: BorderSide(color: themeColor, width: 2),
+                                borderSide: BorderSide(
+                                  color: themeColor,
+                                  width: 2,
+                                ),
                               ),
                               disabledBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: BorderSide(color: SafeTalkTheme.borderSage.withValues(alpha: 0.5), width: 1.5),
+                                borderSide: BorderSide(
+                                  color: SafeTalkTheme.borderSage.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  width: 1.5,
+                                ),
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 20),
 
                           // Password Field
                           Text(
                             _isSigningUp ? 'CREATE ACCESS PIN' : 'ACCESS KEY',
-                            style: SafeTalkTheme.captionStyle(color: themeColor).copyWith(fontWeight: FontWeight.bold),
+                            style: SafeTalkTheme.captionStyle(
+                              color: themeColor,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
                           TextField(
                             controller: _passController,
                             obscureText: _obscurePassword,
                             enabled: !_isLoading,
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ),
                             decoration: InputDecoration(
                               hintText: '••••••••',
-                              hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                              hintStyle: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textMuted,
+                              ),
                               filled: true,
                               fillColor: SafeTalkTheme.bgMidnight,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
                                   color: SafeTalkTheme.textSecondary,
                                   size: 20,
                                 ),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: SafeTalkTheme.borderSage,
+                                  width: 1.5,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: BorderSide(color: themeColor, width: 2),
+                                borderSide: BorderSide(
+                                  color: themeColor,
+                                  width: 2,
+                                ),
                               ),
                               disabledBorder: OutlineInputBorder(
                                 borderRadius: SafeTalkTheme.standardRadius,
-                                borderSide: BorderSide(color: SafeTalkTheme.borderSage.withValues(alpha: 0.5), width: 1.5),
+                                borderSide: BorderSide(
+                                  color: SafeTalkTheme.borderSage.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  width: 1.5,
+                                ),
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 40),
 
                           // Main Action Button (Sign In / Sign Up) with loading state
@@ -228,7 +282,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: themeColor,
                                 foregroundColor: SafeTalkTheme.bgMidnight,
-                                disabledBackgroundColor: themeColor.withValues(alpha: 0.5),
+                                disabledBackgroundColor: themeColor.withValues(
+                                  alpha: 0.5,
+                                ),
                                 elevation: 6,
                                 shadowColor: themeColor.withValues(alpha: 0.15),
                                 shape: RoundedRectangleBorder(
@@ -241,13 +297,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                       width: 22,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.5,
-                                        valueColor: AlwaysStoppedAnimation<Color>(SafeTalkTheme.bgMidnight),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              SafeTalkTheme.bgMidnight,
+                                            ),
                                       ),
                                     )
                                   : Text(
-                                      _isSigningUp ? 'Create Account' : 'Sign In',
-                                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true)
-                                          .copyWith(fontSize: 16),
+                                      _isSigningUp
+                                          ? 'Create Account'
+                                          : 'Sign In',
+                                      style: SafeTalkTheme.bodyStyle(
+                                        color: SafeTalkTheme.bgMidnight,
+                                        bold: true,
+                                      ).copyWith(fontSize: 16),
                                     ),
                             ),
                           ),
@@ -259,13 +322,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             height: 54,
                             child: OutlinedButton.icon(
-                              onPressed: _isLoading ? null : _handleGoogleSignIn,
+                              onPressed: _isLoading
+                                  ? null
+                                  : _handleGoogleSignIn,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: SafeTalkTheme.textPrimary,
                                 side: BorderSide(
-                                  color: _isLoading 
-                                      ? SafeTalkTheme.borderSage.withValues(alpha: 0.5) 
-                                      : SafeTalkTheme.borderSage, 
+                                  color: _isLoading
+                                      ? SafeTalkTheme.borderSage.withValues(
+                                          alpha: 0.5,
+                                        )
+                                      : SafeTalkTheme.borderSage,
                                   width: 1.5,
                                 ),
                                 shape: RoundedRectangleBorder(
@@ -274,13 +341,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               icon: _isLoading
                                   ? const SizedBox.shrink()
-                                  : const Icon(Icons.g_mobiledata_rounded, size: 28),
+                                  : const Icon(
+                                      Icons.g_mobiledata_rounded,
+                                      size: 28,
+                                    ),
                               label: Text(
                                 'Continue with Google',
                                 style: SafeTalkTheme.bodyStyle(
-                                  color: _isLoading 
-                                      ? SafeTalkTheme.textMuted 
-                                      : SafeTalkTheme.textPrimary, 
+                                  color: _isLoading
+                                      ? SafeTalkTheme.textMuted
+                                      : SafeTalkTheme.textPrimary,
                                   bold: true,
                                 ).copyWith(fontSize: 15),
                               ),
@@ -301,15 +371,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                     },
                               borderRadius: SafeTalkTheme.pillRadius,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 child: Text(
                                   _isSigningUp
                                       ? 'Already registered? Sign In instead'
                                       : 'New to SafeTalk? Sign Up',
-                                  style: SafeTalkTheme.captionStyle(color: themeColor).copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
+                                  style:
+                                      SafeTalkTheme.captionStyle(
+                                        color: themeColor,
+                                      ).copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      ),
                                 ),
                               ),
                             ),
@@ -320,18 +396,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              
+
               // 2. Encryption active message fixed strictly at the bottom
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0, top: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.lock_outline_rounded, color: SafeTalkTheme.brandSageLight.withValues(alpha: 0.6), size: 15),
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      color: SafeTalkTheme.brandSageLight.withValues(
+                        alpha: 0.6,
+                      ),
+                      size: 15,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Firebase Secure Authentication',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                      style: SafeTalkTheme.captionStyle(
+                        color: SafeTalkTheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),

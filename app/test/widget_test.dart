@@ -10,10 +10,9 @@ void main() {
     addTearDown(() => tester.view.resetPhysicalSize());
 
     // Build LoginScreen directly
-    await tester.pumpWidget(const MaterialApp(
-      home: LoginScreen(),
-    ));
-    await tester.pump(); // Use pump() instead of pumpAndSettle() due to looping logo animation
+    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+    await tester
+        .pump(); // Use pump() instead of pumpAndSettle() due to looping logo animation
 
     // Verify that our Login starting elements render
     expect(find.text('safe talk'), findsOneWidget);
@@ -21,14 +20,14 @@ void main() {
     expect(find.text('CONFIDENTIAL EMAIL ADDRESS'), findsOneWidget);
   });
 
-  testWidgets('Toggling between Sign In and Sign Up modes on LoginScreen', (WidgetTester tester) async {
+  testWidgets('Toggling between Sign In and Sign Up modes on LoginScreen', (
+    WidgetTester tester,
+  ) async {
     tester.view.physicalSize = const Size(800, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(const MaterialApp(
-      home: LoginScreen(),
-    ));
+    await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
     await tester.pump();
 
     // Verify we start in "Welcome Back" (Sign In) mode
@@ -37,7 +36,9 @@ void main() {
 
     // Tap "New to SafeTalk? Sign Up"
     await tester.tap(find.text('New to SafeTalk? Sign Up'));
-    await tester.pump(const Duration(milliseconds: 100)); // pump once to start state change
+    await tester.pump(
+      const Duration(milliseconds: 100),
+    ); // pump once to start state change
 
     // Verify we transition to "Create an Account" (Sign Up) mode
     expect(find.text('Create an Account'), findsOneWidget);

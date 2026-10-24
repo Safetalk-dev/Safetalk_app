@@ -29,12 +29,14 @@ class ListenerProfileScreen extends StatefulWidget {
 class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
   late bool _panicCallToggle;
   late bool _supervisionToggle;
-  String listenerName = AuthService().displayName.isNotEmpty && AuthService().displayName != 'Anonymous'
+  String listenerName =
+      AuthService().displayName.isNotEmpty &&
+          AuthService().displayName != 'Anonymous'
       ? AuthService().displayName
       : "Listener";
-  
-  String get listenerRank => SessionController().isTherapist 
-      ? "Licensed Clinical Therapist (Prestige Cl.)" 
+
+  String get listenerRank => SessionController().isTherapist
+      ? "Licensed Clinical Therapist (Prestige Cl.)"
       : "Certified Empathetic Peer Specialist";
 
   double _pendingPayout = 0.0;
@@ -109,7 +111,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
           // Header titles
           Text(
             'Support Profile',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 6),
           Text(
@@ -123,14 +127,21 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-              border: Border.all(color: brandColor.withValues(alpha: 0.3), width: 1.5),
+              border: Border.all(
+                color: brandColor.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: brandColor.withValues(alpha: 0.15),
-                  child: Icon(Icons.face_retouching_natural_rounded, color: brandColor, size: 30),
+                  child: Icon(
+                    Icons.face_retouching_natural_rounded,
+                    color: brandColor,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -139,13 +150,17 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     children: [
                       Text(
                         listenerName,
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                            .copyWith(fontSize: 18),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.textPrimary,
+                          bold: true,
+                        ).copyWith(fontSize: 18),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         listenerRank,
-                        style: SafeTalkTheme.captionStyle(color: brandColorLight).copyWith(fontWeight: FontWeight.bold),
+                        style: SafeTalkTheme.captionStyle(
+                          color: brandColorLight,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -189,9 +204,13 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.isOnline ? 'Online & Active' : 'Offline & Paused',
+                        widget.isOnline
+                            ? 'Online & Active'
+                            : 'Offline & Paused',
                         style: SafeTalkTheme.bodyStyle(
-                          color: widget.isOnline ? brandColor : SafeTalkTheme.textPrimary,
+                          color: widget.isOnline
+                              ? brandColor
+                              : SafeTalkTheme.textPrimary,
                           bold: true,
                         ).copyWith(fontSize: 16),
                       ),
@@ -200,7 +219,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                         widget.isOnline
                             ? 'You are active in the matching queue to receive client chats.'
                             : 'Matching requests are paused. Set online to resume listening.',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -226,7 +247,7 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
             style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
           ),
           const SizedBox(height: 12),
-          
+
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -235,10 +256,30 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
             mainAxisSpacing: 16,
             childAspectRatio: 1.3,
             children: [
-              _buildMetricCard('2,480m', 'Minutes Listened', Icons.timer, brandColor),
-              _buildMetricCard('148', 'Seekers Helped', Icons.volunteer_activism, SafeTalkTheme.brandTerracotta),
-              _buildMetricCard('4.95', 'Feedback Rating', Icons.star, SafeTalkTheme.brandGold),
-              _buildMetricCard('100%', 'Anonymity Kept', Icons.verified_user, brandColorLight),
+              _buildMetricCard(
+                '2,480m',
+                'Minutes Listened',
+                Icons.timer,
+                brandColor,
+              ),
+              _buildMetricCard(
+                '148',
+                'Seekers Helped',
+                Icons.volunteer_activism,
+                SafeTalkTheme.brandTerracotta,
+              ),
+              _buildMetricCard(
+                '4.95',
+                'Feedback Rating',
+                Icons.star,
+                SafeTalkTheme.brandGold,
+              ),
+              _buildMetricCard(
+                '100%',
+                'Anonymity Kept',
+                Icons.verified_user,
+                brandColorLight,
+              ),
             ],
           ),
 
@@ -257,11 +298,16 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                 SwitchListTile(
                   title: Text(
                     'Accept acute panic requests',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   subtitle: Text(
                     'Flags you as available for high-stress crisis matches',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                   value: _panicCallToggle,
                   activeThumbColor: brandColor,
@@ -275,10 +321,13 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          val 
-                              ? 'Acute Panic Crisis Standby ACTIVE.' 
+                          val
+                              ? 'Acute Panic Crisis Standby ACTIVE.'
                               : 'Crisis standby deactivated.',
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.bgMidnight,
+                            bold: true,
+                          ),
                         ),
                         backgroundColor: brandColor,
                         behavior: SnackBarBehavior.floating,
@@ -290,11 +339,16 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                 SwitchListTile(
                   title: Text(
                     'Supervision backup mode',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.textPrimary,
+                      bold: true,
+                    ),
                   ),
                   subtitle: Text(
                     'Requests clinical supervisor oversight standby',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                   value: _supervisionToggle,
                   activeThumbColor: brandColor,
@@ -308,12 +362,17 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          val 
-                              ? 'Supervision standby requested. Oversight active.' 
+                          val
+                              ? 'Supervision standby requested. Oversight active.'
                               : 'Oversight standby deactivated.',
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.bgMidnight,
+                            bold: true,
+                          ),
                         ),
-                        backgroundColor: val ? SafeTalkTheme.brandGold : brandColorLight,
+                        backgroundColor: val
+                            ? SafeTalkTheme.brandGold
+                            : brandColorLight,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -347,24 +406,38 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                             children: [
                               Text(
                                 'Secure Vault',
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 16),
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: SafeTalkTheme.textPrimary,
+                                  bold: true,
+                                ).copyWith(fontSize: 16),
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: ChatController().isVaultEnabled
                                       ? brandColor.withValues(alpha: 0.15)
-                                      : SafeTalkTheme.textMuted.withValues(alpha: 0.1),
+                                      : SafeTalkTheme.textMuted.withValues(
+                                          alpha: 0.1,
+                                        ),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  ChatController().isVaultEnabled ? 'Active' : 'Disabled',
-                                  style: SafeTalkTheme.captionStyle(
-                                    color: ChatController().isVaultEnabled
-                                        ? brandColor
-                                        : SafeTalkTheme.textSecondary,
-                                  ).copyWith(fontWeight: FontWeight.bold, fontSize: 10),
+                                  ChatController().isVaultEnabled
+                                      ? 'Active'
+                                      : 'Disabled',
+                                  style:
+                                      SafeTalkTheme.captionStyle(
+                                        color: ChatController().isVaultEnabled
+                                            ? brandColor
+                                            : SafeTalkTheme.textSecondary,
+                                      ).copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                      ),
                                 ),
                               ),
                             ],
@@ -372,14 +445,18 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Encrypt locally saved counselor notes using a custom user-derived PIN.',
-                            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                            style: SafeTalkTheme.captionStyle(
+                              color: SafeTalkTheme.textSecondary,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 16),
                     Switch(
-                      value: ChatController().isVaultEnabled && ChatController().userPin != null,
+                      value:
+                          ChatController().isVaultEnabled &&
+                          ChatController().userPin != null,
                       activeThumbColor: brandColor,
                       activeTrackColor: brandColor.withValues(alpha: 0.3),
                       inactiveThumbColor: SafeTalkTheme.textMuted,
@@ -398,7 +475,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                                 SnackBar(
                                   content: Text(
                                     'Encrypted Vault successfully initialized.',
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.bgMidnight,
+                                      bold: true,
+                                    ),
                                   ),
                                   backgroundColor: brandColor,
                                   behavior: SnackBarBehavior.floating,
@@ -415,7 +495,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                               SnackBar(
                                 content: Text(
                                   'Vault locked. Memory keys wiped.',
-                                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                  style: SafeTalkTheme.bodyStyle(
+                                    color: SafeTalkTheme.bgMidnight,
+                                    bold: true,
+                                  ),
                                 ),
                                 backgroundColor: brandColorLight,
                                 behavior: SnackBarBehavior.floating,
@@ -432,7 +515,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                                   SnackBar(
                                     content: Text(
                                       'Vault unlocked successfully.',
-                                      style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                      style: SafeTalkTheme.bodyStyle(
+                                        color: SafeTalkTheme.bgMidnight,
+                                        bold: true,
+                                      ),
                                     ),
                                     backgroundColor: brandColor,
                                     behavior: SnackBarBehavior.floating,
@@ -466,17 +552,25 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                                       context: context,
                                       mode: PinSheetMode.createNew,
                                       onSuccess: (newPin) async {
-                                        final success = await ChatController().changePin(oldPin, newPin);
+                                        final success = await ChatController()
+                                            .changePin(oldPin, newPin);
                                         if (success) {
                                           setState(() {});
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Text(
                                                 'Vault PIN changed successfully.',
-                                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                                style: SafeTalkTheme.bodyStyle(
+                                                  color:
+                                                      SafeTalkTheme.bgMidnight,
+                                                  bold: true,
+                                                ),
                                               ),
                                               backgroundColor: brandColor,
-                                              behavior: SnackBarBehavior.floating,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
                                           );
                                         }
@@ -502,16 +596,25 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                               backgroundColor: SafeTalkTheme.cardBg,
                               title: Text(
                                 'Reset Vault?',
-                                style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.brandTerracotta),
+                                style: SafeTalkTheme.headingStyle(
+                                  color: SafeTalkTheme.brandTerracotta,
+                                ),
                               ),
                               content: Text(
                                 'WARNING: Recovery is mathematically impossible. Resetting will completely delete all locally encrypted journal notes. This action cannot be undone.',
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: SafeTalkTheme.textPrimary,
+                                ),
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: Text('Cancel', style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary)),
+                                  child: Text(
+                                    'Cancel',
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textSecondary,
+                                    ),
+                                  ),
                                 ),
                                 TextButton(
                                   onPressed: () {
@@ -522,41 +625,76 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                                         backgroundColor: SafeTalkTheme.cardBg,
                                         title: Text(
                                           'Permanent Data Loss',
-                                          style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.brandTerracotta),
+                                          style: SafeTalkTheme.headingStyle(
+                                            color:
+                                                SafeTalkTheme.brandTerracotta,
+                                          ),
                                         ),
                                         content: Text(
                                           'All your seeker notes will be permanently erased. Resetting deletes both metadata salts and encrypted notes. Proceed?',
-                                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                                          style: SafeTalkTheme.bodyStyle(
+                                            color: SafeTalkTheme.textPrimary,
+                                          ),
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context),
-                                            child: Text('Cancel', style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary)),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: Text(
+                                              'Cancel',
+                                              style: SafeTalkTheme.bodyStyle(
+                                                color:
+                                                    SafeTalkTheme.textSecondary,
+                                              ),
+                                            ),
                                           ),
                                           TextButton(
                                             onPressed: () async {
                                               Navigator.pop(context);
-                                              await ChatController().wipeAndResetVault();
+                                              await ChatController()
+                                                  .wipeAndResetVault();
                                               if (!mounted) return;
                                               setState(() {});
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
                                                     'Vault wiped successfully.',
-                                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                                    style:
+                                                        SafeTalkTheme.bodyStyle(
+                                                          color: SafeTalkTheme
+                                                              .bgMidnight,
+                                                          bold: true,
+                                                        ),
                                                   ),
-                                                  backgroundColor: SafeTalkTheme.brandTerracotta,
-                                                  behavior: SnackBarBehavior.floating,
+                                                  backgroundColor: SafeTalkTheme
+                                                      .brandTerracotta,
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
                                                 ),
                                               );
                                             },
-                                            child: Text('Yes, Delete', style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandTerracotta, bold: true)),
+                                            child: Text(
+                                              'Yes, Delete',
+                                              style: SafeTalkTheme.bodyStyle(
+                                                color: SafeTalkTheme
+                                                    .brandTerracotta,
+                                                bold: true,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     );
                                   },
-                                  child: Text('Confirm Delete', style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandTerracotta, bold: true)),
+                                  child: Text(
+                                    'Confirm Delete',
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.brandTerracotta,
+                                      bold: true,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -564,8 +702,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                         },
                         child: Text(
                           'Reset Vault',
-                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandTerracotta)
-                              .copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.brandTerracotta,
+                          ).copyWith(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ),
                     ],
@@ -584,7 +723,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               Expanded(
                 child: Text(
                   'Earnings & Payouts Ledger',
-                  style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                  style: SafeTalkTheme.headingStyle(
+                    color: SafeTalkTheme.textPrimary,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -596,8 +737,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                 ),
                 child: Text(
                   isTherapist ? 'CLINICAL TIER' : 'COMPANION TIER',
-                  style: SafeTalkTheme.captionStyle(color: brandColor)
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style: SafeTalkTheme.captionStyle(
+                    color: brandColor,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -608,7 +750,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-              border: Border.all(color: brandColor.withValues(alpha: 0.2), width: 1.5),
+              border: Border.all(
+                color: brandColor.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,17 +762,43 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: _buildEarningsMetric('Total Earned', '₹1,996', brandColor)),
-                    Container(height: 30, width: 1.5, color: SafeTalkTheme.borderSage),
-                    Expanded(child: _buildEarningsMetric('Settled Sessions', '4', SafeTalkTheme.brandGold)),
-                    Container(height: 30, width: 1.5, color: SafeTalkTheme.borderSage),
-                    Expanded(child: _buildEarningsMetric('Pending Payout', '₹${_pendingPayout.toStringAsFixed(0)}', brandColorLight)),
+                    Expanded(
+                      child: _buildEarningsMetric(
+                        'Total Earned',
+                        '₹1,996',
+                        brandColor,
+                      ),
+                    ),
+                    Container(
+                      height: 30,
+                      width: 1.5,
+                      color: SafeTalkTheme.borderSage,
+                    ),
+                    Expanded(
+                      child: _buildEarningsMetric(
+                        'Settled Sessions',
+                        '4',
+                        SafeTalkTheme.brandGold,
+                      ),
+                    ),
+                    Container(
+                      height: 30,
+                      width: 1.5,
+                      color: SafeTalkTheme.borderSage,
+                    ),
+                    Expanded(
+                      child: _buildEarningsMetric(
+                        'Pending Payout',
+                        '₹${_pendingPayout.toStringAsFixed(0)}',
+                        brandColorLight,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 const Divider(color: SafeTalkTheme.borderSage, height: 1),
                 const SizedBox(height: 16),
-                
+
                 // Payout Trigger
                 if (_pendingPayout > 0) ...[
                   SizedBox(
@@ -648,12 +819,17 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : Text(
                                 'Request Bank Payout (₹${_pendingPayout.toStringAsFixed(0)})',
-                                style: SafeTalkTheme.bodyStyle(color: Colors.white, bold: true),
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: Colors.white,
+                                  bold: true,
+                                ),
                               ),
                       ),
                     ),
@@ -671,23 +847,31 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle_outline_rounded, color: brandColor, size: 18),
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          color: brandColor,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'All earnings fully settled',
-                          style: SafeTalkTheme.bodyStyle(color: brandColor, bold: true),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: brandColor,
+                            bold: true,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
-                
+
                 const SizedBox(height: 24),
-                
+
                 Text(
                   'RECENT SETTLED SESSIONS',
-                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-                      .copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                  style: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
                 ),
                 const SizedBox(height: 10),
 
@@ -736,13 +920,21 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: SafeTalkTheme.brandTerracotta,
-                side: const BorderSide(color: SafeTalkTheme.borderSage, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                side: const BorderSide(
+                  color: SafeTalkTheme.borderSage,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: SafeTalkTheme.organicCardRadius,
+                ),
               ),
               icon: const Icon(Icons.logout_rounded, size: 18),
               label: Text(
                 'Leave Duty Desk (Sign Out)',
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandTerracotta, bold: true),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.brandTerracotta,
+                  bold: true,
+                ),
               ),
             ),
           ),
@@ -771,7 +963,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
           SnackBar(
             content: Text(
               message.toString(),
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.bgMidnight,
+                bold: true,
+              ),
             ),
             backgroundColor: SafeTalkTheme.brandSage,
             behavior: SnackBarBehavior.floating,
@@ -783,9 +978,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
         setState(() {
           _isPayoutRequesting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payout error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Payout error: $e')));
       }
     }
   }
@@ -796,15 +991,18 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
       children: [
         Text(
           value,
-          style: SafeTalkTheme.headingStyle(color: color)
-              .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+          style: SafeTalkTheme.headingStyle(
+            color: color,
+          ).copyWith(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             label,
-            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+            style: SafeTalkTheme.captionStyle(
+              color: SafeTalkTheme.textSecondary,
+            ),
           ),
         ),
       ],
@@ -831,7 +1029,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               children: [
                 Text(
                   moniker,
-                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                  style: SafeTalkTheme.bodyStyle(
+                    color: SafeTalkTheme.textPrimary,
+                    bold: true,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 FittedBox(
@@ -839,7 +1040,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     '$date • $platformFee',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -848,15 +1051,22 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
           const SizedBox(width: 8),
           Text(
             payout,
-            style: SafeTalkTheme.bodyStyle(color: brandColor, bold: true)
-                .copyWith(fontSize: 16),
+            style: SafeTalkTheme.bodyStyle(
+              color: brandColor,
+              bold: true,
+            ).copyWith(fontSize: 16),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMetricCard(String value, String label, IconData icon, Color color) {
+  Widget _buildMetricCard(
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: SafeTalkTheme.glassCardDecoration,
@@ -871,14 +1081,17 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary)
-                  .copyWith(fontSize: 22, fontWeight: FontWeight.bold),
+              style: SafeTalkTheme.headingStyle(
+                color: SafeTalkTheme.textPrimary,
+              ).copyWith(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+            style: SafeTalkTheme.captionStyle(
+              color: SafeTalkTheme.textSecondary,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -896,7 +1109,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-          border: Border.all(color: brandColor.withValues(alpha: 0.5), width: 2),
+          border: Border.all(
+            color: brandColor.withValues(alpha: 0.5),
+            width: 2,
+          ),
           boxShadow: SafeTalkTheme.glowShadow(brandColor, opacity: 0.1),
         ),
         child: Column(
@@ -907,7 +1123,11 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: brandColor.withValues(alpha: 0.12),
-                  child: Icon(Icons.verified_rounded, color: brandColor, size: 20),
+                  child: Icon(
+                    Icons.verified_rounded,
+                    color: brandColor,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -916,24 +1136,38 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     children: [
                       Text(
                         'Licensed Clinical Therapist',
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 16),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.textPrimary,
+                          bold: true,
+                        ).copyWith(fontSize: 16),
                       ),
                       Text(
                         'PRESTIGE AMETHYST ACTIVE',
-                        style: SafeTalkTheme.captionStyle(color: brandColorLight).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                        style:
+                            SafeTalkTheme.captionStyle(
+                              color: brandColorLight,
+                            ).copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: brandColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'VERIFIED',
-                    style: SafeTalkTheme.captionStyle(color: brandColor).copyWith(fontWeight: FontWeight.bold),
+                    style: SafeTalkTheme.captionStyle(
+                      color: brandColor,
+                    ).copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -957,7 +1191,10 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     SnackBar(
                       content: Text(
                         'Returned to Certified Peer Counselor status.',
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.bgMidnight,
+                          bold: true,
+                        ),
                       ),
                       backgroundColor: SafeTalkTheme.brandSage,
                       behavior: SnackBarBehavior.floating,
@@ -968,12 +1205,19 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                   decoration: BoxDecoration(
                     color: SafeTalkTheme.bgMidnight,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: SafeTalkTheme.brandTerracotta.withValues(
+                        alpha: 0.3,
+                      ),
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     'Revert to Standard Peer Theme',
-                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.brandTerracotta, bold: true).copyWith(fontSize: 13),
+                    style: SafeTalkTheme.bodyStyle(
+                      color: SafeTalkTheme.brandTerracotta,
+                      bold: true,
+                    ).copyWith(fontSize: 13),
                   ),
                 ),
               ),
@@ -992,8 +1236,14 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: SafeTalkTheme.brandSage.withValues(alpha: 0.12),
-                  child: const Icon(Icons.volunteer_activism_rounded, color: SafeTalkTheme.brandSage, size: 20),
+                  backgroundColor: SafeTalkTheme.brandSage.withValues(
+                    alpha: 0.12,
+                  ),
+                  child: const Icon(
+                    Icons.volunteer_activism_rounded,
+                    color: SafeTalkTheme.brandSage,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1002,11 +1252,16 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                     children: [
                       Text(
                         'Certified Peer Specialist',
-                        style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 16),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: SafeTalkTheme.textPrimary,
+                          bold: true,
+                        ).copyWith(fontSize: 16),
                       ),
                       Text(
                         'Listed under peer counseling networks',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -1018,7 +1273,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
             const SizedBox(height: 16),
             Text(
               'UPGRADE PROFILE TO THERAPIST',
-              style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
+              style: SafeTalkTheme.captionStyle(
+                color: SafeTalkTheme.textSecondary,
+              ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
             ),
             const SizedBox(height: 12),
             Container(
@@ -1030,10 +1287,14 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               ),
               child: TextField(
                 controller: _licenseController,
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Board License Number (e.g., LCSW-99824-A)',
-                  labelStyle: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                  labelStyle: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ),
                   border: InputBorder.none,
                 ),
               ),
@@ -1048,10 +1309,14 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               ),
               child: TextField(
                 controller: _boardController,
-                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                style: SafeTalkTheme.bodyStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ),
                 decoration: InputDecoration(
                   labelText: 'State Board Authority',
-                  labelStyle: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                  labelStyle: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ),
                   border: InputBorder.none,
                 ),
               ),
@@ -1061,33 +1326,40 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
               width: double.infinity,
               height: 46,
               child: HapticTouchable(
-                onTap: _isVerifying ? null : () {
-                  setState(() {
-                    _isVerifying = true;
-                  });
-                  Future.delayed(const Duration(milliseconds: 1200), () {
-                    if (!mounted) return;
-                    setState(() {
-                      _isVerifying = false;
-                    });
-                    SessionController().isTherapist = true;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Clinical credentials verified successfully! Enjoy your prestige Royal Amethyst layout theme.',
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
-                        ),
-                        backgroundColor: SafeTalkTheme.brandTherapist,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  });
-                },
+                onTap: _isVerifying
+                    ? null
+                    : () {
+                        setState(() {
+                          _isVerifying = true;
+                        });
+                        Future.delayed(const Duration(milliseconds: 1200), () {
+                          if (!mounted) return;
+                          setState(() {
+                            _isVerifying = false;
+                          });
+                          SessionController().isTherapist = true;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Clinical credentials verified successfully! Enjoy your prestige Royal Amethyst layout theme.',
+                                style: SafeTalkTheme.bodyStyle(
+                                  color: SafeTalkTheme.bgMidnight,
+                                  bold: true,
+                                ),
+                              ),
+                              backgroundColor: SafeTalkTheme.brandTherapist,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        });
+                      },
                 child: Container(
                   decoration: BoxDecoration(
                     color: SafeTalkTheme.brandSage,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: SafeTalkTheme.glowShadow(SafeTalkTheme.brandSage),
+                    boxShadow: SafeTalkTheme.glowShadow(
+                      SafeTalkTheme.brandSage,
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: _isVerifying
@@ -1096,12 +1368,17 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
                           'Verify Clinical Credentials',
-                          style: SafeTalkTheme.bodyStyle(color: Colors.white, bold: true),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: Colors.white,
+                            bold: true,
+                          ),
                         ),
                 ),
               ),
@@ -1121,7 +1398,9 @@ class _ListenerProfileScreenState extends State<ListenerProfileScreen> {
       children: [
         Text(
           label,
-          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(fontWeight: FontWeight.bold),
+          style: SafeTalkTheme.captionStyle(
+            color: SafeTalkTheme.textSecondary,
+          ).copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
           value,

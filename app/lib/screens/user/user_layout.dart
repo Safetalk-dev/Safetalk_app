@@ -11,9 +11,11 @@ import '../../controllers/session_controller.dart';
 import '../../controllers/chat_controller.dart';
 import '../../widgets/haptic_touchable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/user_service.dart';
 import '../../services/matcher_service.dart';
 import '../../services/push_notification_service.dart';
+import '../../services/mood_service.dart';
 
 class UserLayout extends StatefulWidget {
   final VoidCallback onLogout;
@@ -55,26 +57,43 @@ class _UserLayoutState extends State<UserLayout> {
     try {
       final authUser = FirebaseAuth.instance.currentUser;
       List<String> langs = ['en'];
-      
+
       if (authUser != null) {
+        // Load recent persistent mood check-ins (A4.5)
+        final savedMoods = await MoodService().getRecentMoodScores(
+          authUser.uid,
+        );
+        if (savedMoods.isNotEmpty && mounted) {
+          setState(() {
+            _moodScores.clear();
+            _moodScores.addAll(savedMoods);
+            _dailyCheckInCompleted = true;
+          });
+        }
+
         final user = await UserService().getUser(authUser.uid);
         if (user != null) {
           if (mounted) {
             setState(() {
-              _username = user.displayName.isNotEmpty ? user.displayName : (authUser.displayName ?? 'Seeker');
+              _username = user.displayName.isNotEmpty
+                  ? user.displayName
+                  : (authUser.displayName ?? 'Seeker');
               _realName = authUser.displayName?.isNotEmpty == true
                   ? authUser.displayName!
                   : (authUser.email?.split('@').first ?? user.displayName);
-              if (user.seekerData != null && user.seekerData!.safeCircle.isNotEmpty) {
+              if (user.seekerData != null &&
+                  user.seekerData!.safeCircle.isNotEmpty) {
                 _regularListenerNames.clear();
                 _regularListenerNames.addAll(user.seekerData!.safeCircle);
               }
             });
           }
-          if (user.seekerData != null && user.seekerData!.preferredLanguages.isNotEmpty) {
+          if (user.seekerData != null &&
+              user.seekerData!.preferredLanguages.isNotEmpty) {
             langs = user.seekerData!.preferredLanguages;
           }
-        } else if (authUser.displayName != null && authUser.displayName!.isNotEmpty) {
+        } else if (authUser.displayName != null &&
+            authUser.displayName!.isNotEmpty) {
           if (mounted) {
             setState(() {
               _username = authUser.displayName!;
@@ -83,23 +102,34 @@ class _UserLayoutState extends State<UserLayout> {
           }
         }
       }
-      
+
       final matcher = MatcherService();
       final listeners = await matcher.getOnlineListeners(langs);
-      
+
       if (mounted) {
         setState(() {
-          _allListeners = listeners.map((l) => {
-            'uid': l.uid,
-            'name': l.displayName.isEmpty ? 'Anonymous Listener' : l.displayName,
-            'rating': l.listenerData?.stats?.rating.toStringAsFixed(1) ?? '5.0',
-            'sessions': l.listenerData?.stats?.minutesListened ?? 0,
-            'active': l.listenerData?.isOnline ?? false,
-            'avatarColor': SafeTalkTheme.brandSage,
-            'specialties': l.listenerData?.specialties.isNotEmpty == true ? l.listenerData!.specialties : ['Listening'],
-            'bio': (l.listenerData?.bio.isNotEmpty ?? false) ? l.listenerData!.bio : 'A compassionate ear ready to listen without judgment.',
-            'latestNote': 'No previous sessions',
-          }).toList();
+          _allListeners = listeners
+              .map(
+                (l) => {
+                  'uid': l.uid,
+                  'name': l.displayName.isEmpty
+                      ? 'Anonymous Listener'
+                      : l.displayName,
+                  'rating':
+                      l.listenerData?.stats?.rating.toStringAsFixed(1) ?? '5.0',
+                  'sessions': l.listenerData?.stats?.minutesListened ?? 0,
+                  'active': l.listenerData?.isOnline ?? false,
+                  'avatarColor': SafeTalkTheme.brandSage,
+                  'specialties': l.listenerData?.specialties.isNotEmpty == true
+                      ? l.listenerData!.specialties
+                      : ['Listening'],
+                  'bio': (l.listenerData?.bio.isNotEmpty ?? false)
+                      ? l.listenerData!.bio
+                      : 'A compassionate ear ready to listen without judgment.',
+                  'latestNote': 'No previous sessions',
+                },
+              )
+              .toList();
         });
       }
     } catch (e) {
@@ -107,14 +137,40 @@ class _UserLayoutState extends State<UserLayout> {
     }
   }
 
-  void _toggleRegularStatus(String name) {
+  void _toggleRegularStatus(String identifier) {
+    // Resolve UID (handle cases where a name or a UID was supplied)
+    String targetUid = identifier;
+    final matchingListener = _allListeners.firstWhere(
+      (l) => l['uid'] == identifier || l['name'] == identifier,
+      orElse: () => <String, dynamic>{},
+    );
+    if (matchingListener.isNotEmpty && matchingListener['uid'] != null) {
+      targetUid = matchingListener['uid'] as String;
+    }
+
     setState(() {
-      if (_regularListenerNames.contains(name)) {
-        _regularListenerNames.remove(name);
+      if (_regularListenerNames.contains(targetUid) ||
+          _regularListenerNames.contains(identifier)) {
+        _regularListenerNames.remove(targetUid);
+        _regularListenerNames.remove(identifier);
       } else {
-        _regularListenerNames.add(name);
+        _regularListenerNames.add(targetUid);
       }
     });
+
+    // A4.4: Persist safeCircle to Firestore
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(authUser.uid)
+          .set({
+            'seekerData': {'safeCircle': _regularListenerNames},
+          }, SetOptions(merge: true))
+          .catchError((e) {
+            debugPrint('Failed to persist safeCircle: $e');
+          });
+    }
   }
 
   void _triggerRequestFlow(SessionType type) {
@@ -135,16 +191,16 @@ class _UserLayoutState extends State<UserLayout> {
     setState(() {
       _requestingListener = false;
     });
-    
+
     Widget targetScreen;
-    
+
     targetScreen = SessionChatScreen(
       sessionId: SessionController().currentSessionId ?? '',
       myUid: SessionController().firebaseUid ?? '',
       partnerName: listenerName,
       isSeeker: true,
     );
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => targetScreen),
@@ -154,10 +210,19 @@ class _UserLayoutState extends State<UserLayout> {
   }
 
   void _handleMoodCheckIn(double score) {
+    final graphScore = (score / 10.0).clamp(0.1, 1.0);
+
+    // A4.5: Persist mood check-in to Firestore
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser != null) {
+      MoodService().saveMoodCheckIn(authUser.uid, score, graphScore).catchError(
+        (e) {
+          debugPrint('Failed to save mood check-in: $e');
+        },
+      );
+    }
+
     setState(() {
-      // Map 1-10 score to 0.1-1.0 coordinate points on the Bezier graph
-      final graphScore = (score / 10.0).clamp(0.1, 1.0);
-      
       // Shift values and append to represent weekly rolling trend
       if (_moodScores.length >= 7) {
         _moodScores.removeAt(0);
@@ -169,15 +234,28 @@ class _UserLayoutState extends State<UserLayout> {
 
   Widget _buildBody() {
     if (_showingNotifications) {
-      return UserNotificationScreen(onBack: () {
-        setState(() => _showingNotifications = false);
-      });
+      return UserNotificationScreen(
+        onBack: () {
+          setState(() => _showingNotifications = false);
+        },
+      );
     }
 
     if (_requestingListener) {
+      final currentMoniker = _isAnonymous ? _username : _realName;
+      final recentMood = _moodScores.isNotEmpty
+          ? (_moodScores.last >= 0.7
+                ? 'Calm / Grounded'
+                : (_moodScores.last <= 0.4
+                      ? 'Anxious / Overwhelmed'
+                      : 'Seeking Emotional Space'))
+          : 'Seeking Support';
+
       return RequestListenerScreen(
         onCancel: _cancelRequestFlow,
         onMatched: _completeRequestFlow,
+        seekerMoniker: currentMoniker,
+        seekerMoodTag: recentMood,
       );
     }
 
@@ -191,7 +269,10 @@ class _UserLayoutState extends State<UserLayout> {
           onOpenListenerChat: (name) {
             final listener = _allListeners.firstWhere(
               (l) => l['name'] == name,
-              orElse: () => <String, dynamic>{'active': false, 'avatarColor': SafeTalkTheme.brandSage},
+              orElse: () => <String, dynamic>{
+                'active': false,
+                'avatarColor': SafeTalkTheme.brandSage,
+              },
             );
             final isActive = listener['active'] == true;
 
@@ -213,8 +294,10 @@ class _UserLayoutState extends State<UserLayout> {
                 (t) => t['name'] == name,
                 orElse: () => {
                   'name': name,
-                  'status': 'Last session: ${listener['latestNote']?.split(':')?.first ?? 'Sun'}',
-                  'avatarColor': listener['avatarColor'] ?? SafeTalkTheme.brandSage,
+                  'status':
+                      'Last session: ${listener['latestNote']?.split(':')?.first ?? 'Sun'}',
+                  'avatarColor':
+                      listener['avatarColor'] ?? SafeTalkTheme.brandSage,
                   'online': false,
                   'unread': false,
                   'lastMessage': '',
@@ -223,7 +306,7 @@ class _UserLayoutState extends State<UserLayout> {
                   'messages': [
                     {'sender': 'user', 'text': 'Hello, is anyone there?'},
                     {'sender': 'listener', 'text': 'Hello, yes I am here.'},
-                  ]
+                  ],
                 },
               );
 
@@ -248,7 +331,10 @@ class _UserLayoutState extends State<UserLayout> {
           onMessageListener: (name) {
             final listener = _allListeners.firstWhere(
               (l) => l['name'] == name,
-              orElse: () => <String, dynamic>{'active': false, 'avatarColor': SafeTalkTheme.brandSage},
+              orElse: () => <String, dynamic>{
+                'active': false,
+                'avatarColor': SafeTalkTheme.brandSage,
+              },
             );
             final isActive = listener['active'] == true;
 
@@ -270,8 +356,10 @@ class _UserLayoutState extends State<UserLayout> {
                 (t) => t['name'] == name,
                 orElse: () => {
                   'name': name,
-                  'status': 'Last session: ${listener['latestNote']?.split(':')?.first ?? 'Sun'}',
-                  'avatarColor': listener['avatarColor'] ?? SafeTalkTheme.brandSage,
+                  'status':
+                      'Last session: ${listener['latestNote']?.split(':')?.first ?? 'Sun'}',
+                  'avatarColor':
+                      listener['avatarColor'] ?? SafeTalkTheme.brandSage,
                   'online': false,
                   'unread': false,
                   'lastMessage': '',
@@ -280,7 +368,7 @@ class _UserLayoutState extends State<UserLayout> {
                   'messages': [
                     {'sender': 'user', 'text': 'Hello, is anyone there?'},
                     {'sender': 'listener', 'text': 'Hello, yes I am here.'},
-                  ]
+                  ],
                 },
               );
 
@@ -349,9 +437,13 @@ class _UserLayoutState extends State<UserLayout> {
                   _isAnonymous
                       ? 'Confidential Anonymous Shield Activated'
                       : 'Public Mode Active: real identity shared',
-                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight),
+                  style: SafeTalkTheme.bodyStyle(
+                    color: SafeTalkTheme.bgMidnight,
+                  ),
                 ),
-                backgroundColor: _isAnonymous ? SafeTalkTheme.brandTerracotta : SafeTalkTheme.brandSage,
+                backgroundColor: _isAnonymous
+                    ? SafeTalkTheme.brandTerracotta
+                    : SafeTalkTheme.brandSage,
                 behavior: SnackBarBehavior.floating,
                 duration: const Duration(seconds: 2),
               ),
@@ -378,20 +470,28 @@ class _UserLayoutState extends State<UserLayout> {
               children: [
                 Icon(
                   Icons.lens,
-                  color: _isAnonymous ? SafeTalkTheme.brandTerracotta : SafeTalkTheme.brandSage,
+                  color: _isAnonymous
+                      ? SafeTalkTheme.brandTerracotta
+                      : SafeTalkTheme.brandSage,
                   size: 8,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   _isAnonymous ? 'Anonymous Mode' : 'Public Mode ($_realName)',
                   style: SafeTalkTheme.captionStyle(
-                    color: _isAnonymous ? SafeTalkTheme.brandTerracotta : SafeTalkTheme.brandSage,
+                    color: _isAnonymous
+                        ? SafeTalkTheme.brandTerracotta
+                        : SafeTalkTheme.brandSage,
                   ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 6),
                 Icon(
-                  _isAnonymous ? Icons.shield_outlined : Icons.lock_open_rounded,
-                  color: _isAnonymous ? SafeTalkTheme.brandTerracotta : SafeTalkTheme.brandSage,
+                  _isAnonymous
+                      ? Icons.shield_outlined
+                      : Icons.lock_open_rounded,
+                  color: _isAnonymous
+                      ? SafeTalkTheme.brandTerracotta
+                      : SafeTalkTheme.brandSage,
                   size: 13,
                 ),
               ],
@@ -404,8 +504,12 @@ class _UserLayoutState extends State<UserLayout> {
             icon: Stack(
               children: [
                 Icon(
-                  _showingNotifications ? Icons.notifications : Icons.notifications_none,
-                  color: _showingNotifications ? SafeTalkTheme.brandTerracotta : SafeTalkTheme.textPrimary,
+                  _showingNotifications
+                      ? Icons.notifications
+                      : Icons.notifications_none,
+                  color: _showingNotifications
+                      ? SafeTalkTheme.brandTerracotta
+                      : SafeTalkTheme.textPrimary,
                 ),
                 Positioned(
                   right: 2,
@@ -438,7 +542,7 @@ class _UserLayoutState extends State<UserLayout> {
           child: _buildBody(),
         ),
       ),
-      
+
       // Floating Custom Glassmorphic Nav Bar
       bottomNavigationBar: (_requestingListener || _showingNotifications)
           ? null // Hide navigation bar during matchmaking or notification view
@@ -449,18 +553,44 @@ class _UserLayoutState extends State<UserLayout> {
                 decoration: BoxDecoration(
                   color: SafeTalkTheme.cardBg.withValues(alpha: 0.92),
                   borderRadius: SafeTalkTheme.pillRadius,
-                  border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
-                  boxShadow: SafeTalkTheme.glowShadow(Colors.black, opacity: 0.4),
+                  border: Border.all(
+                    color: SafeTalkTheme.borderSage,
+                    width: 1.5,
+                  ),
+                  boxShadow: SafeTalkTheme.glowShadow(
+                    Colors.black,
+                    opacity: 0.4,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildNavItem(0, Icons.compass_calibration_outlined, Icons.explore, 'Explore'),
-                      _buildNavItem(1, Icons.favorite_outline, Icons.favorite, 'Circle'),
-                      _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'History'),
-                      _buildNavItem(3, Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
+                      _buildNavItem(
+                        0,
+                        Icons.compass_calibration_outlined,
+                        Icons.explore,
+                        'Explore',
+                      ),
+                      _buildNavItem(
+                        1,
+                        Icons.favorite_outline,
+                        Icons.favorite,
+                        'Circle',
+                      ),
+                      _buildNavItem(
+                        2,
+                        Icons.history_rounded,
+                        Icons.history_rounded,
+                        'History',
+                      ),
+                      _buildNavItem(
+                        3,
+                        Icons.person_outline_rounded,
+                        Icons.person_rounded,
+                        'Profile',
+                      ),
                     ],
                   ),
                 ),
@@ -469,7 +599,12 @@ class _UserLayoutState extends State<UserLayout> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData outlineIcon, IconData filledIcon, String label) {
+  Widget _buildNavItem(
+    int index,
+    IconData outlineIcon,
+    IconData filledIcon,
+    String label,
+  ) {
     final isSelected = _currentIndex == index;
     final activeColor = SafeTalkTheme.brandTerracotta;
 
@@ -487,7 +622,9 @@ class _UserLayoutState extends State<UserLayout> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: isSelected ? activeColor.withValues(alpha: 0.12) : Colors.transparent,
+              color: isSelected
+                  ? activeColor.withValues(alpha: 0.12)
+                  : Colors.transparent,
               borderRadius: SafeTalkTheme.pillRadius,
             ),
             child: Icon(
@@ -499,12 +636,13 @@ class _UserLayoutState extends State<UserLayout> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: SafeTalkTheme.captionStyle(
-              color: isSelected ? activeColor : SafeTalkTheme.textSecondary,
-            ).copyWith(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 10,
-            ),
+            style:
+                SafeTalkTheme.captionStyle(
+                  color: isSelected ? activeColor : SafeTalkTheme.textSecondary,
+                ).copyWith(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 10,
+                ),
           ),
         ],
       ),

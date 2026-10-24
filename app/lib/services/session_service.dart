@@ -6,7 +6,7 @@ class SessionService {
   final FirebaseFirestore _firestore;
 
   SessionService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Creates a new session request
   Future<String> createSessionRequest({
@@ -38,12 +38,20 @@ class SessionService {
 
   /// Listens to session updates
   Stream<SessionModel?> streamSession(String sessionId) {
-    return _firestore.collection('sessions').doc(sessionId).snapshots().map(
-      (doc) {
-        if (!doc.exists || doc.data() == null) return null;
-        return SessionModel.fromJson(doc.data()!, doc.id);
-      },
-    );
+    return _firestore.collection('sessions').doc(sessionId).snapshots().map((
+      doc,
+    ) {
+      if (!doc.exists || doc.data() == null) return null;
+      return SessionModel.fromJson(doc.data()!, doc.id);
+    });
+  }
+
+  /// One-shot fetch of a session document (used to eagerly populate the
+  /// session key without waiting for the first stream event — CRIT-SEC-04).
+  Future<SessionModel?> getSession(String sessionId) async {
+    final doc = await _firestore.collection('sessions').doc(sessionId).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return SessionModel.fromJson(doc.data()!, doc.id);
   }
 
   /// Listens to incoming requests for a listener
@@ -54,10 +62,10 @@ class SessionService {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => SessionModel.fromJson(doc.data(), doc.id))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => SessionModel.fromJson(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   // ---------------------------------------------------------------------------
@@ -66,13 +74,17 @@ class SessionService {
 
   /// Sends a message to a session's chat subcollection.
   /// Note: Encryption should ideally happen before this point.
-  Future<void> sendMessage(String sessionId, String text, String senderId) async {
+  Future<void> sendMessage(
+    String sessionId,
+    String text,
+    String senderId,
+  ) async {
     final msgData = {
       'text': text,
       'senderId': senderId,
       'timestamp': FieldValue.serverTimestamp(),
     };
-    
+
     await _firestore
         .collection('sessions')
         .doc(sessionId)
@@ -89,16 +101,16 @@ class SessionService {
         .orderBy('timestamp', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return {
-          'id': doc.id,
-          'text': data['text'] ?? '',
-          'senderId': data['senderId'] ?? '',
-          'timestamp': data['timestamp'],
-        };
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'id': doc.id,
+              'text': data['text'] ?? '',
+              'senderId': data['senderId'] ?? '',
+              'timestamp': data['timestamp'],
+            };
+          }).toList();
+        });
   }
 
   /// Listener accepts session
@@ -124,6 +136,31 @@ class SessionService {
       'status': 'completed',
       'completedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Submit seeker rating and feedback for completed session (HIGH-BUG-05)
+  Future<void> submitSessionRating({
+    required String sessionId,
+    required int rating,
+    int? sessionRating,
+    String? feedback,
+  }) async {
+    final sessionRef = _firestore.collection('sessions').doc(sessionId);
+    await sessionRef.update({
+      'rating': rating,
+      'sessionRating': ?sessionRating,
+      if (feedback != null && feedback.isNotEmpty) 'feedback': feedback,
+      'ratedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    final reviewRef = sessionRef.collection('reviews').doc();
+    await reviewRef.set({
+      'rating': rating,
+      'sessionRating': ?sessionRating,
+      if (feedback != null && feedback.isNotEmpty) 'feedback': feedback,
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 

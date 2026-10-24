@@ -17,14 +17,16 @@ sequenceDiagram
     participant Razorpay
 
     Seeker->>Firestore: Create Session Request (status: "pending")
-    Note over Cloud Functions: Trigger: autoMatchSession
+    Note over Cloud Functions: Trigger: autoMatchSession (enforces language match)
     Cloud Functions->>Firestore: Assign Listener UID
     Firestore->>Listener: Realtime Stream Trigger
     Listener->>Firestore: Accept Session (status: "payment_pending")
     Seeker->>Razorpay: Open standard checkout (Razorpay SDK)
-    Razorpay-->>Seeker: Return Payment ID
-    Seeker->>Firestore: Mark Payment Complete (status: "active")
-    Note over Seeker,Listener: Agora Call / Messages active
+    Razorpay-->>Seeker: Payment Captured
+    Razorpay->>Cloud Functions: Webhook POST (x-razorpay-signature)
+    Note over Cloud Functions: Trigger: razorpayWebhook verifies HMAC
+    Cloud Functions->>Firestore: Server-Authoritative Update (status: "active")
+    Note over Seeker,Listener: Agora Call / Encrypted Messages active
     Listener->>Firestore: Complete Session (status: "completed")
     Note over Cloud Functions: Trigger: onSessionCompleted
     Cloud Functions->>Firestore: Increment pendingPayout in /ledgers/{uid}
@@ -34,16 +36,16 @@ sequenceDiagram
 
 ## 2. Process Breakdown
 
-1.  **Request Initiation**: A seeker requests a companion. A document is written to `sessions/{sessionId}` with status `"pending"`.
-2.  **Autonomous Router (Uber-style matching)**: Firestore trigger `autoMatchSession` executes. It queries available online listeners, matching spoken languages, and updates the session with the listener's UID.
+1.  **Request Initiation**: A seeker requests a companion. A document is written to `sessions/{sessionId}` with status `"pending"` containing preferred ISO language codes.
+2.  **Autonomous Server Matcher**: Firestore trigger `autoMatchSession` executes. It queries available online listeners, strictly requiring that the listener speaks at least one of the seeker's preferred languages (`seekerLanguages`). If matched, it assigns the listener's UID; if no compatible listener is online, it rejects the request gracefully and alerts the seeker.
 3.  **Acceptance**: The listener accepts the incoming request. The status updates to `"payment_pending"`.
 4.  **Payment Checkout**: Seeker completes the transaction via Razorpay.
-    *   *Direct Update*: On success, the client updates the session status to `"active"`.
-    *   *Webhook Fallback*: The `razorpayWebhook` Cloud Function captures the event, verifies the signature using `RAZORPAY_KEY_SECRET`, and updates the status to `"active"` if not already updated.
-5.  **Agora Voice Session**: Users fetch dynamic token details via `generateAgoraToken` and enter [VoiceCallScreen](file:///e:/Coding/safe_talk/app/lib/screens/shared/voice_call_screen.dart).
-6.  **Ledger Credit**: Ending the session moves the status to `"completed"`. The Firestore trigger `onSessionCompleted` calculates elapsed minutes and increments `pendingPayout` in `/ledgers/{listenerUid}`.
+    *   *Server-Authoritative Activation*: Payment status transitions to `"active"` **only** via the `razorpayWebhook` Cloud Function following HMAC-SHA256 signature verification of the raw request payload with `RAZORPAY_KEY_SECRET`.
+    *   *Rules Enforcement*: Direct client updates attempting to set `status: "active"` or revive `status: "completed"` back to `"active"` are strictly denied by Firestore security rules.
+5.  **Agora Voice Session / Encrypted Chat**: Users fetch dynamic token details via `generateAgoraToken` for voice sessions, or establish per-session AES-256-GCM symmetric messaging channels via `ChatCryptoService`.
+6.  **Ledger Credit**: Ending the session moves the status to `"completed"`. The Firestore trigger `onSessionCompleted` calculates elapsed minutes and increments `pendingPayout` and writes transaction audit entries in `/ledgers/{listenerUid}`.
 
 ---
 
 ### Navigation
-**◄ [Previous: Overview](file:///e:/Coding/safe_talk/docs/architecture/overview.md)** | **[Table of Contents](file:///e:/Coding/safe_talk/docs/system_architecture_specification.md)** | **[Next: Database Schemas](file:///e:/Coding/safe_talk/docs/architecture/database_schema.md) ──►**
+**◄ [Previous: Overview](file:///d:/Coding/safe_talk/docs/architecture/overview.md)** | **[Table of Contents](file:///d:/Coding/safe_talk/docs/system_architecture_specification.md)** | **[Next: Database Schemas](file:///d:/Coding/safe_talk/docs/architecture/database_schema.md) ──►**

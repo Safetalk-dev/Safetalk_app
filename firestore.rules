@@ -9,8 +9,43 @@ service cloud.firestore {
       // Users can always read their own profile.
       allow read: if request.auth != null && (request.auth.uid == userId || resource.data.role == "listener");
       
-      // Users can only write their own profile
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // CRIT-SEC-02 / HIGH-DATA-01: Replace blanket `allow write` with
+      // fine-grained create/update rules that prevent self-elevation of `role`,
+      // self-modification of server-managed stats, and wallet-balance tampering.
+
+      // New users may create their own document with a restricted initial field set.
+      // `role` must be either "seeker" or "listener" (no "admin" self-grant).
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.role in ["seeker", "listener"]
+                    && !request.resource.data.keys().hasAny(["listenerData.stats", "seekerData.walletBalance"]);
+
+      // Users may update their own document but only a safe allow-list of fields.
+      // Prohibited: role, listenerData.stats (and sub-fields), seekerData.walletBalance.
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                         "displayName", "bio", "languages", "avatarUrl", "updatedAt",
+                         "listenerData.isOnline", "listenerData.bio", "listenerData.languages",
+                         "listenerData.specializations", "listenerData.experience",
+                         "seekerData.safeCircle", "seekerData.moodHistory",
+                         "fcmToken", "lastSeen"
+                       ]);
+
+      // In-app notifications subcollection (A4.1 - D-16)
+      match /notifications/{notificationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Mood check-in history subcollection (A4.5)
+      match /mood_checkins/{checkinId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Private credentials & tokens subcollection (HIGH-SEC-05)
+      match /private/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // SESSIONS COLLECTION
@@ -50,9 +85,13 @@ service cloud.firestore {
       allow read: if isParticipant();
                   
       // Only the seeker can initiate a session request with initial status 'pending'
+      // Field bounds: sanitize input lengths to protect from oversized payloads (HIGH-SEC-06)
       allow create: if request.auth != null && 
                     request.resource.data.seekerId == request.auth.uid &&
-                    request.resource.data.status == "pending";
+                    request.resource.data.status == "pending" &&
+                    (!('seekerConcern' in request.resource.data) || (request.resource.data.seekerConcern is string && request.resource.data.seekerConcern.size() <= 1000)) &&
+                    (!('seekerMoniker' in request.resource.data) || (request.resource.data.seekerMoniker is string && request.resource.data.seekerMoniker.size() <= 64)) &&
+                    (!('seekerMoodTag' in request.resource.data) || (request.resource.data.seekerMoodTag is string && request.resource.data.seekerMoodTag.size() <= 64));
 
       // Updates are strictly constrained: only participants, immutable fields preserved, valid transitions
       allow update: if isParticipant() && immutableFieldsPreserved() && validStatusTransition();
@@ -63,6 +102,13 @@ service cloud.firestore {
       // MESSAGES SUBCOLLECTION
       match /messages/{messageId} {
         // Only the participants of the parent session can read or write messages
+        allow read, write: if request.auth != null &&
+                      (get(/databases/$(database)/documents/sessions/$(sessionId)).data.seekerId == request.auth.uid ||
+                       get(/databases/$(database)/documents/sessions/$(sessionId)).data.listenerId == request.auth.uid);
+      }
+
+      // REVIEWS / FEEDBACK SUBCOLLECTION (HIGH-BUG-05)
+      match /reviews/{reviewId} {
         allow read, write: if request.auth != null &&
                       (get(/databases/$(database)/documents/sessions/$(sessionId)).data.seekerId == request.auth.uid ||
                        get(/databases/$(database)/documents/sessions/$(sessionId)).data.listenerId == request.auth.uid);

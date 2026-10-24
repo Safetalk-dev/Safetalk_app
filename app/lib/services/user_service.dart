@@ -6,7 +6,7 @@ class UserService {
   final FirebaseFirestore _firestore;
 
   UserService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Fetches a user's document from the 'users' collection.
   Future<UserModel?> getUser(String uid) async {

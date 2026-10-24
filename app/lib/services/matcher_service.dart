@@ -6,10 +6,12 @@ class MatcherService {
   final FirebaseFirestore _firestore;
 
   MatcherService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Fetches online listeners matching the seeker's preferred languages.
-  Future<List<UserModel>> getOnlineListeners(List<String> preferredLanguages) async {
+  Future<List<UserModel>> getOnlineListeners(
+    List<String> preferredLanguages,
+  ) async {
     if (preferredLanguages.isEmpty) return [];
 
     try {
@@ -17,8 +19,10 @@ class MatcherService {
           .collection('users')
           .where('role', isEqualTo: 'listener')
           .where('listenerData.isOnline', isEqualTo: true)
-          .where('listenerData.languagesSpoken',
-              arrayContainsAny: preferredLanguages)
+          .where(
+            'listenerData.languagesSpoken',
+            arrayContainsAny: preferredLanguages,
+          )
           .get();
 
       return querySnapshot.docs

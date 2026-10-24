@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,36 +21,37 @@ class SafeTalkScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase before anything else
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Connect to local emulators ONLY when explicitly enabled via --dart-define=USE_FIREBASE_EMULATOR=true
-  const bool kUseFirebaseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+  const bool kUseFirebaseEmulator = bool.fromEnvironment(
+    'USE_FIREBASE_EMULATOR',
+    defaultValue: false,
+  );
   if (kUseFirebaseEmulator) {
     try {
       final host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
-      
+
       // Connect Authentication
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-      
+
       // Connect Firestore
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
-      
+
       // Connect Cloud Functions
       FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
-      
+
       debugPrint('Firebase Emulators connected successfully: Host=$host');
     } catch (e) {
       debugPrint('Error connecting to Firebase Emulators: $e');
@@ -57,13 +59,13 @@ void main() async {
   } else {
     debugPrint('SafeTalk: Connected to live Firebase cloud project.');
   }
-  
+
   // Asynchronously load the service settings before the UI renders to prevent race conditions
   await VaultService.initializeDirectory();
   await BiometricService().loadSettings();
   await PushNotificationService().loadSettings();
   await ListenerSettingsService().loadSettings();
-  
+
   runApp(const SafeTalkApp());
 }
 
@@ -93,9 +95,7 @@ class SafeTalkApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: BiometricShieldWrapper(
-        child: AuthWrapper(
-          onLogout: () => AuthService().signOut(),
-        ),
+        child: AuthWrapper(onLogout: () => AuthService().signOut()),
       ),
     );
   }
@@ -122,8 +122,8 @@ class _BiometricShieldWrapperState extends State<BiometricShieldWrapper> {
     if (BiometricService().isEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final success = await BiometricService().authenticate(
-          context, 
-          reason: 'Authenticate to access your Safe Haven.'
+          context,
+          reason: 'Authenticate to access your Safe Haven.',
         );
         if (success) {
           setState(() {
@@ -147,43 +147,55 @@ class _BiometricShieldWrapperState extends State<BiometricShieldWrapper> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_rounded, color: SafeTalkTheme.brandTerracotta, size: 64),
+              const Icon(
+                Icons.lock_rounded,
+                color: SafeTalkTheme.brandTerracotta,
+                size: 64,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Safe Haven Locked',
-                style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                style: SafeTalkTheme.headingStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Unlock with Biometrics to continue',
-                style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                style: SafeTalkTheme.captionStyle(
+                  color: SafeTalkTheme.textSecondary,
+                ),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: SafeTalkTheme.brandTerracotta,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 0,
                 ),
                 onPressed: _checkAuthentication,
                 icon: const Icon(Icons.fingerprint_rounded),
                 label: const Text('Unlock'),
               ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _authenticated = true;
-                  });
-                },
-                child: Text(
-                  'Demo Bypass',
-                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(
-                    decoration: TextDecoration.underline,
+              if (kDebugMode) ...[
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _authenticated = true;
+                    });
+                  },
+                  child: Text(
+                    'Demo Bypass (Debug Mode)',
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ).copyWith(decoration: TextDecoration.underline),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

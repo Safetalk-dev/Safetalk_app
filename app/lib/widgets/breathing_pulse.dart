@@ -37,12 +37,10 @@ class _BreathingPulseState extends State<BreathingPulse>
       curve: Curves.easeInOut,
     );
 
-    _rotateAnimation = Tween<double>(begin: 0, end: 2 * math.pi).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.linear,
-      ),
-    );
+    _rotateAnimation = Tween<double>(
+      begin: 0,
+      end: 2 * math.pi,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
   }
 
   @override
@@ -85,7 +83,9 @@ class _BreathingPulseState extends State<BreathingPulse>
                       width: widget.size,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: SafeTalkTheme.brandSage.withValues(alpha: opacity * 0.4),
+                        color: SafeTalkTheme.brandSage.withValues(
+                          alpha: opacity * 0.4,
+                        ),
                       ),
                     ),
                   ),
@@ -97,7 +97,9 @@ class _BreathingPulseState extends State<BreathingPulse>
                       width: widget.size,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: SafeTalkTheme.brandTerracotta.withValues(alpha: opacity * 0.6),
+                        color: SafeTalkTheme.brandTerracotta.withValues(
+                          alpha: opacity * 0.6,
+                        ),
                       ),
                     ),
                   ),
@@ -131,7 +133,9 @@ class _BreathingPulseState extends State<BreathingPulse>
                             width: widget.size * 0.88,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: SafeTalkTheme.bgMidnight.withValues(alpha: 0.85),
+                              color: SafeTalkTheme.bgMidnight.withValues(
+                                alpha: 0.85,
+                              ),
                             ),
                             child: Center(
                               child: widget.showText
@@ -146,7 +150,8 @@ class _BreathingPulseState extends State<BreathingPulse>
                                       height: 12,
                                       width: 12,
                                       decoration: BoxDecoration(
-                                        color: SafeTalkTheme.brandSageLight.withValues(alpha: 0.5),
+                                        color: SafeTalkTheme.brandSageLight
+                                            .withValues(alpha: 0.5),
                                         shape: BoxShape.circle,
                                       ),
                                     ),

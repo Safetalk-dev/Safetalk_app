@@ -34,7 +34,8 @@ class ChatController extends ChangeNotifier {
         userThreads.addAll(savedUserThreads);
       }
 
-      final savedListenerThreads = await OfflineChatService().loadListenerThreads();
+      final savedListenerThreads = await OfflineChatService()
+          .loadListenerThreads();
       if (savedListenerThreads.isNotEmpty) {
         listenerThreads.clear();
         listenerThreads.addAll(savedListenerThreads);
@@ -70,7 +71,7 @@ class ChatController extends ChangeNotifier {
     try {
       final decryptedNotes = await VaultService().unlockVault(pin);
       _userPin = pin;
-      
+
       // Load notes back into memory threads!
       for (final thread in listenerThreads) {
         final threadName = thread['name'];
@@ -78,7 +79,7 @@ class ChatController extends ChangeNotifier {
           thread['notes'] = decryptedNotes[threadName];
         }
       }
-      
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -98,33 +99,33 @@ class ChatController extends ChangeNotifier {
   Future<void> enableVault(String pin) async {
     await VaultService().initializeVault(pin);
     _userPin = pin;
-    
+
     // Save current memory notes into the vault!
     final notesMap = <String, String>{};
     for (final t in listenerThreads) {
       notesMap[t['name']] = t['notes'] ?? '';
     }
     await VaultService().saveNotes(pin, notesMap);
-    
+
     notifyListeners();
   }
 
   Future<void> wipeAndResetVault() async {
     await VaultService().wipeAndResetVault();
     _userPin = null;
-    
+
     // Clear all memory notes!
     for (final t in listenerThreads) {
       t['notes'] = '';
     }
-    
+
     // Wipe offline stored chats as well
     await OfflineChatService().clearAllChats();
-    
+
     // Reset lists to empty defaults
     userThreads.clear();
     listenerThreads.clear();
-    
+
     notifyListeners();
   }
 
@@ -152,13 +153,15 @@ class ChatController extends ChangeNotifier {
         'avatarColor': avatarColor ?? SafeTalkTheme.brandSage,
         'online': true,
         'unread': false,
-        'lastMessage': 'Say hello! Your conversation is private to you and your listener.',
+        'lastMessage':
+            'Say hello! Your conversation is private to you and your listener.',
         'time': 'Now',
         'messages': [
           {
             'sender': 'listener',
-            'text': 'Hello, I am here for you. Take your time and share whatever feels comfortable.',
-          }
+            'text':
+                'Hello, I am here for you. Take your time and share whatever feels comfortable.',
+          },
         ],
       });
       _persistUserThreads();
@@ -166,7 +169,11 @@ class ChatController extends ChangeNotifier {
     }
   }
 
-  void sendUserMessage(String partnerName, String message, {required VoidCallback onReplyTriggered}) {
+  void sendUserMessage(
+    String partnerName,
+    String message, {
+    required VoidCallback onReplyTriggered,
+  }) {
     ensureUserThread(partnerName);
     final thread = userThreads.firstWhere((t) => t['name'] == partnerName);
     thread['messages'].add({'sender': 'user', 'text': message});
@@ -178,9 +185,11 @@ class ChatController extends ChangeNotifier {
     // Trigger mock supportive automatic answer
     Future.delayed(const Duration(seconds: 2), () {
       final t = userThreads.firstWhere((t) => t['name'] == partnerName);
-      String supportReply = "I am right here with you. What does your body feel like right now?";
+      String supportReply =
+          "I am right here with you. What does your body feel like right now?";
       if (message.toLowerCase().contains('thank')) {
-        supportReply = "Of course. You deserve to be heard. I'm glad to be here.";
+        supportReply =
+            "Of course. You deserve to be heard. I'm glad to be here.";
       }
       t['messages'].add({'sender': 'listener', 'text': supportReply});
       t['lastMessage'] = supportReply;
@@ -208,7 +217,21 @@ class ChatController extends ChangeNotifier {
 
   // --- ACTIONS FOR LISTENER SIDE ---
   void sendListenerMessage(String partnerName, String message) {
-    final thread = listenerThreads.firstWhere((t) => t['name'] == partnerName);
+    final thread = listenerThreads.firstWhere(
+      (t) => t['name'] == partnerName,
+      orElse: () {
+        final newThread = <String, dynamic>{
+          'name': partnerName,
+          'messages': <Map<String, dynamic>>[],
+          'lastMessage': '',
+          'time': 'Just now',
+          'unread': false,
+          'notes': '',
+        };
+        listenerThreads.add(newThread);
+        return newThread;
+      },
+    );
     thread['messages'].add({'sender': 'listener', 'text': message});
     thread['lastMessage'] = message;
     thread['time'] = 'Just now';
@@ -220,25 +243,45 @@ class ChatController extends ChangeNotifier {
     sendListenerMessage(partnerName, macroText);
   }
 
-  void saveListenerNotes(String partnerName, String notes) {
-    final thread = listenerThreads.firstWhere((t) => t['name'] == partnerName);
+  Future<void> saveListenerNotes(String partnerName, String notes) async {
+    final thread = listenerThreads.firstWhere(
+      (t) => t['name'] == partnerName,
+      orElse: () {
+        final newThread = <String, dynamic>{
+          'name': partnerName,
+          'messages': <Map<String, dynamic>>[],
+          'lastMessage': '',
+          'time': 'Just now',
+          'unread': false,
+          'notes': '',
+        };
+        listenerThreads.add(newThread);
+        return newThread;
+      },
+    );
     thread['notes'] = notes;
-    
+
     if (_userPin != null) {
       final notesMap = <String, String>{};
       for (final t in listenerThreads) {
         notesMap[t['name']] = t['notes'] ?? '';
       }
-      VaultService().saveNotes(_userPin!, notesMap);
+      try {
+        await VaultService().saveNotes(_userPin!, notesMap);
+      } catch (e) {
+        debugPrint('Failed to encrypt and save vault notes: $e');
+      }
     }
-    
+
     notifyListeners();
   }
 
   void markListenerThreadRead(String partnerName) {
-    final thread = listenerThreads.firstWhere((t) => t['name'] == partnerName);
-    thread['unread'] = false;
-    _persistListenerThreads();
-    notifyListeners();
+    final idx = listenerThreads.indexWhere((t) => t['name'] == partnerName);
+    if (idx != -1) {
+      listenerThreads[idx]['unread'] = false;
+      _persistListenerThreads();
+      notifyListeners();
+    }
   }
 }

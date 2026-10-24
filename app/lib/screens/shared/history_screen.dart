@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/tokens.dart';
 import '../../controllers/session_controller.dart';
 import '../../controllers/chat_controller.dart';
@@ -15,15 +17,140 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  // List of past sessions
-  final List<Map<String, dynamic>> _pastSessions = [];
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final m = months[dt.month - 1];
+    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    final minuteStr = dt.minute.toString().padLeft(2, '0');
+    return '$m ${dt.day}, $h:$minuteStr $ampm';
+  }
 
-  void _showSessionDetail(Map<String, dynamic> session) {
+  Stream<List<Map<String, dynamic>>> _streamPastSessions() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return Stream.value([]);
+
+    return FirebaseFirestore.instance
+        .collection('sessions')
+        .where(widget.isSeeker ? 'seekerId' : 'listenerId', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) {
+          final list = <Map<String, dynamic>>[];
+          for (final doc in snapshot.docs) {
+            final data = doc.data();
+            final status = data['status'] as String? ?? '';
+            // Only display finished/past sessions
+            if (status != 'completed' &&
+                status != 'cancelled' &&
+                status != 'timeout') {
+              continue;
+            }
+
+            DateTime dt = DateTime.now();
+            final rawDate =
+                data['completedAt'] ?? data['updatedAt'] ?? data['createdAt'];
+            if (rawDate is Timestamp) {
+              dt = rawDate.toDate();
+            } else if (rawDate is String) {
+              dt = DateTime.tryParse(rawDate) ?? dt;
+            }
+
+            final rawType = data['sessionType'] as String? ?? 'messages';
+            final isChat =
+                rawType.contains('messages') || rawType.contains('chat');
+            final typeTitle = isChat
+                ? 'Secure Chat Support'
+                : (rawType.contains('video')
+                      ? 'Video Call Session'
+                      : 'Voice Call Session');
+
+            final displayName = widget.isSeeker
+                ? (data['listenerName'] as String? ?? 'Compassionate Listener')
+                : (data['seekerMoniker'] as String? ?? 'Anonymous Seeker');
+
+            final earned = (data['listenerEarned'] is num)
+                ? (data['listenerEarned'] as num).toDouble()
+                : 50.0;
+            final amount = widget.isSeeker ? 150.0 : earned;
+
+            list.add({
+              'docId': doc.id,
+              'id':
+                  '#${doc.id.substring(0, doc.id.length > 8 ? 8 : doc.id.length).toUpperCase()}',
+              'name': displayName,
+              'seekerName': displayName,
+              'type': typeTitle,
+              'date': _formatDate(dt),
+              'dateTime': dt,
+              'amount': amount,
+              'rating': (data['rating'] is num)
+                  ? (data['rating'] as num).toInt()
+                  : 5,
+              'isPremium': false,
+              'icon': isChat
+                  ? Icons.chat_bubble_outline_rounded
+                  : Icons.phone_in_talk_rounded,
+              'status': status,
+            });
+          }
+          // Sort newest first
+          list.sort(
+            (a, b) => (b['dateTime'] as DateTime).compareTo(
+              a['dateTime'] as DateTime,
+            ),
+          );
+          return list;
+        });
+  }
+
+  void _showSessionDetail(Map<String, dynamic> session) async {
+    final docId = session['docId'] as String? ?? '';
     if (session['type'] == 'Secure Chat Support') {
+      // If messages not loaded yet, fetch from subcollection
+      if (session['messages'] == null && docId.isNotEmpty) {
+        try {
+          final msgsSnapshot = await FirebaseFirestore.instance
+              .collection('sessions')
+              .doc(docId)
+              .collection('messages')
+              .orderBy('timestamp', descending: false)
+              .get();
+
+          session['messages'] = msgsSnapshot.docs.map((d) {
+            final m = d.data();
+            return {
+              'sender': m['senderId'] == FirebaseAuth.instance.currentUser?.uid
+                  ? 'me'
+                  : 'them',
+              'text': m['ciphertext'] ?? m['text'] ?? '',
+              'time': m['timestamp'] is Timestamp
+                  ? _formatDate((m['timestamp'] as Timestamp).toDate())
+                  : '',
+            };
+          }).toList();
+        } catch (_) {
+          session['messages'] = [];
+        }
+      }
+
       // Synchronize with ChatController in real-time
-      final nameToFind = session['name'] ?? (widget.isSeeker ? 'Listener' : 'Seeker');
-      final threads = widget.isSeeker 
-          ? ChatController().userThreads 
+      final nameToFind =
+          session['name'] ?? (widget.isSeeker ? 'Listener' : 'Seeker');
+      final threads = widget.isSeeker
+          ? ChatController().userThreads
           : ChatController().listenerThreads;
       final matchingThread = threads.firstWhere(
         (t) => t['name'] == nameToFind,
@@ -34,7 +161,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         session['notes'] = matchingThread['notes'];
       }
 
-      // Chat session → open chat history transcript screen
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -58,8 +185,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final isTherapist = SessionController().isTherapist;
@@ -82,18 +207,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 Text(
                   'PAST COUNSELING LOGS',
-                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                  ),
+                  style: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
                 ),
                 Icon(Icons.shield_outlined, color: brandColorLight, size: 16),
               ],
             ),
           ),
           Expanded(
-            child: _pastSessions.isEmpty
-                ? Center(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _streamPastSessions(),
+              builder: (context, snapshot) {
+                final pastSessions = snapshot.data ?? [];
+
+                if (pastSessions.isEmpty) {
+                  return Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Column(
@@ -104,7 +233,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             decoration: BoxDecoration(
                               color: SafeTalkTheme.cardBg,
                               shape: BoxShape.circle,
-                              border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                              border: Border.all(
+                                color: SafeTalkTheme.borderSage,
+                                width: 1.5,
+                              ),
                             ),
                             child: Icon(
                               Icons.history_rounded,
@@ -115,7 +247,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           const SizedBox(height: 20),
                           Text(
                             'No Session History Yet',
-                            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                            style: SafeTalkTheme.headingStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ).copyWith(fontSize: 18),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
@@ -123,92 +257,122 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             widget.isSeeker
                                 ? 'Completed support sessions and consultation transcripts will appear here.'
                                 : 'Completed counseling sessions with seekers will be securely logged here.',
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textSecondary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
-                  )
-                : ListView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    itemCount: _pastSessions.length,
-                    itemBuilder: (context, index) {
-                      final session = _pastSessions[index];
-                      final displayName = widget.isSeeker ? session['name'] : session['seekerName'];
+                  );
+                }
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: HapticTouchable(
-                    onTap: () => _showSessionDetail(session),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: SafeTalkTheme.glassCardDecoration,
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: session['isPremium']
-                                ? SafeTalkTheme.brandGold.withValues(alpha: 0.15)
-                                : brandColor.withValues(alpha: 0.15),
-                            child: Icon(
-                              session['icon'],
-                              color: session['isPremium'] ? SafeTalkTheme.brandGold : brandColorLight,
-                              size: 16,
-                            ),
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  itemCount: pastSessions.length,
+                  itemBuilder: (context, index) {
+                    final session = pastSessions[index];
+                    final displayName = widget.isSeeker
+                        ? session['name']
+                        : session['seekerName'];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: HapticTouchable(
+                        onTap: () => _showSessionDetail(session),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayName,
-                                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${session['type']} • ${session['id']}',
-                                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(fontSize: 11),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  session['date'],
-                                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textMuted).copyWith(fontSize: 10),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          decoration: SafeTalkTheme.glassCardDecoration,
+                          child: Row(
                             children: [
-                              Text(
-                                widget.isSeeker
-                                    ? '-₹${session['amount'].toStringAsFixed(0)}'
-                                    : '+₹${session['amount'].toStringAsFixed(0)}',
-                                style: SafeTalkTheme.bodyStyle(
-                                  color: session['isPremium'] ? SafeTalkTheme.brandGold : brandColorLight,
-                                  bold: true,
-                                ).copyWith(fontSize: 14),
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: session['isPremium']
+                                    ? SafeTalkTheme.brandGold.withValues(
+                                        alpha: 0.15,
+                                      )
+                                    : brandColor.withValues(alpha: 0.15),
+                                child: Icon(
+                                  session['icon'],
+                                  color: session['isPremium']
+                                      ? SafeTalkTheme.brandGold
+                                      : brandColorLight,
+                                  size: 16,
+                                ),
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: List.generate(5, (starIndex) {
-                                  final isFilled = starIndex < session['rating'];
-                                  return Icon(
-                                    isFilled ? Icons.star_rounded : Icons.star_border_rounded,
-                                    color: SafeTalkTheme.brandGold,
-                                    size: 10,
-                                  );
-                                }),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: SafeTalkTheme.bodyStyle(
+                                        color: SafeTalkTheme.textPrimary,
+                                        bold: true,
+                                      ).copyWith(fontSize: 14),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${session['type']} • ${session['id']}',
+                                      style: SafeTalkTheme.captionStyle(
+                                        color: SafeTalkTheme.textSecondary,
+                                      ).copyWith(fontSize: 11),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      session['date'],
+                                      style: SafeTalkTheme.captionStyle(
+                                        color: SafeTalkTheme.textMuted,
+                                      ).copyWith(fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    widget.isSeeker
+                                        ? '-₹${session['amount'].toStringAsFixed(0)}'
+                                        : '+₹${session['amount'].toStringAsFixed(0)}',
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: session['isPremium']
+                                          ? SafeTalkTheme.brandGold
+                                          : brandColorLight,
+                                      bold: true,
+                                    ).copyWith(fontSize: 14),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: List.generate(5, (starIndex) {
+                                      final isFilled =
+                                          starIndex < session['rating'];
+                                      return Icon(
+                                        isFilled
+                                            ? Icons.star_rounded
+                                            : Icons.star_border_rounded,
+                                        color: SafeTalkTheme.brandGold,
+                                        size: 10,
+                                      );
+                                    }),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -237,19 +401,22 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        final TextEditingController notesController = TextEditingController(text: session['notes'] ?? '');
+        final TextEditingController notesController = TextEditingController(
+          text: session['notes'] ?? '',
+        );
         bool isEditing = false;
-        
+
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final double screenHeight = MediaQuery.of(context).size.height;
-            final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+            final bool isKeyboardOpen =
+                MediaQuery.of(context).viewInsets.bottom > 0;
             final isTherapist = SessionController().isTherapist;
             final brandColor = isSeeker
                 ? SafeTalkTheme.brandTerracotta
                 : SafeTalkTheme.getListenerColor(isTherapist);
-            
-            final double drawerHeight = isKeyboardOpen 
+
+            final double drawerHeight = isKeyboardOpen
                 ? (screenHeight - MediaQuery.of(context).viewInsets.bottom - 40)
                 : (screenHeight * 0.7);
 
@@ -257,7 +424,10 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                 ? screenHeight * 0.18
                 : screenHeight * 0.30;
 
-            final bool isLocked = !isSeeker && ChatController().isVaultEnabled && ChatController().userPin == null;
+            final bool isLocked =
+                !isSeeker &&
+                ChatController().isVaultEnabled &&
+                ChatController().userPin == null;
 
             return Container(
               width: double.infinity,
@@ -284,12 +454,19 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          isSeeker ? 'Secure Session Journal' : 'Secure Session Notes',
-                          style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                          isSeeker
+                              ? 'Secure Session Journal'
+                              : 'Secure Session Notes',
+                          style: SafeTalkTheme.headingStyle(
+                            color: SafeTalkTheme.textPrimary,
+                          ),
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, color: SafeTalkTheme.textSecondary),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                         onPressed: () {
                           if (ChatController().isVaultEnabled) {
                             ChatController().lockVault();
@@ -304,10 +481,12 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                     isSeeker
                         ? 'Your private, encrypted reflections and journals for this session.'
                         : 'Confidential session records for ${session['seekerName']}. Locked securely inside the Vault.',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -336,16 +515,22 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                   const SizedBox(height: 8),
                                   Text(
                                     'Encrypted Journal is Locked',
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                                        .copyWith(fontSize: 15),
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textPrimary,
+                                      bold: true,
+                                    ).copyWith(fontSize: 15),
                                   ),
                                   const SizedBox(height: 6),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       'To protect seeker confidentiality, this journal is sealed with a PIN-derived encryption key. Decryption keys are held in volatile memory only.',
                                       textAlign: TextAlign.center,
-                                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                                      style: SafeTalkTheme.captionStyle(
+                                        color: SafeTalkTheme.textSecondary,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 16),
@@ -366,11 +551,15 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
                                           color: brandColor,
-                                          borderRadius: SafeTalkTheme.organicCardRadius,
+                                          borderRadius:
+                                              SafeTalkTheme.organicCardRadius,
                                         ),
                                         child: Text(
                                           'Unlock Session Notes',
-                                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                          style: SafeTalkTheme.bodyStyle(
+                                            color: SafeTalkTheme.bgMidnight,
+                                            bold: true,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -385,9 +574,18 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                 padding: const EdgeInsets.all(16),
                                 decoration: SafeTalkTheme.glassCardDecoration,
                                 child: Text(
-                                  session['notes'] ?? (isSeeker ? 'No journal entries logged for this session.' : 'No notes compiled for this session.'),
-                                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary)
-                                      .copyWith(fontStyle: FontStyle.italic, fontSize: 13, height: 1.4),
+                                  session['notes'] ??
+                                      (isSeeker
+                                          ? 'No journal entries logged for this session.'
+                                          : 'No notes compiled for this session.'),
+                                  style:
+                                      SafeTalkTheme.bodyStyle(
+                                        color: SafeTalkTheme.textPrimary,
+                                      ).copyWith(
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 13,
+                                        height: 1.4,
+                                      ),
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -400,12 +598,20 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                       isEditing = true;
                                     });
                                   },
-                                  icon: const Icon(Icons.edit_rounded, size: 16),
-                                  label: Text(isSeeker ? 'Edit Journal' : 'Edit Notes'),
+                                  icon: const Icon(
+                                    Icons.edit_rounded,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    isSeeker ? 'Edit Journal' : 'Edit Notes',
+                                  ),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: brandColor,
                                     side: BorderSide(color: brandColor),
-                                    shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          SafeTalkTheme.organicCardRadius,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -417,20 +623,34 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                   maxLines: null,
                                   expands: true,
                                   textAlignVertical: TextAlignVertical.top,
-                                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                                  style: SafeTalkTheme.bodyStyle(
+                                    color: SafeTalkTheme.textPrimary,
+                                  ),
                                   decoration: InputDecoration(
-                                    hintText: isSeeker ? 'Write down your thoughts, breakthroughs, and reflections...' : 'Add counseling notes or reminders...',
-                                    hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                                    hintText: isSeeker
+                                        ? 'Write down your thoughts, breakthroughs, and reflections...'
+                                        : 'Add counseling notes or reminders...',
+                                    hintStyle: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textMuted,
+                                    ),
                                     filled: true,
                                     fillColor: SafeTalkTheme.bgMidnight,
                                     contentPadding: const EdgeInsets.all(16),
                                     enabledBorder: OutlineInputBorder(
-                                      borderRadius: SafeTalkTheme.standardRadius,
-                                      borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1),
+                                      borderRadius:
+                                          SafeTalkTheme.standardRadius,
+                                      borderSide: const BorderSide(
+                                        color: SafeTalkTheme.borderSage,
+                                        width: 1,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderRadius: SafeTalkTheme.standardRadius,
-                                      borderSide: BorderSide(color: brandColor, width: 1.5),
+                                      borderRadius:
+                                          SafeTalkTheme.standardRadius,
+                                      borderSide: BorderSide(
+                                        color: brandColor,
+                                        width: 1.5,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -446,9 +666,15 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                         });
                                       },
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: SafeTalkTheme.textSecondary,
-                                        side: const BorderSide(color: SafeTalkTheme.borderSage),
-                                        shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                                        foregroundColor:
+                                            SafeTalkTheme.textSecondary,
+                                        side: const BorderSide(
+                                          color: SafeTalkTheme.borderSage,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              SafeTalkTheme.organicCardRadius,
+                                        ),
                                       ),
                                       child: const Text('Cancel'),
                                     ),
@@ -459,10 +685,19 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                       onPressed: () {
                                         session['notes'] = notesController.text;
                                         if (isSeeker) {
-                                          ChatController().saveUserNotes(session['name'] ?? '', notesController.text);
+                                          ChatController().saveUserNotes(
+                                            session['name'] ?? '',
+                                            notesController.text,
+                                          );
                                         } else {
-                                          final seekerName = session['seekerName'] ?? session['name'] ?? 'Pine Pebble #107';
-                                          ChatController().saveListenerNotes(seekerName, notesController.text);
+                                          final seekerName =
+                                              session['seekerName'] ??
+                                              session['name'] ??
+                                              'Pine Pebble #107';
+                                          ChatController().saveListenerNotes(
+                                            seekerName,
+                                            notesController.text,
+                                          );
                                           if (ChatController().isVaultEnabled) {
                                             ChatController().lockVault();
                                           }
@@ -470,11 +705,17 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                         setSheetState(() {
                                           isEditing = false;
                                         });
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              isSeeker ? 'Session journal securely saved.' : 'Session notes securely saved.',
-                                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight),
+                                              isSeeker
+                                                  ? 'Session journal securely saved.'
+                                                  : 'Session notes securely saved.',
+                                              style: SafeTalkTheme.bodyStyle(
+                                                color: SafeTalkTheme.bgMidnight,
+                                              ),
                                             ),
                                             backgroundColor: brandColor,
                                             behavior: SnackBarBehavior.floating,
@@ -483,8 +724,12 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: brandColor,
-                                        foregroundColor: SafeTalkTheme.bgMidnight,
-                                        shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                                        foregroundColor:
+                                            SafeTalkTheme.bgMidnight,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              SafeTalkTheme.organicCardRadius,
+                                        ),
                                       ),
                                       child: const Text('Save Changes'),
                                     ),
@@ -517,8 +762,12 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
         : SafeTalkTheme.getListenerColorLight(isTherapist);
 
     final rawMessages = session['messages'] as List?;
-    final messages = rawMessages?.map((m) => Map<String, String>.from(m as Map)).toList() ?? <Map<String, String>>[];
-    final displayName = isSeeker ? (session['name'] ?? '') : (session['seekerName'] ?? session['name'] ?? '');
+    final messages =
+        rawMessages?.map((m) => Map<String, String>.from(m as Map)).toList() ??
+        <Map<String, String>>[];
+    final displayName = isSeeker
+        ? (session['name'] ?? '')
+        : (session['seekerName'] ?? session['name'] ?? '');
 
     return Scaffold(
       backgroundColor: SafeTalkTheme.bgMidnight,
@@ -538,7 +787,9 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
             left: -150,
             child: CircleAvatar(
               radius: 250,
-              backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.03),
+              backgroundColor: SafeTalkTheme.brandTerracotta.withValues(
+                alpha: 0.03,
+              ),
             ),
           ),
 
@@ -547,16 +798,26 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
               children: [
                 // Top Custom Header Bar - Redesigned to be Premium, Floating & Uncluttered
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   margin: const EdgeInsets.all(16),
                   decoration: SafeTalkTheme.glassCardDecoration.copyWith(
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: brandColor.withValues(alpha: 0.2), width: 1.5),
+                    border: Border.all(
+                      color: brandColor.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
                   ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, color: SafeTalkTheme.textPrimary, size: 18),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: SafeTalkTheme.textPrimary,
+                          size: 18,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 4),
@@ -567,7 +828,9 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                             : brandColor.withValues(alpha: 0.15),
                         child: Icon(
                           Icons.chat_bubble_outline_rounded,
-                          color: session['isPremium'] == true ? SafeTalkTheme.brandGold : brandColorLight,
+                          color: session['isPremium'] == true
+                              ? SafeTalkTheme.brandGold
+                              : brandColorLight,
                           size: 16,
                         ),
                       ),
@@ -578,19 +841,28 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                           children: [
                             Text(
                               displayName,
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14.5),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textPrimary,
+                                bold: true,
+                              ).copyWith(fontSize: 14.5),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                Icon(Icons.security, color: brandColorLight, size: 12),
+                                Icon(
+                                  Icons.security,
+                                  color: brandColorLight,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     'Archived Private Transcript',
-                                    style: SafeTalkTheme.captionStyle(color: brandColorLight).copyWith(fontWeight: FontWeight.bold),
+                                    style: SafeTalkTheme.captionStyle(
+                                      color: brandColorLight,
+                                    ).copyWith(fontWeight: FontWeight.bold),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -609,36 +881,60 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isSeeker ? Icons.history_edu_outlined : Icons.note_alt_outlined,
+                            isSeeker
+                                ? Icons.history_edu_outlined
+                                : Icons.note_alt_outlined,
                             color: brandColorLight,
                             size: 18,
                           ),
-                          tooltip: isSeeker ? 'Secure Session Journal' : 'Secure Session Notes',
+                          tooltip: isSeeker
+                              ? 'Secure Session Journal'
+                              : 'Secure Session Notes',
                           onPressed: () => _showNotesBottomSheet(context),
                         ),
                       ),
                       // Premium styled Rating badge
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: SafeTalkTheme.cardBg,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: SafeTalkTheme.brandGold.withValues(alpha: 0.4), width: 1.2),
-                          boxShadow: SafeTalkTheme.glowShadow(SafeTalkTheme.brandGold, opacity: 0.1),
+                          border: Border.all(
+                            color: SafeTalkTheme.brandGold.withValues(
+                              alpha: 0.4,
+                            ),
+                            width: 1.2,
+                          ),
+                          boxShadow: SafeTalkTheme.glowShadow(
+                            SafeTalkTheme.brandGold,
+                            opacity: 0.1,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.star_rounded, color: SafeTalkTheme.brandGold, size: 14),
+                            const Icon(
+                              Icons.star_rounded,
+                              color: SafeTalkTheme.brandGold,
+                              size: 14,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               (session['rating'] is num)
-                                  ? (session['rating'] as num).toStringAsFixed(1)
+                                  ? (session['rating'] as num).toStringAsFixed(
+                                      1,
+                                    )
                                   : '5.0',
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 12),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textPrimary,
+                                bold: true,
+                              ).copyWith(fontSize: 12),
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -647,7 +943,10 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                 Expanded(
                   child: ListView.builder(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final msg = messages[index];
@@ -673,33 +972,49 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Row(
-                          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          mainAxisAlignment: isMe
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
                           children: [
                             if (!isMe) ...[
                               CircleAvatar(
                                 radius: 12,
-                                backgroundColor: brandColor.withValues(alpha: 0.2),
+                                backgroundColor: brandColor.withValues(
+                                  alpha: 0.2,
+                                ),
                                 child: Text(
                                   displayName[0],
-                                  style: SafeTalkTheme.captionStyle(color: brandColor).copyWith(fontSize: 9),
+                                  style: SafeTalkTheme.captionStyle(
+                                    color: brandColor,
+                                  ).copyWith(fontSize: 9),
                                 ),
                               ),
                               const SizedBox(width: 8),
                             ],
                             Flexible(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isMe ? brandColor : SafeTalkTheme.cardBg,
+                                  color: isMe
+                                      ? brandColor
+                                      : SafeTalkTheme.cardBg,
                                   borderRadius: radius,
                                   border: isMe
                                       ? null
-                                      : Border.all(color: SafeTalkTheme.borderSage, width: 1.2),
+                                      : Border.all(
+                                          color: SafeTalkTheme.borderSage,
+                                          width: 1.2,
+                                        ),
                                 ),
                                 child: Text(
                                   msg['text']!,
                                   style: SafeTalkTheme.bodyStyle(
-                                    color: isMe ? SafeTalkTheme.bgMidnight : SafeTalkTheme.textPrimary,
+                                    color: isMe
+                                        ? SafeTalkTheme.bgMidnight
+                                        : SafeTalkTheme.textPrimary,
                                   ).copyWith(fontSize: 14),
                                 ),
                               ),
@@ -717,11 +1032,17 @@ class ChatHistoryTranscriptScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.lock_rounded, color: SafeTalkTheme.brandSage.withValues(alpha: 0.5), size: 14),
+                      Icon(
+                        Icons.lock_rounded,
+                        color: SafeTalkTheme.brandSage.withValues(alpha: 0.5),
+                        size: 14,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'This chat record remains locked and zero-trace.',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -753,19 +1074,22 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        final TextEditingController notesController = TextEditingController(text: session['notes'] ?? '');
+        final TextEditingController notesController = TextEditingController(
+          text: session['notes'] ?? '',
+        );
         bool isEditing = false;
-        
+
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final double screenHeight = MediaQuery.of(context).size.height;
-            final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+            final bool isKeyboardOpen =
+                MediaQuery.of(context).viewInsets.bottom > 0;
             final isTherapist = SessionController().isTherapist;
             final brandColor = isSeeker
                 ? SafeTalkTheme.brandTerracotta
                 : SafeTalkTheme.getListenerColor(isTherapist);
-            
-            final double drawerHeight = isKeyboardOpen 
+
+            final double drawerHeight = isKeyboardOpen
                 ? (screenHeight - MediaQuery.of(context).viewInsets.bottom - 40)
                 : (screenHeight * 0.7);
 
@@ -773,7 +1097,10 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                 ? screenHeight * 0.18
                 : screenHeight * 0.30;
 
-            final bool isLocked = !isSeeker && ChatController().isVaultEnabled && ChatController().userPin == null;
+            final bool isLocked =
+                !isSeeker &&
+                ChatController().isVaultEnabled &&
+                ChatController().userPin == null;
 
             return Container(
               width: double.infinity,
@@ -800,12 +1127,19 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          isSeeker ? 'Secure Session Journal' : 'Secure Session Notes',
-                          style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+                          isSeeker
+                              ? 'Secure Session Journal'
+                              : 'Secure Session Notes',
+                          style: SafeTalkTheme.headingStyle(
+                            color: SafeTalkTheme.textPrimary,
+                          ),
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, color: SafeTalkTheme.textSecondary),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                         onPressed: () {
                           if (ChatController().isVaultEnabled) {
                             ChatController().lockVault();
@@ -820,10 +1154,12 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                     isSeeker
                         ? 'Your private, encrypted reflections and journals for this session.'
                         : 'Confidential session records for ${session['seekerName']}. Locked securely inside the Vault.',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -852,16 +1188,22 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                   const SizedBox(height: 8),
                                   Text(
                                     'Encrypted Journal is Locked',
-                                    style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true)
-                                        .copyWith(fontSize: 15),
+                                    style: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textPrimary,
+                                      bold: true,
+                                    ).copyWith(fontSize: 15),
                                   ),
                                   const SizedBox(height: 6),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       'To protect seeker confidentiality, this journal is sealed with a PIN-derived encryption key. Decryption keys are held in volatile memory only.',
                                       textAlign: TextAlign.center,
-                                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                                      style: SafeTalkTheme.captionStyle(
+                                        color: SafeTalkTheme.textSecondary,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 16),
@@ -882,11 +1224,15 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
                                           color: brandColor,
-                                          borderRadius: SafeTalkTheme.organicCardRadius,
+                                          borderRadius:
+                                              SafeTalkTheme.organicCardRadius,
                                         ),
                                         child: Text(
                                           'Unlock Session Notes',
-                                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight, bold: true),
+                                          style: SafeTalkTheme.bodyStyle(
+                                            color: SafeTalkTheme.bgMidnight,
+                                            bold: true,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -901,9 +1247,18 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                 padding: const EdgeInsets.all(16),
                                 decoration: SafeTalkTheme.glassCardDecoration,
                                 child: Text(
-                                  session['notes'] ?? (isSeeker ? 'No journal entries logged for this session.' : 'No notes compiled for this session.'),
-                                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary)
-                                      .copyWith(fontStyle: FontStyle.italic, fontSize: 13, height: 1.4),
+                                  session['notes'] ??
+                                      (isSeeker
+                                          ? 'No journal entries logged for this session.'
+                                          : 'No notes compiled for this session.'),
+                                  style:
+                                      SafeTalkTheme.bodyStyle(
+                                        color: SafeTalkTheme.textPrimary,
+                                      ).copyWith(
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 13,
+                                        height: 1.4,
+                                      ),
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -916,12 +1271,20 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                       isEditing = true;
                                     });
                                   },
-                                  icon: const Icon(Icons.edit_rounded, size: 16),
-                                  label: Text(isSeeker ? 'Edit Journal' : 'Edit Notes'),
+                                  icon: const Icon(
+                                    Icons.edit_rounded,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    isSeeker ? 'Edit Journal' : 'Edit Notes',
+                                  ),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: brandColor,
                                     side: BorderSide(color: brandColor),
-                                    shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          SafeTalkTheme.organicCardRadius,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -933,20 +1296,34 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                   maxLines: null,
                                   expands: true,
                                   textAlignVertical: TextAlignVertical.top,
-                                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary),
+                                  style: SafeTalkTheme.bodyStyle(
+                                    color: SafeTalkTheme.textPrimary,
+                                  ),
                                   decoration: InputDecoration(
-                                    hintText: isSeeker ? 'Write down your thoughts, breakthroughs, and reflections...' : 'Add counseling notes or reminders...',
-                                    hintStyle: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textMuted),
+                                    hintText: isSeeker
+                                        ? 'Write down your thoughts, breakthroughs, and reflections...'
+                                        : 'Add counseling notes or reminders...',
+                                    hintStyle: SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textMuted,
+                                    ),
                                     filled: true,
                                     fillColor: SafeTalkTheme.bgMidnight,
                                     contentPadding: const EdgeInsets.all(16),
                                     enabledBorder: OutlineInputBorder(
-                                      borderRadius: SafeTalkTheme.standardRadius,
-                                      borderSide: const BorderSide(color: SafeTalkTheme.borderSage, width: 1),
+                                      borderRadius:
+                                          SafeTalkTheme.standardRadius,
+                                      borderSide: const BorderSide(
+                                        color: SafeTalkTheme.borderSage,
+                                        width: 1,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderRadius: SafeTalkTheme.standardRadius,
-                                      borderSide: BorderSide(color: brandColor, width: 1.5),
+                                      borderRadius:
+                                          SafeTalkTheme.standardRadius,
+                                      borderSide: BorderSide(
+                                        color: brandColor,
+                                        width: 1.5,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -962,9 +1339,15 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                         });
                                       },
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: SafeTalkTheme.textSecondary,
-                                        side: const BorderSide(color: SafeTalkTheme.borderSage),
-                                        shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                                        foregroundColor:
+                                            SafeTalkTheme.textSecondary,
+                                        side: const BorderSide(
+                                          color: SafeTalkTheme.borderSage,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              SafeTalkTheme.organicCardRadius,
+                                        ),
                                       ),
                                       child: const Text('Cancel'),
                                     ),
@@ -975,10 +1358,19 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                       onPressed: () {
                                         session['notes'] = notesController.text;
                                         if (isSeeker) {
-                                          ChatController().saveUserNotes(session['name'] ?? '', notesController.text);
+                                          ChatController().saveUserNotes(
+                                            session['name'] ?? '',
+                                            notesController.text,
+                                          );
                                         } else {
-                                          final seekerName = session['seekerName'] ?? session['name'] ?? 'Pine Pebble #107';
-                                          ChatController().saveListenerNotes(seekerName, notesController.text);
+                                          final seekerName =
+                                              session['seekerName'] ??
+                                              session['name'] ??
+                                              'Pine Pebble #107';
+                                          ChatController().saveListenerNotes(
+                                            seekerName,
+                                            notesController.text,
+                                          );
                                           if (ChatController().isVaultEnabled) {
                                             ChatController().lockVault();
                                           }
@@ -986,11 +1378,17 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                         setSheetState(() {
                                           isEditing = false;
                                         });
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              isSeeker ? 'Session journal securely saved.' : 'Session notes securely saved.',
-                                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.bgMidnight),
+                                              isSeeker
+                                                  ? 'Session journal securely saved.'
+                                                  : 'Session notes securely saved.',
+                                              style: SafeTalkTheme.bodyStyle(
+                                                color: SafeTalkTheme.bgMidnight,
+                                              ),
                                             ),
                                             backgroundColor: brandColor,
                                             behavior: SnackBarBehavior.floating,
@@ -999,8 +1397,12 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: brandColor,
-                                        foregroundColor: SafeTalkTheme.bgMidnight,
-                                        shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.organicCardRadius),
+                                        foregroundColor:
+                                            SafeTalkTheme.bgMidnight,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              SafeTalkTheme.organicCardRadius,
+                                        ),
                                       ),
                                       child: const Text('Save Changes'),
                                     ),
@@ -1032,7 +1434,9 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
         ? SafeTalkTheme.brandTerracotta.withValues(alpha: 0.8)
         : SafeTalkTheme.getListenerColorLight(isTherapist);
 
-    final displayName = isSeeker ? (session['name'] ?? '') : (session['seekerName'] ?? session['name'] ?? '');
+    final displayName = isSeeker
+        ? (session['name'] ?? '')
+        : (session['seekerName'] ?? session['name'] ?? '');
 
     return Scaffold(
       backgroundColor: SafeTalkTheme.bgMidnight,
@@ -1052,7 +1456,9 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
             left: -150,
             child: CircleAvatar(
               radius: 250,
-              backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.03),
+              backgroundColor: SafeTalkTheme.brandTerracotta.withValues(
+                alpha: 0.03,
+              ),
             ),
           ),
 
@@ -1061,16 +1467,26 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
               children: [
                 // Top Custom Header Bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   margin: const EdgeInsets.all(16),
                   decoration: SafeTalkTheme.glassCardDecoration.copyWith(
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: brandColor.withValues(alpha: 0.2), width: 1.5),
+                    border: Border.all(
+                      color: brandColor.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
                   ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, color: SafeTalkTheme.textPrimary, size: 18),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: SafeTalkTheme.textPrimary,
+                          size: 18,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 4),
@@ -1081,7 +1497,9 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                             : brandColor.withValues(alpha: 0.15),
                         child: Icon(
                           session['icon'] ?? Icons.phone_rounded,
-                          color: session['isPremium'] == true ? SafeTalkTheme.brandGold : brandColorLight,
+                          color: session['isPremium'] == true
+                              ? SafeTalkTheme.brandGold
+                              : brandColorLight,
                           size: 16,
                         ),
                       ),
@@ -1092,19 +1510,28 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                           children: [
                             Text(
                               displayName,
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 14.5),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textPrimary,
+                                bold: true,
+                              ).copyWith(fontSize: 14.5),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                Icon(Icons.security, color: brandColorLight, size: 12),
+                                Icon(
+                                  Icons.security,
+                                  color: brandColorLight,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     'Archived Secure Call Log',
-                                    style: SafeTalkTheme.captionStyle(color: brandColorLight).copyWith(fontWeight: FontWeight.bold),
+                                    style: SafeTalkTheme.captionStyle(
+                                      color: brandColorLight,
+                                    ).copyWith(fontWeight: FontWeight.bold),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1123,36 +1550,60 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            isSeeker ? Icons.history_edu_outlined : Icons.note_alt_outlined,
+                            isSeeker
+                                ? Icons.history_edu_outlined
+                                : Icons.note_alt_outlined,
                             color: brandColorLight,
                             size: 18,
                           ),
-                          tooltip: isSeeker ? 'Secure Session Journal' : 'Secure Session Notes',
+                          tooltip: isSeeker
+                              ? 'Secure Session Journal'
+                              : 'Secure Session Notes',
                           onPressed: () => _showNotesBottomSheet(context),
                         ),
                       ),
                       // Rating Badge
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: SafeTalkTheme.cardBg,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: SafeTalkTheme.brandGold.withValues(alpha: 0.4), width: 1.2),
-                          boxShadow: SafeTalkTheme.glowShadow(SafeTalkTheme.brandGold, opacity: 0.1),
+                          border: Border.all(
+                            color: SafeTalkTheme.brandGold.withValues(
+                              alpha: 0.4,
+                            ),
+                            width: 1.2,
+                          ),
+                          boxShadow: SafeTalkTheme.glowShadow(
+                            SafeTalkTheme.brandGold,
+                            opacity: 0.1,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.star_rounded, color: SafeTalkTheme.brandGold, size: 14),
+                            const Icon(
+                              Icons.star_rounded,
+                              color: SafeTalkTheme.brandGold,
+                              size: 14,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               (session['rating'] is num)
-                                  ? (session['rating'] as num).toStringAsFixed(1)
+                                  ? (session['rating'] as num).toStringAsFixed(
+                                      1,
+                                    )
                                   : '5.0',
-                              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(fontSize: 12),
+                              style: SafeTalkTheme.bodyStyle(
+                                color: SafeTalkTheme.textPrimary,
+                                bold: true,
+                              ).copyWith(fontSize: 12),
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -1161,7 +1612,10 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1193,32 +1647,58 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                               Center(
                                 child: Text(
                                   session['type'] ?? 'Voice Call Support',
-                                  style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 20),
+                                  style: SafeTalkTheme.headingStyle(
+                                    color: SafeTalkTheme.textPrimary,
+                                  ).copyWith(fontSize: 20),
                                 ),
                               ),
                               Center(
                                 child: Text(
                                   'Completed Session • ${session['id']}',
-                                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                                  style: SafeTalkTheme.captionStyle(
+                                    color: SafeTalkTheme.textSecondary,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              const Divider(color: SafeTalkTheme.borderSage, height: 1),
+                              const Divider(
+                                color: SafeTalkTheme.borderSage,
+                                height: 1,
+                              ),
                               const SizedBox(height: 24),
-                              _buildStatItem('Companion Name', isSeeker ? (session['name'] ?? 'Listener') : 'You (Listener)'),
+                              _buildStatItem(
+                                'Companion Name',
+                                isSeeker
+                                    ? (session['name'] ?? 'Listener')
+                                    : 'You (Listener)',
+                              ),
                               const SizedBox(height: 14),
-                              _buildStatItem('Seeker Pseudonym', isSeeker ? 'You (Seeker)' : (session['seekerName'] ?? 'Anonymous Seeker')),
+                              _buildStatItem(
+                                'Seeker Pseudonym',
+                                isSeeker
+                                    ? 'You (Seeker)'
+                                    : (session['seekerName'] ??
+                                          'Anonymous Seeker'),
+                              ),
                               const SizedBox(height: 14),
-                              _buildStatItem('Call Duration', session['duration'] ?? '15 minutes'),
+                              _buildStatItem(
+                                'Call Duration',
+                                session['duration'] ?? '15 minutes',
+                              ),
                               const SizedBox(height: 14),
-                              _buildStatItem('Date & Time', session['date'] ?? 'Just now'),
+                              _buildStatItem(
+                                'Date & Time',
+                                session['date'] ?? 'Just now',
+                              ),
                               const SizedBox(height: 14),
                               _buildStatItem(
                                 'Billed Amount',
                                 isSeeker
                                     ? '-₹${(session['amount'] ?? 150.0).toStringAsFixed(0)}'
                                     : '+₹${(session['amount'] ?? 150.0).toStringAsFixed(0)}',
-                                highlightColor: session['isPremium'] == true ? SafeTalkTheme.brandGold : brandColorLight,
+                                highlightColor: session['isPremium'] == true
+                                    ? SafeTalkTheme.brandGold
+                                    : brandColorLight,
                               ),
                             ],
                           ),
@@ -1227,10 +1707,13 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                         // Quick reflections summary preview
                         Text(
                           'SESSION SUMMARY',
-                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                          ),
+                          style:
+                              SafeTalkTheme.captionStyle(
+                                color: SafeTalkTheme.textSecondary,
+                              ).copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.8,
+                              ),
                         ),
                         const SizedBox(height: 10),
                         Container(
@@ -1241,26 +1724,39 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                session['notes'] ?? (isSeeker ? 'No journal entry has been compiled yet.' : 'No notes have been logged yet.'),
-                                style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary).copyWith(
-                                  height: 1.4,
-                                  fontSize: 13.5,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                                session['notes'] ??
+                                    (isSeeker
+                                        ? 'No journal entry has been compiled yet.'
+                                        : 'No notes have been logged yet.'),
+                                style:
+                                    SafeTalkTheme.bodyStyle(
+                                      color: SafeTalkTheme.textPrimary,
+                                    ).copyWith(
+                                      height: 1.4,
+                                      fontSize: 13.5,
+                                      fontStyle: FontStyle.italic,
+                                    ),
                               ),
                               const SizedBox(height: 14),
                               TextButton.icon(
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                   foregroundColor: brandColor,
                                 ),
                                 icon: Icon(
-                                  isSeeker ? Icons.history_edu_outlined : Icons.note_alt_outlined,
+                                  isSeeker
+                                      ? Icons.history_edu_outlined
+                                      : Icons.note_alt_outlined,
                                   size: 16,
                                 ),
-                                label: Text(isSeeker ? 'Manage Secure Journal' : 'Manage Confidential Notes'),
+                                label: Text(
+                                  isSeeker
+                                      ? 'Manage Secure Journal'
+                                      : 'Manage Confidential Notes',
+                                ),
                                 onPressed: () => _showNotesBottomSheet(context),
                               ),
                             ],
@@ -1277,11 +1773,17 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.lock_rounded, color: SafeTalkTheme.brandSage.withValues(alpha: 0.5), size: 14),
+                      Icon(
+                        Icons.lock_rounded,
+                        color: SafeTalkTheme.brandSage.withValues(alpha: 0.5),
+                        size: 14,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'This call record remains locked and zero-trace.',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -1298,7 +1800,10 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary)),
+        Text(
+          label,
+          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+        ),
         Text(
           value,
           style: SafeTalkTheme.bodyStyle(
@@ -1310,5 +1815,3 @@ class CallHistoryTranscriptScreen extends StatelessWidget {
     );
   }
 }
-
-

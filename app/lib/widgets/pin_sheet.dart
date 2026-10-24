@@ -53,7 +53,8 @@ class PinSheet extends StatefulWidget {
   State<PinSheet> createState() => _PinSheetState();
 }
 
-class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin {
+class _PinSheetState extends State<PinSheet>
+    with SingleTickerProviderStateMixin {
   String _enteredCode = '';
   late PinSheetMode _currentMode;
   String? _firstEnteredPin; // Temp store during setup confirmation
@@ -72,9 +73,10 @@ class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin
       duration: const Duration(milliseconds: 350),
     );
 
-    _shakeAnimation = Tween<double>(begin: 0.0, end: 12.0)
-        .chain(CurveTween(curve: Curves.elasticIn))
-        .animate(_shakeController);
+    _shakeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 12.0,
+    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
 
     _shakeController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -257,7 +259,11 @@ class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin
           Text(
             'ENCRYPTED JOURNAL VAULT',
             style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary)
-                .copyWith(fontSize: 14, letterSpacing: 1.2, fontWeight: FontWeight.bold),
+                .copyWith(
+                  fontSize: 14,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -271,7 +277,11 @@ class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin
             animation: _shakeAnimation,
             builder: (context, child) {
               return Transform.translate(
-                offset: Offset(_shakeAnimation.value * math.sin(_shakeController.value * 6 * math.pi), 0.0),
+                offset: Offset(
+                  _shakeAnimation.value *
+                      math.sin(_shakeController.value * 6 * math.pi),
+                  0.0,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(4, (index) {
@@ -285,7 +295,9 @@ class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin
                         shape: BoxShape.circle,
                         color: _isError
                             ? SafeTalkTheme.brandGold
-                            : (isFilled ? SafeTalkTheme.brandTerracotta : Colors.transparent),
+                            : (isFilled
+                                  ? SafeTalkTheme.brandTerracotta
+                                  : Colors.transparent),
                         border: Border.all(
                           color: _isError
                               ? SafeTalkTheme.brandGold
@@ -353,8 +365,9 @@ class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin
         child: Center(
           child: Text(
             digit,
-            style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary)
-                .copyWith(fontSize: 22, fontWeight: FontWeight.bold),
+            style: SafeTalkTheme.headingStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 22, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -369,8 +382,9 @@ class _PinSheetState extends State<PinSheet> with SingleTickerProviderStateMixin
         onPressed: () => Navigator.pop(context),
         child: Text(
           'Cancel',
-          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-              .copyWith(fontWeight: FontWeight.bold),
+          style: SafeTalkTheme.captionStyle(
+            color: SafeTalkTheme.textSecondary,
+          ).copyWith(fontWeight: FontWeight.bold),
         ),
       ),
     );

@@ -72,7 +72,9 @@ class ChatCryptoService {
 
     try {
       final Map<String, dynamic> data = jsonDecode(payload);
-      if (!data.containsKey('c') || !data.containsKey('n') || !data.containsKey('m')) {
+      if (!data.containsKey('c') ||
+          !data.containsKey('n') ||
+          !data.containsKey('m')) {
         return payload; // JSON, but not our encrypted schema
       }
 
@@ -81,11 +83,7 @@ class ChatCryptoService {
       final mac = base64Decode(data['m'] as String);
 
       final secretKey = _deriveSecretKey(sessionKey);
-      final secretBox = SecretBox(
-        ciphertext,
-        nonce: nonce,
-        mac: Mac(mac),
-      );
+      final secretBox = SecretBox(ciphertext, nonce: nonce, mac: Mac(mac));
 
       final cleartextBytes = await _aesGcm.decrypt(
         secretBox,

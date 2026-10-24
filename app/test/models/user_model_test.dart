@@ -12,8 +12,8 @@ void main() {
         'seekerData': {
           'walletBalance': 50.0,
           'preferredLanguages': ['en', 'hi'],
-          'safeCircle': ['listener456']
-        }
+          'safeCircle': ['listener456'],
+        },
       };
 
       final user = UserModel.fromJson(json);
@@ -37,11 +37,8 @@ void main() {
           'isOnline': true,
           'status': 'active',
           'languagesSpoken': ['en', 'es', 'hi'],
-          'stats': {
-            'rating': 4.9,
-            'minutesListened': 100
-          }
-        }
+          'stats': {'rating': 4.9, 'minutesListened': 100},
+        },
       };
 
       final user = UserModel.fromJson(json);
@@ -51,7 +48,10 @@ void main() {
       expect(user.seekerData, isNull);
       expect(user.listenerData, isNotNull);
       expect(user.listenerData?.isOnline, true);
-      expect(user.listenerData?.languagesSpoken, containsAll(['en', 'es', 'hi']));
+      expect(
+        user.listenerData?.languagesSpoken,
+        containsAll(['en', 'es', 'hi']),
+      );
       expect(user.listenerData?.stats?.rating, 4.9);
     });
 

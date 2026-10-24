@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../controllers/session_controller.dart';
@@ -95,10 +96,10 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
 
   void _launchCallAsListener() {
     if (!mounted || widget.currentRequest == null) return;
-    
+
     Widget targetScreen;
     final partnerName = widget.currentRequest!.seekerMoniker;
-    
+
     targetScreen = SessionChatScreen(
       sessionId: SessionController().currentSessionId ?? '',
       myUid: SessionController().firebaseUid ?? '',
@@ -137,9 +138,12 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
   void _onListenerAccepts() {
     _countdownTimer?.cancel();
     if (widget.currentRequest != null) {
-      SessionController().listenerAcceptsRequest('Listener', sessionId: widget.currentRequest!.id);
+      SessionController().listenerAcceptsRequest(
+        'Listener',
+        sessionId: widget.currentRequest!.id,
+      );
     }
-    
+
     widget.onAcceptConnection();
   }
 
@@ -180,16 +184,21 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     final isTherapist = SessionController().isTherapist;
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
-    final seekerMoniker = widget.currentRequest?.seekerMoniker ?? 'Unknown Seeker';
+    final seekerMoniker =
+        widget.currentRequest?.seekerMoniker ?? 'Unknown Seeker';
     final moodTag = widget.currentRequest?.seekerMoodTag ?? 'Neutral';
-    final sessionTypeString = SessionModel.normalizeSessionType(widget.currentRequest?.sessionType);
-    
+    final sessionTypeString = SessionModel.normalizeSessionType(
+      widget.currentRequest?.sessionType,
+    );
+
     String sessionTypeName = 'Secure Chat';
     IconData sessionTypeIcon = Icons.chat_bubble_rounded;
-    if (sessionTypeString == 'voiceCall' || sessionTypeString == 'SessionType.voiceCall') {
+    if (sessionTypeString == 'voiceCall' ||
+        sessionTypeString == 'SessionType.voiceCall') {
       sessionTypeName = 'Secure Voice Call';
       sessionTypeIcon = Icons.phone_rounded;
-    } else if (sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall') {
+    } else if (sessionTypeString == 'videoCall' ||
+        sessionTypeString == 'SessionType.videoCall') {
       sessionTypeName = 'Secure Video Call';
       sessionTypeIcon = Icons.videocam_rounded;
     }
@@ -202,7 +211,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
         children: [
           Text(
             'Preparing Session',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 6),
           Text(
@@ -217,36 +228,47 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
               decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-                border: Border.all(color: brandColor.withValues(alpha: 0.3), width: 1.5),
+                border: Border.all(
+                  color: brandColor.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
                 boxShadow: SafeTalkTheme.glowShadow(brandColor, opacity: 0.08),
               ),
               child: Column(
                 children: [
                   // Breathing pulse with seeker visual style
-                  const BreathingPulse(
-                    size: 130,
-                    showText: false,
-                  ),
+                  const BreathingPulse(size: 130, showText: false),
                   const SizedBox(height: 20),
 
                   // Elapsed stopwatch container
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: SafeTalkTheme.bgForest,
                       borderRadius: SafeTalkTheme.pillRadius,
-                      border: Border.all(color: brandColor.withValues(alpha: 0.15), width: 1.2),
+                      border: Border.all(
+                        color: brandColor.withValues(alpha: 0.15),
+                        width: 1.2,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.timer_outlined, size: 16, color: brandColorLight),
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 16,
+                          color: brandColorLight,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Elapsed Time: ${_formatDuration(_paymentSecondsElapsed)}',
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true).copyWith(
-                            fontSize: 13,
-                          ),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.textPrimary,
+                            bold: true,
+                          ).copyWith(fontSize: 13),
                         ),
                       ],
                     ),
@@ -260,20 +282,27 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                         width: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(brandColorLight),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            brandColorLight,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Text(
                         'Awaiting checkout authorization...',
-                        style: SafeTalkTheme.bodyStyle(color: brandColorLight, bold: true).copyWith(fontSize: 14),
+                        style: SafeTalkTheme.bodyStyle(
+                          color: brandColorLight,
+                          bold: true,
+                        ).copyWith(fontSize: 14),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Typically takes 10 - 20 seconds. Please keep this screen open.',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -284,10 +313,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
           // Match summary details card
           Text(
             'MATCH SPECIFICATIONS',
-            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
-            ),
+            style: SafeTalkTheme.captionStyle(
+              color: SafeTalkTheme.textSecondary,
+            ).copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.8),
           ),
           const SizedBox(height: 10),
           Container(
@@ -299,19 +327,31 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
               children: [
                 _buildStatItem('Seeker Moniker', seekerMoniker),
                 const SizedBox(height: 12),
-                _buildStatItem('Mood Indicator', moodTag, highlightColor: SafeTalkTheme.brandTerracotta),
+                _buildStatItem(
+                  'Mood Indicator',
+                  moodTag,
+                  highlightColor: SafeTalkTheme.brandTerracotta,
+                ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Medium', style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary)),
+                    Text(
+                      'Medium',
+                      style: SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.textSecondary,
+                      ),
+                    ),
                     Row(
                       children: [
                         Icon(sessionTypeIcon, color: brandColorLight, size: 16),
                         const SizedBox(width: 6),
                         Text(
                           sessionTypeName,
-                          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                          style: SafeTalkTheme.bodyStyle(
+                            color: SafeTalkTheme.textPrimary,
+                            bold: true,
+                          ),
                         ),
                       ],
                     ),
@@ -332,12 +372,18 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.self_improvement_rounded, color: SafeTalkTheme.brandSageLight, size: 22),
+                const Icon(
+                  Icons.self_improvement_rounded,
+                  color: SafeTalkTheme.brandSageLight,
+                  size: 22,
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     'Preparation Tip: Take a slow breath, clear your thoughts, and prepare to hold a warm, empathetic, and confidential space.',
-                    style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textPrimary).copyWith(height: 1.4),
+                    style: SafeTalkTheme.captionStyle(
+                      color: SafeTalkTheme.textPrimary,
+                    ).copyWith(height: 1.4),
                   ),
                 ),
               ],
@@ -352,7 +398,10 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary)),
+        Text(
+          label,
+          style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+        ),
         Text(
           value,
           style: SafeTalkTheme.bodyStyle(
@@ -380,14 +429,25 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
               ),
-              child: const Icon(Icons.nights_stay_outlined, color: SafeTalkTheme.textSecondary, size: 50),
+              child: const Icon(
+                Icons.nights_stay_outlined,
+                color: SafeTalkTheme.textSecondary,
+                size: 50,
+              ),
             ),
             const SizedBox(height: 24),
-            Text('Currently set to Offline', style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary)),
+            Text(
+              'Currently set to Offline',
+              style: SafeTalkTheme.headingStyle(
+                color: SafeTalkTheme.textPrimary,
+              ),
+            ),
             const SizedBox(height: 10),
             Text(
               'Set your status to Online in the "Status" tab to begin receiving seeker match assignments.',
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -411,7 +471,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
         children: [
           Text(
             'Support Queue',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 6),
           Text(
@@ -427,14 +489,20 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: SafeTalkTheme.borderSage, width: 2),
               ),
-              child: Icon(Icons.hearing_rounded, color: brandColorLight, size: 56),
+              child: Icon(
+                Icons.hearing_rounded,
+                color: brandColorLight,
+                size: 56,
+              ),
             ),
           ),
           const SizedBox(height: 32),
           Center(
             child: Text(
               'Listening Mode Active',
-              style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary),
+              style: SafeTalkTheme.headingStyle(
+                color: SafeTalkTheme.textPrimary,
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -442,41 +510,58 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
             child: Text(
               'SafeTalk will show you incoming requests here when a seeker needs support.',
               textAlign: TextAlign.center,
-              style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textSecondary),
-            ),
-          ),
-          const SizedBox(height: 32),
-          // Simulate a demo request button for testing
-          Center(
-            child: OutlinedButton.icon(
-              onPressed: () {
-                // Randomly select one of the three session types (chat, voice, or video call)
-                final random = Random();
-                final sessionType = SessionType.values[random.nextInt(SessionType.values.length)];
-                
-                // Show the active incoming request card on screen
-                SessionController().seekerSendsRequest(
-                  moniker: 'Pine Pebble #107',
-                  moodTag: 'Anxious / Overwhelmed',
-                  concern: 'Having deep anxiety regarding upcoming challenges. Need a calm, non-judgmental space to talk.',
-                  sessionType: sessionType,
-                );
-                // Flag as simulated request to automatically complete payment once accepted by listener
-                SessionController().isSimulated = true;
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: brandColorLight,
-                side: BorderSide(color: brandColor.withValues(alpha: 0.3), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: SafeTalkTheme.pillRadius),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              icon: const Icon(Icons.flash_on_rounded, size: 18),
-              label: Text(
-                'Simulate Incoming Match Request (Random)',
-                style: SafeTalkTheme.bodyStyle(color: brandColorLight, bold: true),
+              style: SafeTalkTheme.bodyStyle(
+                color: SafeTalkTheme.textSecondary,
               ),
             ),
           ),
+          if (kDebugMode) ...[
+            const SizedBox(height: 32),
+            // Simulate a demo request button for testing (Debug Mode Only)
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // Randomly select one of the three session types (chat, voice, or video call)
+                  final random = Random();
+                  final sessionType = SessionType
+                      .values[random.nextInt(SessionType.values.length)];
+
+                  // Show the active incoming request card on screen
+                  SessionController().seekerSendsRequest(
+                    moniker: 'Pine Pebble #107',
+                    moodTag: 'Anxious / Overwhelmed',
+                    concern:
+                        'Having deep anxiety regarding upcoming challenges. Need a calm, non-judgmental space to talk.',
+                    sessionType: sessionType,
+                  );
+                  // Flag as simulated request to automatically complete payment once accepted by listener
+                  SessionController().isSimulated = true;
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: brandColorLight,
+                  side: BorderSide(
+                    color: brandColor.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: SafeTalkTheme.pillRadius,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                icon: const Icon(Icons.flash_on_rounded, size: 18),
+                label: Text(
+                  'Simulate Incoming Match Request (Debug Only)',
+                  style: SafeTalkTheme.bodyStyle(
+                    color: brandColorLight,
+                    bold: true,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -488,7 +573,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
     final isTherapist = SessionController().isTherapist;
     final brandColor = SafeTalkTheme.getListenerColor(isTherapist);
     final brandColorLight = SafeTalkTheme.getListenerColorLight(isTherapist);
-    final sessionTypeString = SessionModel.normalizeSessionType(widget.currentRequest?.sessionType);
+    final sessionTypeString = SessionModel.normalizeSessionType(
+      widget.currentRequest?.sessionType,
+    );
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -498,7 +585,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
         children: [
           Text(
             'Support Queue',
-            style: SafeTalkTheme.displayStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 28),
+            style: SafeTalkTheme.displayStyle(
+              color: SafeTalkTheme.textPrimary,
+            ).copyWith(fontSize: 28),
           ),
           const SizedBox(height: 6),
           Text(
@@ -512,7 +601,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
             children: [
               Text(
                 'Incoming Connection',
-                style: SafeTalkTheme.headingStyle(color: SafeTalkTheme.textPrimary).copyWith(fontSize: 18),
+                style: SafeTalkTheme.headingStyle(
+                  color: SafeTalkTheme.textPrimary,
+                ).copyWith(fontSize: 18),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -522,8 +613,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                 ),
                 child: Text(
                   'HIGH MATCH',
-                  style: SafeTalkTheme.captionStyle(color: brandColorLight)
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style: SafeTalkTheme.captionStyle(
+                    color: brandColorLight,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -533,7 +625,10 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: SafeTalkTheme.glassCardDecoration.copyWith(
-              border: Border.all(color: brandColor.withValues(alpha: 0.4), width: 1.5),
+              border: Border.all(
+                color: brandColor.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -543,8 +638,14 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                   children: [
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: SafeTalkTheme.brandTerracotta.withValues(alpha: 0.15),
-                      child: const Icon(Icons.psychology, color: SafeTalkTheme.brandTerracotta, size: 20),
+                      backgroundColor: SafeTalkTheme.brandTerracotta.withValues(
+                        alpha: 0.15,
+                      ),
+                      child: const Icon(
+                        Icons.psychology,
+                        color: SafeTalkTheme.brandTerracotta,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -552,12 +653,18 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.currentRequest?.seekerMoniker ?? 'Unknown Seeker',
-                            style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary, bold: true),
+                            widget.currentRequest?.seekerMoniker ??
+                                'Unknown Seeker',
+                            style: SafeTalkTheme.bodyStyle(
+                              color: SafeTalkTheme.textPrimary,
+                              bold: true,
+                            ),
                           ),
                           Text(
                             '97% Compatibility Match',
-                            style: SafeTalkTheme.captionStyle(color: brandColorLight),
+                            style: SafeTalkTheme.captionStyle(
+                              color: brandColorLight,
+                            ),
                           ),
                         ],
                       ),
@@ -573,12 +680,15 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                             value: _secondsLeft / 30,
                             strokeWidth: 3,
                             backgroundColor: SafeTalkTheme.bgMidnight,
-                            valueColor: const AlwaysStoppedAnimation<Color>(SafeTalkTheme.brandTerracotta),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              SafeTalkTheme.brandTerracotta,
+                            ),
                           ),
                           Text(
                             '$_secondsLeft',
-                            style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textPrimary)
-                                .copyWith(fontWeight: FontWeight.bold),
+                            style: SafeTalkTheme.captionStyle(
+                              color: SafeTalkTheme.textPrimary,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -598,20 +708,28 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                     children: [
                       Text(
                         'SEEKER MOOD:  ',
-                        style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-                            .copyWith(fontWeight: FontWeight.bold),
+                        style: SafeTalkTheme.captionStyle(
+                          color: SafeTalkTheme.textSecondary,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: SafeTalkTheme.bgMidnight,
                           borderRadius: SafeTalkTheme.pillRadius,
-                          border: Border.all(color: SafeTalkTheme.borderSage, width: 1),
+                          border: Border.all(
+                            color: SafeTalkTheme.borderSage,
+                            width: 1,
+                          ),
                         ),
                         child: Text(
                           widget.currentRequest?.seekerMoodTag ?? 'Neutral',
-                          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandTerracotta)
-                              .copyWith(fontWeight: FontWeight.bold),
+                          style: SafeTalkTheme.captionStyle(
+                            color: SafeTalkTheme.brandTerracotta,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -622,14 +740,21 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
 
                 Text(
                   "What's on their mind:",
-                  style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary)
-                      .copyWith(fontWeight: FontWeight.bold),
+                  style: SafeTalkTheme.captionStyle(
+                    color: SafeTalkTheme.textSecondary,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   '"${widget.currentRequest?.seekerConcern ?? ''}"',
-                  style: SafeTalkTheme.bodyStyle(color: SafeTalkTheme.textPrimary)
-                      .copyWith(fontStyle: FontStyle.italic, fontSize: 14, height: 1.4),
+                  style:
+                      SafeTalkTheme.bodyStyle(
+                        color: SafeTalkTheme.textPrimary,
+                      ).copyWith(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
                 ),
 
                 const SizedBox(height: 28),
@@ -646,20 +771,29 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildSessionDetailChip(
-                        (sessionTypeString == 'messages' || sessionTypeString == 'SessionType.messages')
+                        (sessionTypeString == 'messages' ||
+                                sessionTypeString == 'SessionType.messages')
                             ? Icons.chat_bubble_outline_rounded
-                            : ((sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall')
-                                ? Icons.videocam_outlined
-                                : Icons.phone_outlined),
-                        (sessionTypeString == 'messages' || sessionTypeString == 'SessionType.messages')
+                            : ((sessionTypeString == 'videoCall' ||
+                                      sessionTypeString ==
+                                          'SessionType.videoCall')
+                                  ? Icons.videocam_outlined
+                                  : Icons.phone_outlined),
+                        (sessionTypeString == 'messages' ||
+                                sessionTypeString == 'SessionType.messages')
                             ? 'Messages'
-                            : ((sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall')
-                                ? 'Video Call'
-                                : 'Voice Call'),
+                            : ((sessionTypeString == 'videoCall' ||
+                                      sessionTypeString ==
+                                          'SessionType.videoCall')
+                                  ? 'Video Call'
+                                  : 'Voice Call'),
                       ),
                       _buildSessionDetailChip(
                         Icons.timer_outlined,
-                        (sessionTypeString == 'videoCall' || sessionTypeString == 'SessionType.videoCall') ? '7 mins' : '10 mins',
+                        (sessionTypeString == 'videoCall' ||
+                                sessionTypeString == 'SessionType.videoCall')
+                            ? '7 mins'
+                            : '10 mins',
                       ),
                       _buildSessionDetailChip(
                         Icons.currency_rupee_rounded,
@@ -679,13 +813,18 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                     decoration: BoxDecoration(
                       color: SafeTalkTheme.bgMidnight,
                       borderRadius: SafeTalkTheme.pillRadius,
-                      border: Border.all(color: SafeTalkTheme.borderSage, width: 1.5),
+                      border: Border.all(
+                        color: SafeTalkTheme.borderSage,
+                        width: 1.5,
+                      ),
                     ),
                     child: Stack(
                       children: [
                         Center(
                           child: Opacity(
-                            opacity: (1 - (_swipePosition / (_maxSwipeWidth - 54))).clamp(0.2, 1.0),
+                            opacity:
+                                (1 - (_swipePosition / (_maxSwipeWidth - 54)))
+                                    .clamp(0.2, 1.0),
                             child: Text(
                               'Swipe to listen →',
                               style: SafeTalkTheme.bodyStyle(
@@ -723,7 +862,11 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                                 color: brandColor,
                               ),
                               child: const Center(
-                                child: Icon(Icons.chevron_right_rounded, color: SafeTalkTheme.bgMidnight, size: 26),
+                                child: Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: SafeTalkTheme.bgMidnight,
+                                  size: 26,
+                                ),
                               ),
                             ),
                           ),
@@ -740,15 +883,22 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
                   child: TextButton.icon(
                     onPressed: () {
                       if (widget.currentRequest != null) {
-                        SessionController().listenerDeclinesRequest(sessionId: widget.currentRequest!.id);
+                        SessionController().listenerDeclinesRequest(
+                          sessionId: widget.currentRequest!.id,
+                        );
                       }
                       setState(() => _swipePosition = 0.0);
                     },
-                    icon: const Icon(Icons.close_rounded, size: 16, color: SafeTalkTheme.brandTerracotta),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: SafeTalkTheme.brandTerracotta,
+                    ),
                     label: Text(
                       'Decline this request',
-                      style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.brandTerracotta)
-                          .copyWith(fontWeight: FontWeight.bold),
+                      style: SafeTalkTheme.captionStyle(
+                        color: SafeTalkTheme.brandTerracotta,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -771,7 +921,9 @@ class _AcceptUserScreenState extends State<AcceptUserScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: SafeTalkTheme.captionStyle(color: SafeTalkTheme.textSecondary).copyWith(fontSize: 11),
+          style: SafeTalkTheme.captionStyle(
+            color: SafeTalkTheme.textSecondary,
+          ).copyWith(fontSize: 11),
         ),
       ],
     );

@@ -5,17 +5,14 @@ class SafeTalkLogo extends StatefulWidget {
   final double size;
   final bool animate;
 
-  const SafeTalkLogo({
-    super.key,
-    this.size = 100.0,
-    this.animate = true,
-  });
+  const SafeTalkLogo({super.key, this.size = 100.0, this.animate = true});
 
   @override
   State<SafeTalkLogo> createState() => _SafeTalkLogoState();
 }
 
-class _SafeTalkLogoState extends State<SafeTalkLogo> with SingleTickerProviderStateMixin {
+class _SafeTalkLogoState extends State<SafeTalkLogo>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _glowAnimation;
@@ -29,18 +26,13 @@ class _SafeTalkLogoState extends State<SafeTalkLogo> with SingleTickerProviderSt
     );
 
     _scaleAnimation = Tween<double>(begin: 0.96, end: 1.04).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOutBack,
-      ),
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutBack),
     );
 
-    _glowAnimation = Tween<double>(begin: 0.2, end: 0.6).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _glowAnimation = Tween<double>(
+      begin: 0.2,
+      end: 0.6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     if (widget.animate) {
       _controller.repeat(reverse: true);
@@ -92,21 +84,22 @@ class _SafeTalkLogoState extends State<SafeTalkLogo> with SingleTickerProviderSt
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: SafeTalkTheme.brandSage.withValues(alpha: _glowAnimation.value * 0.15),
+                color: SafeTalkTheme.brandSage.withValues(
+                  alpha: _glowAnimation.value * 0.15,
+                ),
                 blurRadius: widget.size * 0.3,
                 spreadRadius: 2,
               ),
               BoxShadow(
-                color: SafeTalkTheme.brandTerracotta.withValues(alpha: _glowAnimation.value * 0.08),
+                color: SafeTalkTheme.brandTerracotta.withValues(
+                  alpha: _glowAnimation.value * 0.08,
+                ),
                 blurRadius: widget.size * 0.5,
                 spreadRadius: -4,
               ),
             ],
           ),
-          child: Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          ),
+          child: Transform.scale(scale: _scaleAnimation.value, child: child),
         );
       },
       child: logoWidget,
@@ -141,19 +134,25 @@ class _SLogoPainter extends CustomPainter {
     // Mathematically construct a beautiful flowing, organic 'S' path
     // Starts from top right, loops left, sweeps through center, loops right to bottom left
     path.moveTo(width * 0.76, height * 0.20);
-    
+
     // Top Curve of 'S'
     path.cubicTo(
-      width * 0.38, height * 0.05,  // Control Point 1
-      width * 0.18, height * 0.32,  // Control Point 2
-      width * 0.44, height * 0.48,  // End Point
+      width * 0.38,
+      height * 0.05, // Control Point 1
+      width * 0.18,
+      height * 0.32, // Control Point 2
+      width * 0.44,
+      height * 0.48, // End Point
     );
 
     // Bottom Curve of 'S'
     path.cubicTo(
-      width * 0.78, height * 0.65,  // Control Point 1
-      width * 0.62, height * 0.95,  // Control Point 2
-      width * 0.24, height * 0.80,  // End Point
+      width * 0.78,
+      height * 0.65, // Control Point 1
+      width * 0.62,
+      height * 0.95, // Control Point 2
+      width * 0.24,
+      height * 0.80, // End Point
     );
 
     canvas.drawPath(path, paint);
